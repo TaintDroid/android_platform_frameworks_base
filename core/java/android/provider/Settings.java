@@ -626,7 +626,8 @@ public final class Settings {
          * calculation. For example, one network always seemed to time out for
          * the first couple pings, so this is set to 3 by default.
          */
-        public static final String WIFI_WATCHDOG_INITIAL_IGNORED_PING_COUNT = "wifi_watchdog_initial_ignored_ping_count";
+        public static final String WIFI_WATCHDOG_INITIAL_IGNORED_PING_COUNT = 
+                "wifi_watchdog_initial_ignored_ping_count";
         
         /**
          * The number of pings to test if an access point is a good connection.
@@ -783,6 +784,19 @@ public final class Settings {
         public static final String DATA_ROAMING = "data_roaming";
 
         /**
+         * The CDMA roaming mode 0 = Home Networks, CDMA default
+         *                       1 = Roaming on Affiliated networks
+         *                       2 = Roaming on any networks
+         */
+        public static final String CDMA_ROAMING_MODE = "roaming_settings";
+        
+        /**
+         * The CDMA subscription mode 0 = RUIM/SIM (default)
+         *                                1 = NV
+         */
+        public static final String CDMA_SUBSCRIPTION_MODE = "subscription_mode";
+
+        /**
          * Scaling factor for fonts, float.
          */
         public static final String FONT_SCALE = "font_scale";
@@ -797,6 +811,12 @@ public final class Settings {
          * starting user code.  If 0, it will run normally.
          */
         public static final String WAIT_FOR_DEBUGGER = "wait_for_debugger";
+
+        /**
+         * represents current acitve phone class
+         * 0 = GSM-Phone, 1 = CDMA-Phone
+         */
+        public static final String CURRENT_ACTIVE_PHONE = "current_active_phone";
 
         /**
          * Whether or not to dim the screen. 0=no  1=yes
@@ -1076,6 +1096,35 @@ public final class Settings {
          * boolean (1 or 0).
          */
         public static final String SOUND_EFFECTS_ENABLED = "sound_effects_enabled";
+
+        /**
+         * The preferred network mode 7 = Global, CDMA default
+         *                            4 = CDMA only
+         *                            3 = GSM/UMTS only
+         */
+        public static final String PREFERRED_NETWORK_MODE = 
+                "preferred_network_mode";
+
+        /**
+         * The cdma subscription 0 = Subscription from RUIM, when available
+         *                       1 = Subscription from NV
+         */
+        public static final String PREFERRED_CDMA_SUBSCRIPTION = 
+                "preferred_cdma_subscription";    
+        
+        /**
+        * Whether the enhanced voice privacy mode is enabled.
+        * 0 = normal voice privacy
+        * 1 = enhanced voice privacy
+        */
+       public static final String ENHANCED_VOICE_PRIVACY_ENABLED = "enhanced_voice_privacy_enabled";
+       
+       /**
+        * Whether the TTY mode mode is enabled.
+        * 0 = disabled
+        * 1 = enabled
+        */
+       public static final String TTY_MODE_ENABLED = "tty_mode_enabled";
     }
 
 
@@ -1325,7 +1374,8 @@ public final class Settings {
          * seconds.  This allows for throttling of logs when the device is
          * running for large amounts of time.
          */
-        public static final String MEMCHECK_LOG_REALTIME_INTERVAL = "memcheck_log_realtime_interval";
+        public static final String MEMCHECK_LOG_REALTIME_INTERVAL = 
+                "memcheck_log_realtime_interval";
 
         /**
          * Boolean indicating whether rebooting due to system memory checks
@@ -1860,8 +1910,7 @@ public final class Settings {
      *
      * @hide
      */
-    public static final class Bookmarks implements BaseColumns
-    {
+    public static final class Bookmarks implements BaseColumns {
         private static final String TAG = "Bookmarks";
 
         /**
@@ -1929,8 +1978,7 @@ public final class Settings {
          * @return Intent The bookmarked URL, or null if there is no bookmark
          *         matching the given shortcut.
          */
-        public static Intent getIntentForShortcut(ContentResolver cr, char shortcut)
-        {
+        public static Intent getIntentForShortcut(ContentResolver cr, char shortcut) {
             Intent intent = null;
 
             Cursor c = cr.query(CONTENT_URI,
@@ -1976,8 +2024,7 @@ public final class Settings {
                                            String title,
                                            String folder,
                                            char shortcut,
-                                           int ordering)
-        {
+                                           int ordering) {
             // If a shortcut is supplied, and it is already defined for
             // another bookmark, then remove the old definition.
             if (shortcut != 0) {

@@ -28,13 +28,13 @@ import android.os.Message;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import com.android.internal.telephony.gsm.CommandsInterface;
+import com.android.internal.telephony.IccUtils;
+import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.telephony.gsm.EncodeException;
 import com.android.internal.telephony.gsm.GsmAlphabet;
-import com.android.internal.telephony.gsm.GsmSimCard;
+import com.android.internal.telephony.gsm.SimCard;
 import com.android.internal.telephony.gsm.SIMFileHandler;
 import com.android.internal.telephony.gsm.SIMRecords;
-import com.android.internal.telephony.gsm.SimUtils;
 import com.android.internal.telephony.gsm.stk.Duration.TimeUnit;
 
 import android.util.Config;
@@ -158,7 +158,7 @@ public class Service extends Handler implements AppInterface {
     private CommandsInterface mCmdIf;
     private SIMRecords mSimRecords;
     private Context mContext;
-    private GsmSimCard mSimCard;
+    private SimCard mSimCard;
     private CommandListener mCmdListener;
     private Object mCmdListenerLock = new Object();
     private CommandParams mCmdParams = null;
@@ -250,7 +250,7 @@ public class Service extends Handler implements AppInterface {
 
     /* Intentionally private for singleton */
     private Service(CommandsInterface ci, SIMRecords sr, Context context,
-            SIMFileHandler fh, GsmSimCard sc) {
+            SIMFileHandler fh, SimCard sc) {
         if (ci == null || sr == null || context == null || fh == null
                 || sc == null) {
             throw new NullPointerException(
@@ -291,7 +291,7 @@ public class Service extends Handler implements AppInterface {
      * @return The only Service object in the system
      */
     public static Service getInstance(CommandsInterface ci, SIMRecords sr,
-            Context context, SIMFileHandler fh, GsmSimCard sc) {
+            Context context, SIMFileHandler fh, SimCard sc) {
         if (sInstance == null) {
             if (ci == null || sr == null || context == null || fh == null
                     || sc == null) {
@@ -397,7 +397,7 @@ public class Service extends Handler implements AppInterface {
         int len = rawData.length - 2; // minus (tag + length)
         rawData[1] = (byte) len;
 
-        String hexString = SimUtils.bytesToHexString(rawData);
+        String hexString = IccUtils.bytesToHexString(rawData);
 
         mCmdIf.sendEnvelope(hexString, null);
     }
@@ -546,7 +546,7 @@ public class Service extends Handler implements AppInterface {
         int len = rawData.length - 2; // minus (tag + length)
         rawData[1] = (byte) len;
 
-        String hexString = SimUtils.bytesToHexString(rawData);
+        String hexString = IccUtils.bytesToHexString(rawData);
 
         mCmdIf.sendEnvelope(hexString, null);
     }
@@ -941,7 +941,7 @@ public class Service extends Handler implements AppInterface {
 
         CtlvCommandDetails cmdDet = null;
         try {
-            byte[] rawData = SimUtils.hexStringToBytes(data);
+            byte[] rawData = IccUtils.hexStringToBytes(data);
             BerTlv berTlv = BerTlv.decode(rawData);
 
             List<ComprehensionTlv> ctlvs = berTlv.getComprehensionTlvs();
@@ -1201,7 +1201,7 @@ public class Service extends Handler implements AppInterface {
         }
 
         byte[] rawData = buf.toByteArray();
-        String hexString = SimUtils.bytesToHexString(rawData);
+        String hexString = IccUtils.bytesToHexString(rawData);
         if (Config.LOGD) {
             Log.d(TAG, "TERMINAL RESPONSE: " + hexString);
         }
@@ -2221,7 +2221,7 @@ public class Service extends Handler implements AppInterface {
 
             try {
                 int id = rawValue[valueIndex] & 0xff;
-                String text = SimUtils.adnStringFieldToString(rawValue,
+                String text = IccUtils.adnStringFieldToString(rawValue,
                         valueIndex + 1, textLen);
                 item = new Item(id, text);
             } catch (IndexOutOfBoundsException e) {
@@ -2381,7 +2381,7 @@ public class Service extends Handler implements AppInterface {
         int length = ctlv.getLength();
         if (length != 0) {
             try {
-                return SimUtils.adnStringFieldToString(rawValue, valueIndex,
+                return IccUtils.adnStringFieldToString(rawValue, valueIndex,
                         length);
             } catch (IndexOutOfBoundsException e) {
                 throw new ResultException(ResultCode.CMD_DATA_NOT_UNDERSTOOD);
@@ -2411,7 +2411,7 @@ public class Service extends Handler implements AppInterface {
         if (data.length() == 0) {
             return;
         }
-        rawData = SimUtils.hexStringToBytes(data);
+        rawData = IccUtils.hexStringToBytes(data);
         try {
             berTlv = BerTlv.decode(rawData);
         } catch (ResultException e) {

@@ -28,11 +28,15 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.android.internal.telephony.IccUtils;
+import com.android.internal.telephony.IccConstants;
+import com.android.internal.telephony.IccSmsInterfaceManager;
+
 /**
  * SimSmsInterfaceManager to provide an inter-process communication to
  * access Sms in Sim.
  */
-public class SimSmsInterfaceManager extends ISms.Stub {
+public class SimSmsInterfaceManager extends IccSmsInterfaceManager {
     static final String LOG_TAG = "GSM";
     static final boolean DBG = false;
 
@@ -77,7 +81,7 @@ public class SimSmsInterfaceManager extends ISms.Stub {
 
     public SimSmsInterfaceManager(GSMPhone phone) {
         this.mPhone = phone;
-        ServiceManager.addService("isms", this);
+        //ServiceManager.addService("isms", this); //TODO REMOVE
     }
 
     private void enforceReceiveAndSend(String message) {
@@ -116,7 +120,8 @@ public class SimSmsInterfaceManager extends ISms.Stub {
                 mPhone.mCM.deleteSmsOnSim(index, response);
             } else {
                 byte[] record = makeSmsRecordData(status, pdu);
-                mPhone.mSIMFileHandler.updateEFLinearFixed( SimConstants.EF_SMS,
+                ((SIMFileHandler)mPhone.getIccFileHandler()).updateEFLinearFixed( 
+                        IccConstants.EF_SMS,
                         index, record, null, response);
             }
             try {
@@ -145,8 +150,8 @@ public class SimSmsInterfaceManager extends ISms.Stub {
             mSuccess = false;
             Message response = mHandler.obtainMessage(EVENT_UPDATE_DONE);
 
-            mPhone.mCM.writeSmsToSim(status, SimUtils.bytesToHexString(smsc),
-                    SimUtils.bytesToHexString(pdu), response);
+            mPhone.mCM.writeSmsToSim(status, IccUtils.bytesToHexString(smsc),
+                    IccUtils.bytesToHexString(pdu), response);
 
             try {
                 mLock.wait();
@@ -172,7 +177,7 @@ public class SimSmsInterfaceManager extends ISms.Stub {
                 "Reading messages from SIM");
         synchronized(mLock) {
             Message response = mHandler.obtainMessage(EVENT_LOAD_DONE);
-            mPhone.mSIMFileHandler.loadEFLinearFixedAll(SimConstants.EF_SMS,
+            ((SIMFileHandler)mPhone.getIccFileHandler()).loadEFLinearFixedAll(IccConstants.EF_SMS,
                     response);
 
             try {
@@ -256,7 +261,7 @@ public class SimSmsInterfaceManager extends ISms.Stub {
      * @return byte array for the record.
      */
     private byte[] makeSmsRecordData(int status, byte[] pdu) {
-        byte[] data = new byte[SimConstants.SMS_RECORD_LENGTH];
+        byte[] data = new byte[IccConstants.SMS_RECORD_LENGTH];
 
         // Status bits for this record.  See TS 51.011 10.5.3
         data[0] = (byte)(status & 7);
@@ -264,7 +269,7 @@ public class SimSmsInterfaceManager extends ISms.Stub {
         System.arraycopy(pdu, 0, data, 1, pdu.length);
 
         // Pad out with 0xFF's.
-        for (int j = pdu.length+1; j < SimConstants.SMS_RECORD_LENGTH; j++) {
+        for (int j = pdu.length+1; j < IccConstants.SMS_RECORD_LENGTH; j++) {
             data[j] = -1;
         }
 
@@ -297,6 +302,6 @@ public class SimSmsInterfaceManager extends ISms.Stub {
     }
 
     private void log(String msg) {
-        Log.d(LOG_TAG, "[SmsInterfaceManager] " + msg);
+        Log.d(LOG_TAG, "[SimSmsInterfaceManager] " + msg);
     }
 }

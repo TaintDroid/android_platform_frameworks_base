@@ -21,13 +21,13 @@ package com.android.internal.telephony.gsm;
  * Contains message reference and ackPdu.
  *
  */
-class SmsResponse {
+public class SmsResponse {
     /** Message reference of the just-sent SMS. */
     int messageRef;
     /** ackPdu for the just-sent SMS. */
     String ackPdu;
 
-    SmsResponse(int messageRef, String ackPdu) {
+    public SmsResponse(int messageRef, String ackPdu) {
         this.messageRef = messageRef;
         this.ackPdu = ackPdu;
     }

@@ -21,9 +21,9 @@ import android.telephony.PhoneNumberUtils;
 import android.util.Config;
 import android.util.Log;
 import android.telephony.PhoneNumberUtils;
+import com.android.internal.telephony.IccUtils;
 import com.android.internal.telephony.gsm.EncodeException;
 import com.android.internal.telephony.gsm.GsmAlphabet;
-import com.android.internal.telephony.gsm.SimUtils;
 import com.android.internal.telephony.gsm.SmsHeader;
 
 import java.io.ByteArrayOutputStream;
@@ -367,7 +367,7 @@ public class SmsMessage {
     /* package */ public static SmsMessage newFromCMT(String[] lines) {
         try {
             SmsMessage msg = new SmsMessage();
-            msg.parsePdu(SimUtils.hexStringToBytes(lines[1]));
+            msg.parsePdu(IccUtils.hexStringToBytes(lines[1]));
             return msg;
         } catch (RuntimeException ex) {
             Log.e(LOG_TAG, "SMS PDU parsing failed: ", ex);
@@ -386,7 +386,7 @@ public class SmsMessage {
     /* package */ public static SmsMessage newFromCDS(String line) {
         try {
             SmsMessage msg = new SmsMessage();
-            msg.parsePdu(SimUtils.hexStringToBytes(line));
+            msg.parsePdu(IccUtils.hexStringToBytes(line));
             return msg;
         } catch (RuntimeException ex) {
             Log.e(LOG_TAG, "CDS SMS PDU parsing failed: ", ex);
@@ -725,7 +725,7 @@ public class SmsMessage {
         int mUserDataSize;
 
         PduParser(String s) {
-            this(SimUtils.hexStringToBytes(s));
+            this(IccUtils.hexStringToBytes(s));
         }
 
         PduParser(byte[] pdu) {
@@ -799,12 +799,12 @@ public class SmsMessage {
 
         long getSCTimestampMillis() {
             // TP-Service-Centre-Time-Stamp
-            int year = SimUtils.bcdByteToInt(pdu[cur++]);
-            int month = SimUtils.bcdByteToInt(pdu[cur++]);
-            int day = SimUtils.bcdByteToInt(pdu[cur++]);
-            int hour = SimUtils.bcdByteToInt(pdu[cur++]);
-            int minute = SimUtils.bcdByteToInt(pdu[cur++]);
-            int second = SimUtils.bcdByteToInt(pdu[cur++]);
+            int year = IccUtils.bcdByteToInt(pdu[cur++]);
+            int month = IccUtils.bcdByteToInt(pdu[cur++]);
+            int day = IccUtils.bcdByteToInt(pdu[cur++]);
+            int hour = IccUtils.bcdByteToInt(pdu[cur++]);
+            int minute = IccUtils.bcdByteToInt(pdu[cur++]);
+            int second = IccUtils.bcdByteToInt(pdu[cur++]);
 
             // For the timezone, the most significant bit of the
             // least signficant nibble is the sign byte
@@ -814,7 +814,7 @@ public class SmsMessage {
             byte tzByte = pdu[cur++];
 
             // Mask out sign bit.
-            int timezoneOffset = SimUtils
+            int timezoneOffset = IccUtils
                     .bcdByteToInt((byte) (tzByte & (~0x08)));
 
             timezoneOffset = ((tzByte & 0x08) == 0) ? timezoneOffset
@@ -843,8 +843,7 @@ public class SmsMessage {
          *  of octets
          * @return the number of septets or octets in the user data payload
          */
-        int constructUserData(boolean hasUserDataHeader, boolean dataInSeptets)
-        {
+        int constructUserData(boolean hasUserDataHeader, boolean dataInSeptets) {
             int offset = cur;
             int userDataLength = pdu[offset++] & 0xff;
             int headerSeptets = 0;
@@ -961,7 +960,7 @@ public class SmsMessage {
                 System.out.println(new String(pdu, cur, pdu.length - cur - 1));
             }
 
-            return SimUtils.bytesToHexString(pdu);
+            return IccUtils.bytesToHexString(pdu);
         }
 */
 

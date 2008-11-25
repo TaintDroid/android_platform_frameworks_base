@@ -16,13 +16,14 @@
 
 package com.android.internal.telephony.gsm;
 
+import com.android.internal.telephony.RILConstants;
+
 import android.util.Log;
 
 /**
  * {@hide}
  */
-public class CommandException extends RuntimeException
-{
+public class CommandException extends RuntimeException {
     private Error e;
 
     public enum Error {
@@ -38,15 +39,13 @@ public class CommandException extends RuntimeException
         SMS_FAIL_RETRY,
     }
 
-    public CommandException(Error e)
-    {
+    public CommandException(Error e) {
         super(e.toString());
         this.e = e;
     }
 
     public static CommandException
-    fromRilErrno(int ril_errno)
-    {
+    fromRilErrno(int ril_errno) {
         switch(ril_errno) {
             case RILConstants.SUCCESS:                       return null;
             case RILConstants.RIL_ERRNO_INVALID_RESPONSE:    
@@ -75,8 +74,7 @@ public class CommandException extends RuntimeException
         }
     }
 
-    public Error getCommandError()
-    {
+    public Error getCommandError() {
         return e;
     }
 

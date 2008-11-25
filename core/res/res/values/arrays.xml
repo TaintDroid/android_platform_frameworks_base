@@ -107,6 +107,7 @@
         <item>mute</item>
         <item>speakerphone</item>
         <item>wifi</item>
+        <item>tty</item>item>
         <item>bluetooth</item>
         <item>gps</item>
         <item>sync_active</item>

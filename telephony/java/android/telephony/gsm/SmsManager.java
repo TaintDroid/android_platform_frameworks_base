@@ -26,7 +26,7 @@ import android.text.TextUtils;
 import com.android.internal.telephony.gsm.EncodeException;
 import com.android.internal.telephony.gsm.GsmAlphabet;
 import com.android.internal.telephony.gsm.ISms;
-import com.android.internal.telephony.gsm.SimConstants;
+import com.android.internal.telephony.IccConstants;
 import com.android.internal.telephony.gsm.SmsRawData;
 
 import java.util.ArrayList;
@@ -105,10 +105,11 @@ public final class SmsManager {
         
         if (messageCount > 1) {
             limit = (encodingType == SmsMessage.ENCODING_7BIT)?
-                SmsMessage.MAX_USER_DATA_SEPTETS_WITH_HEADER: SmsMessage.MAX_USER_DATA_BYTES_WITH_HEADER;            
+                SmsMessage.MAX_USER_DATA_SEPTETS_WITH_HEADER 
+                : SmsMessage.MAX_USER_DATA_BYTES_WITH_HEADER;
         } else {
             limit = (encodingType == SmsMessage.ENCODING_7BIT)?
-                SmsMessage.MAX_USER_DATA_SEPTETS: SmsMessage.MAX_USER_DATA_BYTES;            
+                SmsMessage.MAX_USER_DATA_SEPTETS: SmsMessage.MAX_USER_DATA_BYTES;
         }
 
         try {
@@ -311,7 +312,7 @@ public final class SmsManager {
     public boolean
     deleteMessageFromSim(int messageIndex) {
         boolean success = false;
-        byte[] pdu = new byte[SimConstants.SMS_RECORD_LENGTH-1];
+        byte[] pdu = new byte[IccConstants.SMS_RECORD_LENGTH-1];
         Arrays.fill(pdu, (byte)0xff);
 
         try {

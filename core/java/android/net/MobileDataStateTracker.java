@@ -194,7 +194,7 @@ public class MobileDataStateTracker extends NetworkStateTracker {
      */
     public boolean isAvailable() {
         getPhoneService(false);
-        
+
         /*
          * If the phone process has crashed in the past, we'll get a
          * RemoteException and need to re-reference the service.
@@ -209,7 +209,7 @@ public class MobileDataStateTracker extends NetworkStateTracker {
                 if (retry == 0) getPhoneService(true);
             }
         }
-        
+
         return false;
     }
 
@@ -229,6 +229,7 @@ public class MobileDataStateTracker extends NetworkStateTracker {
     public String getTcpBufferSizesPropName() {
       String networkTypeStr = "unknown";
         TelephonyManager tm = new TelephonyManager(mContext);
+        //TODO We have to edit the parameter for getNetworkType regarding CDMA
         switch(tm.getNetworkType()) {
           case TelephonyManager.NETWORK_TYPE_GPRS:
             networkTypeStr = "gprs";
@@ -238,6 +239,15 @@ public class MobileDataStateTracker extends NetworkStateTracker {
             break;
           case TelephonyManager.NETWORK_TYPE_UMTS:
             networkTypeStr = "umts";
+            break;
+          case TelephonyManager.NETWORK_TYPE_CDMA:
+            networkTypeStr = "cdma";
+            break;
+          case TelephonyManager.NETWORK_TYPE_EVDO_0:
+            networkTypeStr = "evdo";
+            break;
+          case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            networkTypeStr = "evdo";
             break;
         }
         return "net.tcp.buffersize." + networkTypeStr;
@@ -267,7 +277,7 @@ public class MobileDataStateTracker extends NetworkStateTracker {
                 if (retry == 0) getPhoneService(true);
             }
         }
-        
+
         Log.w(TAG, "Failed to tear down mobile data connectivity");
         return false;
     }
@@ -316,7 +326,7 @@ public class MobileDataStateTracker extends NetworkStateTracker {
                     "Ignoring mobile radio request because could not acquire PhoneService");
                 break;
             }
-            
+
             try {
                 return mPhoneService.setRadio(turnOn);
             } catch (RemoteException e) {

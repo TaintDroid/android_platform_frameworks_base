@@ -17,14 +17,12 @@
 package android.telephony.gsm;
 
 import android.os.Bundle;
-import com.android.internal.telephony.Phone;
 import android.telephony.CellLocation;
 
 /**
  * Represents the cell location on a GSM phone.
  */
-public class GsmCellLocation extends CellLocation
-{
+public class GsmCellLocation extends CellLocation {
     private int mLac;
     private int mCid;
 

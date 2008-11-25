@@ -22,8 +22,7 @@ import android.os.Parcelable;
 /**
  * {@hide}
  */
-public class NetworkInfo implements Parcelable
-{
+public class NetworkInfo implements Parcelable {
     public enum State {
         UNKNOWN,
         AVAILABLE,
@@ -39,34 +38,29 @@ public class NetworkInfo implements Parcelable
 
 
     public String
-    getOperatorAlphaLong()
-    {
+    getOperatorAlphaLong() {
         return operatorAlphaLong;
     }
 
     public String
-    getOperatorAlphaShort()
-    {
+    getOperatorAlphaShort() {
         return operatorAlphaShort;
     }
 
     public String
-    getOperatorNumeric()
-    {
+    getOperatorNumeric() {
         return operatorNumeric;
     }
 
     public State
-    getState()
-    {
+    getState() {
         return state;
     }
 
     NetworkInfo(String operatorAlphaLong, 
                 String operatorAlphaShort, 
                 String operatorNumeric, 
-                State state)
-    {
+                State state) {
 
         this.operatorAlphaLong = operatorAlphaLong;
         this.operatorAlphaShort = operatorAlphaShort;
@@ -76,11 +70,10 @@ public class NetworkInfo implements Parcelable
     }
 
 
-    NetworkInfo(String operatorAlphaLong, 
+    public NetworkInfo(String operatorAlphaLong, 
                 String operatorAlphaShort, 
                 String operatorNumeric, 
-                String stateString)
-    {
+                String stateString) {
         this (operatorAlphaLong, operatorAlphaShort, 
                 operatorNumeric, rilStateToState(stateString));
     }
@@ -88,8 +81,7 @@ public class NetworkInfo implements Parcelable
     /**
      * See state strings defined in ril.h RIL_REQUEST_QUERY_AVAILABLE_NETWORKS
      */
-    private static State rilStateToState(String s)
-    {
+    private static State rilStateToState(String s) {
         if (s.equals("unknown")) {
             return State.UNKNOWN;
         } else if (s.equals("available")) {
@@ -105,8 +97,7 @@ public class NetworkInfo implements Parcelable
     }
 
 
-    public String toString()
-    {
+    public String toString() {
         return "NetworkInfo " + operatorAlphaLong 
                 + "/" + operatorAlphaShort 
                 + "/" + operatorNumeric 

@@ -38,6 +38,9 @@ import android.telephony.gsm.SmsMessage;
 import android.telephony.gsm.SmsManager;
 import android.telephony.ServiceState;
 import android.util.Config;
+
+import com.android.internal.telephony.IccUtils;
+import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.util.HexDump;
 import android.util.Log;
 import android.view.WindowManager;
@@ -322,7 +325,7 @@ final class SMSDispatcher extends Handler {
                     deliveryPendingList.remove(i);
                     PendingIntent intent = tracker.mDeliveryIntent;
                     Intent fillIn = new Intent();
-                    fillIn.putExtra("pdu", SimUtils.hexStringToBytes(pduString));
+                    fillIn.putExtra("pdu", IccUtils.hexStringToBytes(pduString));
                     try {
                         intent.send(mContext, Activity.RESULT_OK, fillIn);
                     } catch (CanceledException ex) {}
@@ -692,8 +695,7 @@ final class SMSDispatcher extends Handler {
             index++;
         }
         String mimeType;
-        switch (pdu[headerStartIndex])
-        {
+        switch (pdu[headerStartIndex]) {
         case DRM_RIGHTS_XML:
             mimeType = DRM_RIGHTS_XML_MIME_TYPE;
             break;
@@ -725,13 +727,11 @@ final class SMSDispatcher extends Handler {
         // XXX Skip the remainder of the header for now
         int dataIndex = headerStartIndex + headerLength;
         byte[] data;
-        if (pdu[headerStartIndex] == WAP_CO_MIME_PORT)
-        {
+        if (pdu[headerStartIndex] == WAP_CO_MIME_PORT) {
             // because SMSDispatcher can't parse push headers "Content-Location" and
             // X-Wap-Content-URI, so pass the whole push to CO application.
             data = pdu;
-        } else
-        {
+        } else {
             data = new byte[pdu.length - dataIndex];
             System.arraycopy(pdu, dataIndex, data, 0, data.length);
         }
@@ -902,8 +902,8 @@ final class SMSDispatcher extends Handler {
         byte pdu[] = (byte[]) map.get("pdu");
 
         Message reply = obtainMessage(EVENT_SEND_SMS_COMPLETE, tracker);
-        mCm.sendSMS(SimUtils.bytesToHexString(smsc),
-                SimUtils.bytesToHexString(pdu), reply);
+        mCm.sendSMS(IccUtils.bytesToHexString(smsc),
+                IccUtils.bytesToHexString(pdu), reply);
     }
 
     /**

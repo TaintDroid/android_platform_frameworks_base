@@ -38,6 +38,7 @@ import android.util.Config;
 import android.util.Log;
 import android.util.Xml;
 import com.android.internal.util.XmlUtils;
+import com.android.internal.telephony.RILConstants;
 
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.LockPatternView;
@@ -191,7 +192,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 // Shortcuts, applications, folders
                 db.execSQL("UPDATE favorites SET spanX=1, spanY=1 WHERE itemType<=0");
                 // Photo frames, clocks
-                db.execSQL("UPDATE favorites SET spanX=2, spanY=2 WHERE itemType=1000 or itemType=1002");
+                db.execSQL(
+                    "UPDATE favorites SET spanX=2, spanY=2 WHERE itemType=1000 or itemType=1002");
                 // Search boxes
                 db.execSQL("UPDATE favorites SET spanX=4, spanY=1 WHERE itemType=1001");
                 db.setTransactionSuccessful();
@@ -467,11 +469,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 + " VALUES(?,?);");
 
         // Music has double the number of levels
-        loadSetting(stmt, Settings.System.VOLUME_MUSIC, AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_MUSIC]);
-        loadSetting(stmt, Settings.System.VOLUME_RING, AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_RING]);
-        loadSetting(stmt, Settings.System.VOLUME_SYSTEM, AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_SYSTEM]);
-        loadSetting(stmt, Settings.System.VOLUME_VOICE, AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_VOICE_CALL]);
-        loadSetting(stmt, Settings.System.VOLUME_ALARM, AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_ALARM]);
+        loadSetting(stmt, Settings.System.VOLUME_MUSIC, 
+                AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_MUSIC]);
+        loadSetting(stmt, Settings.System.VOLUME_RING, 
+                AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_RING]);
+        loadSetting(stmt, Settings.System.VOLUME_SYSTEM, 
+                AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_SYSTEM]);
+        loadSetting(stmt, Settings.System.VOLUME_VOICE, 
+                AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_VOICE_CALL]);
+        loadSetting(stmt, Settings.System.VOLUME_ALARM, 
+                AudioManager.DEFAULT_STREAM_VOLUME[AudioManager.STREAM_ALARM]);
         loadSetting(stmt, Settings.System.MODE_RINGER, AudioManager.RINGER_MODE_NORMAL);
 
         loadVibrateSetting(db, false);
@@ -509,7 +516,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
         SQLiteStatement stmt = db.compileStatement("INSERT OR IGNORE INTO system(name,value)"
                 + " VALUES(?,?);");
-        
+ 
+        loadSetting(stmt, Settings.System.CURRENT_ACTIVE_PHONE, RILConstants.CDMA_PHONE);
         loadSetting(stmt, Settings.System.DIM_SCREEN, 1);
         loadSetting(stmt, Settings.System.STAY_ON_WHILE_PLUGGED_IN, 
                 "1".equals(SystemProperties.get("ro.kernel.qemu")) ? 1 : 0);
@@ -557,6 +565,14 @@ class DatabaseHelper extends SQLiteOpenHelper {
         loadSetting(stmt, Settings.System.DATE_FORMAT,
                 SystemProperties.get("ro.com.android.dateformat", 
                         "MM-dd-yyyy"));
+
+        // Set the preferred network mode to 0 = Global, CDMA default
+        loadSetting(stmt, Settings.System.PREFERRED_NETWORK_MODE, 
+                RILConstants.NETWORK_MODE_GLOBAL);        
+
+        // Set the preferred cdma subscription to 0 = Subscription from RUIM, when available
+        loadSetting(stmt, Settings.System.PREFERRED_CDMA_SUBSCRIPTION, 
+                RILConstants.SUBSCRIPTION_FROM_RUIM);        
 
         // Don't do this.  The SystemServer will initialize ADB_ENABLED from a
         // persistent system property instead.

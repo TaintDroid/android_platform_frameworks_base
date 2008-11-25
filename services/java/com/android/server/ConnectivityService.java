@@ -650,8 +650,8 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                             info.getState() + "/" + info.getDetailedState());
 
                     // Connectivity state changed:
-                    // [31-11] Reserved for future use
-                    // [10-9] Mobile network connection type (as defined by the TelephonyManager)
+                    // [31-12] Reserved for future use
+                    // [11-9] Mobile network connection type (as defined by the TelephonyManager)
                     // [8-3] Detailed state ordinal (as defined by NetworkInfo.DetailedState)   
                     // [2-0] Network type (as defined by ConnectivityManager)
                     int eventLogParam = (info.getType() & 0x7) |

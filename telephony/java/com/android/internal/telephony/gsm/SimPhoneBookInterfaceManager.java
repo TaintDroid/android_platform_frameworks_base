@@ -27,12 +27,15 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.android.internal.telephony.IccPhoneBookInterfaceManager;
+import com.android.internal.telephony.AdnRecord;
+import com.android.internal.telephony.AdnRecordCache;
 
 /**
  * SimPhoneBookInterfaceManager to provide an inter-process communication to
  * access ADN-like SIM records.
  */
-public class SimPhoneBookInterfaceManager extends ISimPhoneBook.Stub {
+public class SimPhoneBookInterfaceManager extends IccPhoneBookInterfaceManager {
     static final String LOG_TAG = "GSM";
     static final boolean DBG = false;
 
@@ -99,10 +102,13 @@ public class SimPhoneBookInterfaceManager extends ISimPhoneBook.Stub {
     public SimPhoneBookInterfaceManager(GSMPhone phone) {
         this.phone = phone;
         adnCache = phone.mSIMRecords.getAdnCache();
-        publish();
+        //publish(); //TODO REMOVE
     }
 
     private void publish() {
+        // TODO T: Do we have to change the service 
+        //         as well to "iccphonebook"?
+        //         defined in: device/commands/binder/Service_info.c
         ServiceManager.addService("simphonebook", this);
     }
 
@@ -218,7 +224,7 @@ public class SimPhoneBookInterfaceManager extends ISimPhoneBook.Stub {
             checkThread();
             recordSize = new int[3];
             Message response = mHandler.obtainMessage(EVENT_GET_SIZE_DONE);
-            phone.mSIMFileHandler.getEFLinearRecordSize(efid, response);
+            ((SIMFileHandler)phone.getIccFileHandler()).getEFLinearRecordSize(efid, response);
             try {
                 mLock.wait();
             } catch (InterruptedException e) {
@@ -267,12 +273,13 @@ public class SimPhoneBookInterfaceManager extends ISimPhoneBook.Stub {
             // Make sure this isn't the UI thread, since it will block
             if (mHandler.getLooper().equals(Looper.myLooper())) {
                 Log.e(LOG_TAG, "query() called on the main UI thread!");
-                throw new IllegalStateException("You cannot call query on this provder from the main UI thread.");
+                throw new IllegalStateException(
+                        "You cannot call query on this provder from the main UI thread.");
             }
         }
     }
 
     private void log(String msg) {
-        Log.d(LOG_TAG, "[SpbInterfaceManager] " + msg);
+        Log.d(LOG_TAG, "[SimPbInterfaceManager] " + msg);
     }
 }

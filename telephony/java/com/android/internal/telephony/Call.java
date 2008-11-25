@@ -17,6 +17,7 @@
 package com.android.internal.telephony;
 
 import java.util.List;
+
 /**
  * {@hide}
  */
@@ -39,6 +40,13 @@ public abstract class Call {
         }
     }
 
+    
+    /* Instance Variables */
+    
+    public State state = State.IDLE;
+    
+
+    
     /* Instance Methods */
 
     /** Do not modify the List result!!! This list is not yours to keep
@@ -46,8 +54,10 @@ public abstract class Call {
      */
 
     public abstract List<Connection> getConnections();
-    public abstract State getState();
     public abstract Phone getPhone();
+    public abstract boolean isMultiparty();
+    public abstract void hangup() throws CallStateException;
+
 
     /**
      * hasConnection
@@ -71,6 +81,14 @@ public abstract class Call {
         }
         
         return connections.size() > 0;
+    }
+    
+    /**
+     * getState
+     * @return state of class call
+     */
+    public State getState() {
+        return state;
     }
     
     /**
@@ -160,9 +178,6 @@ public abstract class Call {
         return time;
     }
 
-    public abstract boolean isMultiparty();
-
-    public abstract void hangup() throws CallStateException;
 
     public boolean
     isDialingOrAlerting() {

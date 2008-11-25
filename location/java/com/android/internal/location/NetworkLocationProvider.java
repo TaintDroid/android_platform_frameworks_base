@@ -107,8 +107,8 @@ public class NetworkLocationProvider extends LocationProviderImpl {
 
     public static boolean isSupported() {
         // This class provides a Google-specific location feature, so it's enabled only
-        // when the system property ro.com.google.enable_google_location_features  is set.
-        if (!SystemProperties.get("ro.com.google.enable_google_location_features").equals("1")) {
+        // when the system property ro.enable_google_location_feat  is set.
+        if (!SystemProperties.get("ro.com.google.locationfeatures").equals("1")) {
             return false;
         }
 
@@ -377,7 +377,8 @@ public class NetworkLocationProvider extends LocationProviderImpl {
             }
 
         } else if ((mWifiLastScanResults == null)
-            || (mWifiLastScanResults.size() <= 2 && scanResults.size() > mWifiLastScanResults.size()) 
+            || (mWifiLastScanResults.size() <= 2 && scanResults.size() > 
+                    mWifiLastScanResults.size()) 
             || ((now - mLastWifiScanElapsedTime) > mWifiScanFrequency)) {
 
             if (mWifiLastScanResults == null) {
@@ -486,7 +487,8 @@ public class NetworkLocationProvider extends LocationProviderImpl {
         // Don't include wifi points if they're too old
         List<ScanResult> scanResults = null;
         if (mWifiEnabled && (mWifiLastScanResults != null &&
-            ((now - mLastWifiScanElapsedTime) < (mWifiScanFrequency + MAX_TIME_TO_WAIT_FOR_RADIO)))) {
+            ((now - mLastWifiScanElapsedTime) < 
+                (mWifiScanFrequency + MAX_TIME_TO_WAIT_FOR_RADIO)))) {
             scanResults = mWifiLastScanResults;
         }
 

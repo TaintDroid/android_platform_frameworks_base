@@ -17,6 +17,7 @@
 package com.android.internal.telephony.gsm;
 
 import android.os.*;
+import com.android.internal.telephony.CommandsInterface;
 import android.database.Cursor;
 import android.provider.Telephony;
 import android.util.EventLog;
@@ -139,8 +140,7 @@ public class PdpConnection extends Handler {
     private boolean receivedDisconnectReq;
 
     //***** Constructor
-    PdpConnection(GSMPhone phone)
-    {
+    PdpConnection(GSMPhone phone) {
         this.phone = phone;
         this.state = PdpState.INACTIVE;
         onConnectCompleted = null;
@@ -208,8 +208,7 @@ public class PdpConnection extends Handler {
     }
 
     private void
-    setHttpProxy(String httpProxy, String httpPort)
-    {
+    setHttpProxy(String httpProxy, String httpPort) {
         if (httpProxy == null || httpProxy.length() == 0) {
             phone.setSystemProperty("net.gprs.http-proxy", null);
             return;

@@ -149,9 +149,23 @@ public interface Phone {
     static final int BM_BOUNDARY    = 6; // upper band boundary
 
     // Used for preferred network type
-    static final int NT_AUTO_TYPE  = 0;  //   WCDMA preferred (auto mode)
-    static final int NT_GSM_TYPE   = 1;  //   GSM only
-    static final int NT_WCDMA_TYPE = 2;  //   WCDMA only
+    static final int NT_AUTO_TYPE           = 0;  // GSM/WCDMA (WCDMA preferred)
+    static final int NT_GSM_TYPE            = 1;  // GSM only
+    static final int NT_WCDMA_TYPE          = 2;  // WCDMA only
+    static final int NT_GSM_UMTS_AUTO_TYPE  = 3;  // GSM/WCDMA (auto mode)
+    static final int NT_CDMA_EVDO_AUTO_TYPE = 4;  // CDMA and EvDo (auto mode, according to PRL)
+    static final int NT_CDMA_TYPE           = 5;  // CDMA only
+    static final int NT_EVDO_TYPE           = 6;  // EvDo only
+    static final int NT_GLOBAL_AUTO_TYPE    = 7;  // GSM/WCDMA, CDMA, EvDo (auto mode, according to PRL)
+
+    // Used for CDMA roaming mode
+    static final int CDMA_RM_HOME        = 0;  //Home Networks only, as defined in PRL
+    static final int CDMA_RM_AFFILIATED = 1;  //Roaming an Affiliated networks, as defined in PRL
+    static final int CDMA_RM_ANY        = 2;  //Roaming on Any Network, as defined in PRL
+    
+    // Used for CDMA subscription mode
+    static final int CDMA_SUBSCRIPTION_RUIM_SIM    = 0; //RUIM/SIM (default)
+    static final int CDMA_SUBSCRIPTION_NV        = 1; //NV -> non-volatile memory
 
     /**
      * Get the current ServiceState. Use 
@@ -427,10 +441,10 @@ public interface Phone {
     boolean getSimRecordsLoaded();
 
     /**
-     * Returns the SIM card interface for this phone, or null
+     * Returns the ICC card interface for this phone, or null
      * if not applicable to underlying technology.
      */
-    SimCard getSimCard();
+    IccCard getIccCard();
 
     /**
      * Answers a ringing or waiting call. Active calls, if any, go on hold. 
@@ -482,6 +496,22 @@ public interface Phone {
      * In these cases, this operation may not be performed.
      */
     void conference() throws CallStateException;
+
+    /**
+     * Enable or disable enhanced Voice Privacy (VP). If enhanced VP is
+     * disabled, normal VP is enabled.
+     * 
+     * @param enable whether true or false to enable or disable.
+     * @param onComplete a callback message when the action is completed.
+     */
+    void enableEnhancedVoicePrivacy(boolean enable, Message onComplete);
+    
+    /**
+     * Get the currently set Voice Privacy (VP) mode.
+     * 
+     * @param onComplete a callback message when the action is completed.
+     */
+    void getEnhancedVoicePrivacy(Message onComplete);
 
     /**
      * Whether or not the phone can do explicit call transfer in the current
@@ -712,7 +742,7 @@ public interface Phone {
      *        CF_REASONS, as defined in 
      *        <code>com.android.internal.telephony.gsm.CommandsInterface</code>
      * @param onComplete a callback message when the action is completed.
-     *        @see com.android.internal.telephony.gsm.CallForwardInfo for details.
+     *        @see com.android.internal.telephony.CallForwardInfo for details.
      */
     void getCallForwardingOption(int commandInterfaceCFReason,
                                   Message onComplete);
@@ -1016,6 +1046,27 @@ public interface Phone {
     void setDataRoamingEnabled(boolean enable);
 
     /**
+     *  Query the CDMA roaming preference setting
+     *
+     * @param response is callback message to report one of  CDMA_RM_*
+     */
+    void queryCdmaRoamingPreference(Message response);
+    
+    /**
+     *  Requests to set the CDMA roaming preference
+     * @param cdmaRoamingType one of  CDMA_RM_*
+     * @param response is callback message
+     */
+    void setCdmaRoamingPreference(int cdmaRoamingType, Message response);
+
+    /**
+     *  Requests to set the CDMA subscription mode
+     * @param cdmaSubscriptionType one of  CDMA_SUBSCRIPTION_*
+     * @param response is callback message
+     */
+    void setCdmaSubscription(int cdmaSubscriptionType, Message response);
+    
+    /**
      * If this is a simulated phone interface, returns a SimulatedRadioControl.
      * @ return A SimulatedRadioControl if this is a simulated interface; 
      * otherwise, null.
@@ -1122,7 +1173,54 @@ public interface Phone {
     String getSubscriberId();
 
     /**
-     * Retrieves the serial number of the SIM, if applicable.
+     * Retrieves the serial number of the ICC, if applicable.
      */
-    String getSimSerialNumber();
+    String getIccSerialNumber();
+    
+    //***** CDMA support methods
+  
+
+    /**
+     * Retrieves the ESN for CDMA phones.
+     */
+    String getEsn();
+
+    /**
+     * Retrieves MEID for CDMA phones.
+     */
+    String getMeid();
+    
+    /**
+     * Retrieves the PhoneSubInfo of the Phone
+     */
+    public PhoneSubInfo getPhoneSubInfo(); 
+
+    /**
+     * Retrieves the IccSmsInterfaceManager of the Phone
+     */
+    public IccSmsInterfaceManager getIccSmsInterfaceManager();
+
+    /**
+     * Retrieves the IccPhoneBookInterfaceManager of the Phone
+     */
+    public IccPhoneBookInterfaceManager getIccPhoneBookInterfaceManager();
+
+    /**
+     * setTTYModeEnabled
+     * sets a TTY mode option.
+     * 
+     * @param enable is a boolean representing the state that you are 
+     *        requesting, true for enabled, false for disabled.
+     * @param onComplete a callback message when the action is completed
+     */
+    void setTTYModeEnabled(boolean enable, Message onComplete); 
+    
+    /**
+     * queryTTYModeEnabled
+     * query the status of the TTY mode 
+     * 
+     * @param onComplete a callback message when the action is completed.
+     */
+    void queryTTYModeEnabled(Message onComplete);
+    
 }

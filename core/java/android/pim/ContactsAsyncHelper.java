@@ -231,7 +231,7 @@ public class ContactsAsyncHelper extends Handler {
      * Convenience method for calls that do not want to deal with listeners and tokens, but have
      * a CallerInfo object to cache the image to.
      */
-    public static final void updateImageViewWithContactPhotoAsync(CallerInfo info, Context context, 
+    public static final void updateImageViewWithContactPhotoAsync(CallerInfo info, Context context,
             ImageView imageView, Uri person, int placeholderImageResource) {
         // Added additional Cookie field in the callee.
         updateImageViewWithContactPhotoAsync (info, DEFAULT_TOKEN, null, null, context, 

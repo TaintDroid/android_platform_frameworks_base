@@ -19,8 +19,7 @@ package com.android.internal.telephony;
 /**
  * {@hide}
  */
-public abstract class Connection
-{
+public abstract class Connection {
     public enum DisconnectCause {
         NOT_DISCONNECTED,   /* has not yet disconnected */
         INCOMING_MISSED,    /* an incoming call that was missed and never answered */
@@ -116,8 +115,7 @@ public abstract class Connection
      * Returns getCall().getState() or Call.State.IDLE if not
      * connected
      */
-    public Call.State getState()
-    {
+    public Call.State getState() {
         Call c;
 
         c = getCall();
@@ -136,8 +134,7 @@ public abstract class Connection
      * (could be active, holding, ringing, dialing, etc)
      */
     public boolean
-    isAlive()
-    {
+    isAlive() {
         return getState().isAlive();
     }
 
@@ -145,8 +142,7 @@ public abstract class Connection
      * Returns true if Connection is connected and is INCOMING or WAITING
      */
     public boolean
-    isRinging()
-    {
+    isRinging() {
         return getState().isRinging();
     }
 
@@ -154,8 +150,7 @@ public abstract class Connection
      * 
      * @return the userdata set in setUserData()
      */
-    public Object getUserData()
-    {
+    public Object getUserData() {
         return userData;
     }
 
@@ -163,8 +158,7 @@ public abstract class Connection
      * 
      * @param userdata user can store an any userdata in the Connection object.
      */
-    public void setUserData(Object userdata)
-    {
+    public void setUserData(Object userdata) {
         this.userData = userdata;
     }
     
