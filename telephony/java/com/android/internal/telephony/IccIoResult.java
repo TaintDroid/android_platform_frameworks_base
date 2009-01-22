@@ -33,13 +33,11 @@ IccIoResult {
     }
 
     public IccIoResult(int sw1, int sw2, String hexString) {
-        //TODO T: IccUtils is linked to IccUtils which is stored in telephony package
-        //Maybe in a later version all function calls of IccUtils will be renamed to IccUtils.
         this(sw1, sw2, IccUtils.hexStringToBytes(hexString));
     }
 
     public String toString() {
-        return "IccIoResponse sw1:0x" + Integer.toHexString(sw1) + " sw2:0x" 
+        return "IccIoResponse sw1:0x" + Integer.toHexString(sw1) + " sw2:0x"
                 + Integer.toHexString(sw2);
     }
 
@@ -57,7 +55,7 @@ IccIoResult {
      */
     public IccException getException() {
         if (success()) return null;
-        
+
         switch (sw1) {
             case 0x94:
                 if (sw2 == 0x08) {

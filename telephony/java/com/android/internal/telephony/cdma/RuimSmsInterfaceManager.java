@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,31 @@
 
 package com.android.internal.telephony.cdma;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
-import android.os.ServiceManager;
-import android.telephony.gsm.SmsManager;
 import android.util.Log;
+
+import com.android.internal.telephony.IccConstants;
+import com.android.internal.telephony.IccSmsInterfaceManager;
+import com.android.internal.telephony.IccUtils;
+import com.android.internal.telephony.PhoneProxy;
+import com.android.internal.telephony.SmsRawData;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.android.internal.telephony.IccConstants;
-import com.android.internal.telephony.IccSmsInterfaceManager;
-import com.android.internal.telephony.gsm.SmsRawData; //TODO remove after moving to telephony
+import static android.telephony.SmsManager.STATUS_ON_ICC_FREE;
 
 /**
- * SimSmsInterfaceManager to provide an inter-process communication to
- * access Sms in Sim.
+ * RuimSmsInterfaceManager to provide an inter-process communication to
+ * access Sms in Ruim.
  */
 public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
     static final String LOG_TAG = "CDMA";
-    static final boolean DBG = false;
+    static final boolean DBG = true;
 
-    private CDMAPhone mPhone;
     private final Object mLock = new Object();
     private boolean mSuccess;
     private List<SmsRawData> mSms;
@@ -56,7 +56,6 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
 
             switch (msg.what) {
                 case EVENT_UPDATE_DONE:
-                    Log.d(LOG_TAG, "Event EVENT_UPDATE_DONE Received"); //TODO
                     ar = (AsyncResult) msg.obj;
                     synchronized (mLock) {
                         mSuccess = (ar.exception == null);
@@ -64,7 +63,6 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
                     }
                     break;
                 case EVENT_LOAD_DONE:
-                    Log.d(LOG_TAG, "Event EVENT_LOAD_DONE Received"); //TODO
                     ar = (AsyncResult)msg.obj;
                     synchronized (mLock) {
                         if (ar.exception == null) {
@@ -83,79 +81,112 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
     };
 
     public RuimSmsInterfaceManager(CDMAPhone phone) {
-        this.mPhone = phone;
-        //ServiceManager.addService("isms", this);
+        super(phone);
+        mDispatcher = new CdmaSMSDispatcher(phone);
     }
 
-    private void enforceReceiveAndSend(String message) {
-        Context context = mPhone.getContext();
+    public void dispose() {
+    }
 
-        context.enforceCallingPermission(
-                "android.permission.RECEIVE_SMS", message);
-        context.enforceCallingPermission(
-                "android.permission.SEND_SMS", message);
+    protected void finalize() {
+        if(DBG) Log.d(LOG_TAG, "RuimSmsInterfaceManager finalized");
     }
 
     /**
      * Update the specified message on the RUIM.
+     *
+     * @param index record index of message to update
+     * @param status new message status (STATUS_ON_ICC_READ,
+     *                  STATUS_ON_ICC_UNREAD, STATUS_ON_ICC_SENT,
+     *                  STATUS_ON_ICC_UNSENT, STATUS_ON_ICC_FREE)
+     * @param pdu the raw PDU to store
+     * @return success or not
+     *
      */
     public boolean
-    updateMessageOnSimEf(int index, int status, byte[] pdu) {
-        //TODO
-        mSuccess = false;
+    updateMessageOnIccEf(int index, int status, byte[] pdu) {
+        if (DBG) log("updateMessageOnIccEf: index=" + index +
+                " status=" + status + " ==> " +
+                "("+ pdu + ")");
+        enforceReceiveAndSend("Updating message on RUIM");
+        synchronized(mLock) {
+            mSuccess = false;
+            Message response = mHandler.obtainMessage(EVENT_UPDATE_DONE);
+
+            if (status == STATUS_ON_ICC_FREE) {
+                // Special case FREE: call deleteSmsOnRuim instead of
+                // manipulating the RUIM record
+                mPhone.mCM.deleteSmsOnRuim(index, response);
+            } else {
+                byte[] record = makeSmsRecordData(status, pdu);
+                mPhone.getIccFileHandler().updateEFLinearFixed(
+                        IccConstants.EF_SMS, index, record, null, response);
+            }
+            try {
+                mLock.wait();
+            } catch (InterruptedException e) {
+                log("interrupted while trying to update by index");
+            }
+        }
         return mSuccess;
     }
 
     /**
      * Copy a raw SMS PDU to the RUIM.
+     *
+     * @param pdu the raw PDU to store
+     * @param status message status (STATUS_ON_ICC_READ, STATUS_ON_ICC_UNREAD,
+     *               STATUS_ON_ICC_SENT, STATUS_ON_ICC_UNSENT)
+     * @return success or not
+     *
      */
-    public boolean copyMessageToSimEf(int status, byte[] pdu, byte[] smsc) {
-        //TODO
-        mSuccess = false;
+    public boolean copyMessageToIccEf(int status, byte[] pdu, byte[] smsc) {
+        //NOTE smsc not used in RUIM
+        if (DBG) log("copyMessageToIccEf: status=" + status + " ==> " +
+                "pdu=("+ pdu + ")");
+        enforceReceiveAndSend("Copying message to RUIM");
+        synchronized(mLock) {
+            mSuccess = false;
+            Message response = mHandler.obtainMessage(EVENT_UPDATE_DONE);
+
+            mPhone.mCM.writeSmsToRuim(status, IccUtils.bytesToHexString(pdu),
+                    response);
+
+            try {
+                mLock.wait();
+            } catch (InterruptedException e) {
+                log("interrupted while trying to update by index");
+            }
+        }
         return mSuccess;
     }
 
     /**
      * Retrieves all messages currently stored on RUIM.
      */
-    public List<SmsRawData> getAllMessagesFromSimEf() {
-        //TODO
-        return null;
+    public List<SmsRawData> getAllMessagesFromIccEf() {
+        if (DBG) log("getAllMessagesFromEF");
+
+        Context context = mPhone.getContext();
+
+        context.enforceCallingPermission(
+                "android.permission.RECEIVE_SMS",
+                "Reading messages from RUIM");
+        synchronized(mLock) {
+            Message response = mHandler.obtainMessage(EVENT_LOAD_DONE);
+            mPhone.getIccFileHandler().loadEFLinearFixedAll(IccConstants.EF_SMS, response);
+
+            try {
+                mLock.wait();
+            } catch (InterruptedException e) {
+                log("interrupted while trying to load from the RUIM");
+            }
+        }
+        return mSms;
     }
 
-    /**
-     * Send a Raw PDU SMS
-     */
-    public void sendRawPdu(byte[] smsc, byte[] pdu, PendingIntent sentIntent,
-            PendingIntent deliveryIntent) {
-        //TODO
-    }
-
-    /**
-     * Send a multi-part text based SMS.
-     */
-    public void sendMultipartText(String destinationAddress, String scAddress, List<String> parts,
-            List<PendingIntent> sentIntents, List<PendingIntent> deliveryIntents) {
-        //TODO
-    }
-
-    /**
-     * Generates an EF_SMS record from status and raw PDU.
-     */
-    private byte[] makeSmsRecordData(int status, byte[] pdu) {
-        //TODO
-        return null;
-    }
-
-    /**
-     * create SmsRawData lists from all sms record byte[]
-     */
-    private ArrayList<SmsRawData> buildValidRawData(ArrayList<byte[]> messages) {
-        //TODO
-        return null;
-    }
-
-    private void log(String msg) {
+    protected void log(String msg) {
         Log.d(LOG_TAG, "[RuimSmsInterfaceManager] " + msg);
     }
 }
+

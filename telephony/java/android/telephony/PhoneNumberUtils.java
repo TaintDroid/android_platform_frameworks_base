@@ -932,7 +932,7 @@ public class PhoneNumberUtils
             return;
         }
         CharSequence saved = text.subSequence(0, length);
-        
+
         // Strip the dashes first, as we're going to add them back
         int p = 0;
         while (p < text.length()) {
@@ -1013,7 +1013,7 @@ public class PhoneNumberUtils
             int pos = dashPositions[i];
             text.replace(pos + i, pos + i, "-");
         }
-        
+
         // Remove trailing dashes
         int len = text.length();
         while (len > 0) {
@@ -1040,10 +1040,10 @@ public class PhoneNumberUtils
      * listed in the ril / sim, then return true, otherwise false.
      */
     public static boolean isEmergencyNumber(String number) {
-        // Strip the separators from the number before comparing it 
+        // Strip the separators from the number before comparing it
         // to the list.
         number = extractNetworkPortion(number);
-        
+
         // retrieve the list of emergency numbers
         String numbers = SystemProperties.get("ro.ril.ecclist");
 

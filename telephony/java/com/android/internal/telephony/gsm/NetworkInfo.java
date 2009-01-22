@@ -57,9 +57,9 @@ public class NetworkInfo implements Parcelable {
         return state;
     }
 
-    NetworkInfo(String operatorAlphaLong, 
-                String operatorAlphaShort, 
-                String operatorNumeric, 
+    NetworkInfo(String operatorAlphaLong,
+                String operatorAlphaShort,
+                String operatorNumeric,
                 State state) {
 
         this.operatorAlphaLong = operatorAlphaLong;
@@ -70,11 +70,11 @@ public class NetworkInfo implements Parcelable {
     }
 
 
-    public NetworkInfo(String operatorAlphaLong, 
-                String operatorAlphaShort, 
-                String operatorNumeric, 
+    public NetworkInfo(String operatorAlphaLong,
+                String operatorAlphaShort,
+                String operatorNumeric,
                 String stateString) {
-        this (operatorAlphaLong, operatorAlphaShort, 
+        this (operatorAlphaLong, operatorAlphaShort,
                 operatorNumeric, rilStateToState(stateString));
     }
 
@@ -98,27 +98,27 @@ public class NetworkInfo implements Parcelable {
 
 
     public String toString() {
-        return "NetworkInfo " + operatorAlphaLong 
-                + "/" + operatorAlphaShort 
-                + "/" + operatorNumeric 
+        return "NetworkInfo " + operatorAlphaLong
+                + "/" + operatorAlphaShort
+                + "/" + operatorNumeric
                 + "/" + state;
     }
-    
-    /** 
+
+    /**
      * Parcelable interface implemented below.
      * This is a simple effort to make NetworkInfo parcelable rather than
      * trying to make the conventional containing object (AsyncResult),
-     * implement parcelable.  This functionality is needed for the 
+     * implement parcelable.  This functionality is needed for the
      * NetworkQueryService to fix 1128695.
      */
-    
+
     public int describeContents() {
         return 0;
     }
 
-    /** 
+    /**
      * Implement the Parcelable interface.
-     * Method to serialize a NetworkInfo object. 
+     * Method to serialize a NetworkInfo object.
      */
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(operatorAlphaLong);
@@ -127,9 +127,9 @@ public class NetworkInfo implements Parcelable {
         dest.writeSerializable(state);
     }
 
-    /** 
+    /**
      * Implement the Parcelable interface
-     * Method to deserialize a NetworkInfo object, or an array thereof. 
+     * Method to deserialize a NetworkInfo object, or an array thereof.
      */
     public static final Creator<NetworkInfo> CREATOR =
         new Creator<NetworkInfo>() {

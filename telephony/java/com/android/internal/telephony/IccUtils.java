@@ -16,12 +16,13 @@
 
 package com.android.internal.telephony;
 
-import java.io.UnsupportedEncodingException;
-
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
-import com.android.internal.telephony.gsm.GsmAlphabet;
+
+import com.android.internal.telephony.GsmAlphabet;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * Various methods, useful for dealing with SIM data.
@@ -32,7 +33,7 @@ public class IccUtils {
     /**
      * Many fields in GSM SIM's are stored as nibble-swizzled BCD
      *
-     * Assumes left-justified field that may be padded right with 0xf 
+     * Assumes left-justified field that may be padded right with 0xf
      * values.
      *
      * Stops on invalid BCD value, returning string so far
@@ -40,21 +41,21 @@ public class IccUtils {
     public static String
     bcdToString(byte[] data, int offset, int length) {
         StringBuilder ret = new StringBuilder(length*2);
- 
+
         for (int i = offset ; i < offset + length ; i++) {
             byte b;
             int v;
-                        
+
             v = data[i] & 0xf;
             if (v > 9)  break;
             ret.append((char)('0' + v));
 
             v = (data[i] >> 4) & 0xf;
             if (v > 9)  break;
-            ret.append((char)('0' + v));        
+            ret.append((char)('0' + v));
         }
-        
-        return ret.toString();    
+
+        return ret.toString();
     }
 
 
@@ -65,7 +66,7 @@ public class IccUtils {
      * significant nibble.
      *
      * Out-of-range digits are treated as 0 for the sake of the time stamp,
-     * because of this: 
+     * because of this:
      *
      * TS 23.040 section 9.2.3.11
      * "if the MS receives a non-integer value in the SCTS, it shall
@@ -78,7 +79,7 @@ public class IccUtils {
 
         // treat out-of-range BCD values as 0
         if ((b & 0xf0) <= 0x90) {
-            ret = (b >> 4) & 0xf; 
+            ret = (b >> 4) & 0xf;
         }
 
         if ((b & 0x0f) <= 0x09) {
@@ -88,6 +89,24 @@ public class IccUtils {
         return ret;
     }
 
+    /** Decodes BCD byte like {@link bcdByteToInt}, but the most significant BCD
+     *  digit is expected in the most significant nibble.
+     */
+    public static int
+    beBcdByteToInt(byte b) {
+        int ret = 0;
+
+        // treat out-of-range BCD values as 0
+        if ((b & 0xf0) <= 0x90) {
+            ret = ((b >> 4) & 0xf) * 10;
+        }
+
+        if ((b & 0x0f) <= 0x09) {
+            ret +=  (b & 0xf);
+        }
+
+        return ret;
+    }
 
     /**
      * Decodes a string field that's formatted like the EF[ADN] alpha
@@ -96,8 +115,8 @@ public class IccUtils {
      * From TS 51.011 10.5.1:
      *   Coding:
      *       this alpha tagging shall use either
-     *      -    the SMS default 7 bit coded alphabet as defined in 
-     *          TS 23.038 [12] with bit 8 set to 0. The alpha identifier 
+     *      -    the SMS default 7 bit coded alphabet as defined in
+     *          TS 23.038 [12] with bit 8 set to 0. The alpha identifier
      *          shall be left justified. Unused bytes shall be set to 'FF'; or
      *      -    one of the UCS2 coded options as defined in annex B.
      *
@@ -107,7 +126,7 @@ public class IccUtils {
      *      2)  if the first octet in the alpha string is '81', then the
      *          second octet contains a value indicating the number of
      *          characters in the string, and the third octet contains an
-     *          8 bit number which defines bits 15 to 8 of a 16 bit 
+     *          8 bit number which defines bits 15 to 8 of a 16 bit
      *          base pointer, where bit 16 is set to zero and bits 7 to 1
      *          are also set to zero.  These sixteen bits constitute a
      *          base pointer to a "half page" in the UCS2 code space, to be
@@ -215,12 +234,12 @@ public class IccUtils {
 
     /**
      * Converts a hex String to a byte array.
-     * 
+     *
      * @param s A string of hexadecimal characters, must be an even number of
      *          chars long
      *
      * @return byte array representation
-     * 
+     *
      * @throws RuntimeException on invalid format
      */
     public static byte[]
@@ -234,10 +253,10 @@ public class IccUtils {
         ret = new byte[sz/2];
 
         for (int i=0 ; i <sz ; i+=2) {
-            ret[i/2] = (byte) ((hexCharToInt(s.charAt(i)) << 4) 
+            ret[i/2] = (byte) ((hexCharToInt(s.charAt(i)) << 4)
                                 | hexCharToInt(s.charAt(i+1)));
         }
-        
+
         return ret;
     }
 
@@ -250,7 +269,7 @@ public class IccUtils {
     public static String
     bytesToHexString(byte[] bytes) {
         if (bytes == null) return null;
-        
+
         StringBuilder ret = new StringBuilder(2*bytes.length);
 
         for (int i = 0 ; i < bytes.length ; i++) {
@@ -277,7 +296,7 @@ public class IccUtils {
     public static String
     networkNameToString(byte[] data, int offset, int length) {
         String ret;
-        
+
         if ((data[offset] & 0x80) != 0x80 || length < 1) {
             return "";
         }
@@ -288,13 +307,12 @@ public class IccUtils {
                 int countSeptets;
                 int unusedBits = data[offset] & 7;
                 countSeptets = (((length - 1) * 8) - unusedBits) / 7 ;
-                ret =  GsmAlphabet.gsm7BitPackedToString(
-                                data, offset + 1, countSeptets);
+                ret =  GsmAlphabet.gsm7BitPackedToString(data, offset + 1, countSeptets);
             break;
             case 1:
                 // UCS2
                 try {
-                    ret = new String(data, 
+                    ret = new String(data,
                             offset + 1, length - 1, "utf-16");
                 } catch (UnsupportedEncodingException ex) {
                     ret = "";
@@ -325,7 +343,7 @@ public class IccUtils {
      * @param data The raw data
      * @param length The length of image body
      * @return The bitmap
-     */    
+     */
     public static Bitmap parseToBnW(byte[] data, int length){
         int valueIndex = 0;
         int width = data[valueIndex++] & 0xFF;
@@ -362,7 +380,7 @@ public class IccUtils {
 
     /**
      * a TS 131.102 image instance of code scheme '11' into color Bitmap
-     * 
+     *
      * @param data The raw data
      * @param length the length of image body
      * @param transparency with or without transparency

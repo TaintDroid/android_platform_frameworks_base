@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 import com.android.internal.util.HexDump;
 
@@ -24,8 +24,7 @@ import java.util.ArrayList;
  * This class represents a SMS user data header.
  *
  */
-public class SmsHeader
-{
+public class SmsHeader {
     /** See TS 23.040 9.2.3.24 for description of this element ID. */
     public static final int CONCATENATED_8_BIT_REFERENCE = 0x00;
     /** See TS 23.040 9.2.3.24 for description of this element ID. */
@@ -42,6 +41,7 @@ public class SmsHeader
 
     private byte[] m_data;
     private ArrayList<Element> m_elements = new ArrayList<Element>();
+    public int nbrOfHeaders;
 
     /**
      * Creates an SmsHeader object from raw user data header bytes.
@@ -49,36 +49,33 @@ public class SmsHeader
      * @param data is user data header bytes
      * @return an SmsHeader object
      */
-    public static SmsHeader parse(byte[] data)
-    {
+    public static SmsHeader parse(byte[] data) {
         SmsHeader header = new SmsHeader();
         header.m_data = data;
 
         int index = 0;
-        while (index < data.length)
-        {
+        header.nbrOfHeaders = 0;
+        while (index < data.length) {
             int id = data[index++] & 0xff;
             int length = data[index++] & 0xff;
             byte[] elementData = new byte[length];
             System.arraycopy(data, index, elementData, 0, length);
             header.add(new Element(id, elementData));
             index += length;
+            header.nbrOfHeaders++;
         }
 
         return header;
     }
 
-    public SmsHeader()
-    {
-    }
+    public SmsHeader() { }
 
     /**
      * Returns the list of SmsHeader Elements that make up the header.
      *
      * @return the list of SmsHeader Elements.
      */
-    public ArrayList<Element> getElements()
-    {
+    public ArrayList<Element> getElements() {
         return m_elements;
     }
 
@@ -87,14 +84,12 @@ public class SmsHeader
      *
      * @param element to add.
      */
-    public void add(Element element)
-    {
+    public void add(Element element) {
         m_elements.add(element);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append("UDH LENGTH: " + m_data.length + " octets");
@@ -104,40 +99,56 @@ public class SmsHeader
 
         for (Element e : getElements()) {
             builder.append("  0x" + HexDump.toHexString((byte)e.getID()) + " - ");
-            switch (e.getID())
-            {
-                case CONCATENATED_8_BIT_REFERENCE:
-                {
+            switch (e.getID()) {
+                case CONCATENATED_8_BIT_REFERENCE: {
                     builder.append("Concatenated Short Message 8bit ref\n");
                     byte[] data = e.getData();
                     builder.append("    " + data.length + " (0x");
-                    builder.append(HexDump.toHexString((byte)data.length)+") Bytes - Information Element\n");
+                    builder.append(HexDump.toHexString((byte)data.length)
+                            + ") Bytes - Information Element\n");
                     builder.append("      " + data[0] + " : SM reference number\n");
                     builder.append("      " + data[1] + " : number of messages\n");
                     builder.append("      " + data[2] + " : this SM sequence number\n");
                     break;
                 }
 
-                case CONCATENATED_16_BIT_REFERENCE:
-                {
+                case CONCATENATED_16_BIT_REFERENCE: {
                     builder.append("Concatenated Short Message 16bit ref\n");
                     byte[] data = e.getData();
                     builder.append("    " + data.length + " (0x");
-                    builder.append(HexDump.toHexString((byte)data.length)+") Bytes - Information Element\n");
-                    builder.append("      " + (data[0] & 0xff) * 256 + (data[1] & 0xff) +
-                                   " : SM reference number\n");
+                    builder.append(HexDump.toHexString((byte)data.length)
+                            + ") Bytes - Information Element\n");
+                    builder.append("      " + (data[0] & 0xff) * 256 + (data[1] & 0xff)
+                            + " : SM reference number\n");
                     builder.append("      " + data[2] + " : number of messages\n");
                     builder.append("      " + data[3] + " : this SM sequence number\n");
                     break;
                 }
 
-                case APPLICATION_PORT_ADDRESSING_16_BIT:
+                case APPLICATION_PORT_ADDRESSING_8_BIT:
                 {
+                    builder.append("Application port addressing 8bit\n");
+                    byte[] data = e.getData();
+
+                    builder.append("    " + data.length + " (0x");
+                    builder.append(HexDump.toHexString(
+                            (byte)data.length) + ") Bytes - Information Element\n");
+
+                    int source = (data[0] & 0xff);
+                    builder.append("      " + source + " : DESTINATION port\n");
+
+                    int dest = (data[1] & 0xff);
+                    builder.append("      " + dest + " : SOURCE port\n");
+                    break;
+                }
+
+                case APPLICATION_PORT_ADDRESSING_16_BIT: {
                     builder.append("Application port addressing 16bit\n");
                     byte[] data = e.getData();
 
                     builder.append("    " + data.length + " (0x");
-                    builder.append(HexDump.toHexString((byte)data.length)+") Bytes - Information Element\n");
+                    builder.append(HexDump.toHexString((byte)data.length)
+                            + ") Bytes - Information Element\n");
 
                     int source = (data[0] & 0xff) << 8;
                     source |= (data[1] & 0xff);
@@ -149,8 +160,7 @@ public class SmsHeader
                     break;
                 }
 
-                default:
-                {
+                default: {
                     builder.append("Unknown element\n");
                     break;
                 }
@@ -202,13 +212,11 @@ public class SmsHeader
      * See TS 23.040 9.2.3.24.
      *
      */
-    public static class Element
-    {
+    public static class Element {
         private byte[] m_data;
         private int m_id;
 
-        public Element(int id, byte[] data)
-        {
+        public Element(int id, byte[] data) {
             m_id = id;
             m_data = data;
         }
@@ -218,8 +226,7 @@ public class SmsHeader
          *
          * @return the IE identifier.
          */
-        public int getID()
-        {
+        public int getID() {
             return m_id;
         }
 
@@ -228,8 +235,7 @@ public class SmsHeader
          *
          * @return element data.
          */
-        public byte[] getData()
-        {
+        public byte[] getData() {
             return m_data;
         }
     }

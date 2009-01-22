@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO T: remove if AdnRecord is moved to telephony package
-//import com.android.internal.telephony.gsm.*;
 
 /**
  * SimPhoneBookInterfaceManager to provide an inter-process communication to
@@ -38,14 +36,20 @@ import java.util.List;
 public class IccPhoneBookInterfaceManagerProxy extends IIccPhoneBook.Stub {
     private IccPhoneBookInterfaceManager mIccPhoneBookInterfaceManager;
 
-    public IccPhoneBookInterfaceManagerProxy(IccPhoneBookInterfaceManager 
+    public IccPhoneBookInterfaceManagerProxy(IccPhoneBookInterfaceManager
             iccPhoneBookInterfaceManager) {
         mIccPhoneBookInterfaceManager = iccPhoneBookInterfaceManager;
-        ServiceManager.addService("simphonebook", this);;
+        if(ServiceManager.getService("simphonebook") == null) {
+            ServiceManager.addService("simphonebook", this);
+        }
+    }
+
+    public void setmIccPhoneBookInterfaceManager(
+            IccPhoneBookInterfaceManager iccPhoneBookInterfaceManager) {
+        this.mIccPhoneBookInterfaceManager = iccPhoneBookInterfaceManager;
     }
 
     public boolean
-     //TODO Investigate
     updateAdnRecordsInEfBySearch (int efid,
             String oldTag, String oldPhoneNumber,
             String newTag, String newPhoneNumber,
@@ -55,19 +59,16 @@ public class IccPhoneBookInterfaceManagerProxy extends IIccPhoneBook.Stub {
     }
 
     public boolean
-     //TODO Investigate
     updateAdnRecordsInEfByIndex(int efid, String newTag,
             String newPhoneNumber, int index, String pin2) throws android.os.RemoteException {
-        return mIccPhoneBookInterfaceManager.updateAdnRecordsInEfByIndex(efid, 
+        return mIccPhoneBookInterfaceManager.updateAdnRecordsInEfByIndex(efid,
                 newTag, newPhoneNumber, index, pin2);
     }
 
-     //TODO Investigate
     public int[] getAdnRecordsSize(int efid) throws android.os.RemoteException {
         return mIccPhoneBookInterfaceManager.getAdnRecordsSize(efid);
     }
 
-    //TODO Investigate
     public List<AdnRecord> getAdnRecordsInEf(int efid) throws android.os.RemoteException {
         return mIccPhoneBookInterfaceManager.getAdnRecordsInEf(efid);
     }

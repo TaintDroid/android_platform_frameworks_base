@@ -16,21 +16,16 @@
 
 package com.android.internal.telephony;
 
-import com.android.internal.telephony.*;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.Message;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.AsyncResult;
-import android.util.Log;
 import android.telephony.PhoneNumberUtils;
-import java.util.ArrayList;
-import com.android.internal.telephony.gsm.GsmAlphabet;
+import android.util.Log;
+
+import com.android.internal.telephony.GsmAlphabet;
 
 
 /**
- * 
+ *
  * Used to load or store ADNs (Abbreviated Dialing Numbers).
  *
  * {@hide}
@@ -38,7 +33,7 @@ import com.android.internal.telephony.gsm.GsmAlphabet;
  */
 public class AdnRecord implements Parcelable {
     static final String LOG_TAG = "GSM";
-    
+
     //***** Instance Variables
 
     String alphaTag = "";
@@ -111,7 +106,7 @@ public class AdnRecord implements Parcelable {
     AdnRecord (String alphaTag, String number) {
         this(0, 0, alphaTag, number);
     }
-    
+
     public
     AdnRecord (int efid, int recordNumber, String alphaTag, String number) {
         this.efid = efid;
@@ -119,7 +114,7 @@ public class AdnRecord implements Parcelable {
         this.alphaTag = alphaTag;
         this.number = number;
     }
-    
+
     //***** Instance Methods
 
     public String getAlphaTag() {
@@ -219,7 +214,7 @@ public class AdnRecord implements Parcelable {
      * See TS 51.011 10.5.10
      */
     public void
-    appendExtRecord (byte[] extRecord) {        
+    appendExtRecord (byte[] extRecord) {
         try {
             if (extRecord.length != EXT_RECORD_LENGTH_BYTES) {
                 return;
@@ -268,9 +263,9 @@ public class AdnRecord implements Parcelable {
 
             // Please note 51.011 10.5.1:
             //
-            // "If the Dialling Number/SSC String does not contain 
-            // a dialling number, e.g. a control string deactivating 
-            // a service, the TON/NPI byte shall be set to 'FF' by 
+            // "If the Dialling Number/SSC String does not contain
+            // a dialling number, e.g. a control string deactivating
+            // a service, the TON/NPI byte shall be set to 'FF' by
             // the ME (see note 2)."
 
             number = PhoneNumberUtils.calledPartyBCDToString(
@@ -283,6 +278,6 @@ public class AdnRecord implements Parcelable {
             Log.w(LOG_TAG, "Error parsing AdnRecord", ex);
             number = "";
             alphaTag = "";
-        }        
+        }
     }
 }

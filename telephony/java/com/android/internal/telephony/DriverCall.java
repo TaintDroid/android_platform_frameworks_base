@@ -25,7 +25,7 @@ import android.telephony.PhoneNumberUtils;
  */
 public class DriverCall implements Comparable {
     static final String LOG_TAG = "RILB";
-    
+
     public enum State {
         ACTIVE,
         HOLDING,
@@ -45,7 +45,7 @@ public class DriverCall implements Comparable {
     public int TOA;
     public boolean isVoice;
     public int als;
-  
+
     /** returns null on error */
     static DriverCall
     fromCLCCLine(String line) {
@@ -118,7 +118,7 @@ public class DriverCall implements Comparable {
         }
     }
 
-    //***** Comparable Implementation 
+    //***** Comparable Implementation
 
     /** For sorting by index */
     public int

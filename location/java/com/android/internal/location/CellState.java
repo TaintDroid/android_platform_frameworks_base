@@ -81,7 +81,7 @@ public class CellState {
 
         // Get Home MCC/MNC
         String homeOperator = SystemProperties.get(
-                TelephonyProperties.PROPERTY_SIM_OPERATOR_NUMERIC);
+                TelephonyProperties.PROPERTY_ICC_OPERATOR_NUMERIC);
         if (homeOperator != null && !homeOperator.equals("")) {
             String mcc = homeOperator.substring(0, 3);
             String mnc = homeOperator.substring(3);

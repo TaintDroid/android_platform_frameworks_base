@@ -16,27 +16,14 @@
 
 package com.android.internal.telephony;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
-import java.util.Collections;
-
-import android.util.Log;
-import com.android.internal.telephony.gsm.GSMPhone;
-import com.android.internal.telephony.cdma.CDMAPhone;
-import com.android.internal.telephony.RILConstants;
-import com.android.internal.telephony.test.SimulatedCommands;
-
-import android.os.Looper;
-import android.os.SystemProperties;
 import android.content.Context;
-import android.content.Intent;
 import android.net.LocalServerSocket;
-import android.app.ActivityManagerNative;
+import android.os.Looper;
 import android.provider.Settings;
-import android.telephony.cdma.TtyIntent;
+import android.util.Log;
+
+import com.android.internal.telephony.cdma.CDMAPhone;
+import com.android.internal.telephony.gsm.GSMPhone;
 
 /**
  * {@hide}
@@ -45,35 +32,19 @@ public class PhoneFactory {
     static final String LOG_TAG = "PhoneFactory";
     static final int SOCKET_OPEN_RETRY_MILLIS = 2 * 1000;
     static final int SOCKET_OPEN_MAX_RETRY = 3;
-    //***** Class Variables 
+    //***** Class Variables
 
-    static private Phone sPhone = null;
+    static private Phone sProxyPhone = null;
     static private CommandsInterface sCommandsInterface = null;
 
     static private boolean sMadeDefaults = false;
     static private PhoneNotifier sPhoneNotifier;
     static private Looper sLooper;
+    static private Context sContext;
 
-/*    public static final int NETWORK_MODE_GLOBAL = 0;
-    public static final int NETWORK_MODE_CDMA = 1;
-    public static final int NETWORK_MODE_GSM_UMTS = 2;
+    static final int preferredNetworkMode = RILConstants.PREFERRED_NETWORK_MODE;
 
-    public static final int SUBSCRIPTION_FROM_RUIM = 0;
-    public static final int SUBSCRIPTION_FROM_NV = 1;*/ //TODO Remove, moved to RILConstants
-
-    //preferredNetworkMode  7 - Global, CDMA Preferred
-    //                      4 - CDMA only
-    //                      3 - GSM/UMTS only
-    static final int preferredNetworkMode = RILConstants.NETWORK_MODE_GLOBAL;
-
-    //cdmaSubscription  0 - Subscription from RUIM, when available
-    //                  1 - Subscription from NV
-    static final int preferredCdmaSubscription = RILConstants.SUBSCRIPTION_FROM_RUIM;
-            
-    // preferred TTY mode
-    // 0 = disabled
-    // 1 = enabled
-    static final int preferredTTYMode = RILConstants.CDM_TTY_MODE_DISABLED;
+    static final int preferredCdmaSubscription = RILConstants.PREFERRED_CDMA_SUBSCRIPTION;
 
     //***** Class Methods
 
@@ -86,9 +57,10 @@ public class PhoneFactory {
      * instances
      */
     public static void makeDefaultPhone(Context context) {
-        synchronized(Phone.class) {        
-            if (!sMadeDefaults) {  
+        synchronized(Phone.class) {
+            if (!sMadeDefaults) {
                 sLooper = Looper.myLooper();
+                sContext = context;
 
                 if (sLooper == null) {
                     throw new RuntimeException(
@@ -112,7 +84,7 @@ public class PhoneFactory {
                         break;
                     } else if (retryCount > SOCKET_OPEN_MAX_RETRY) {
                         throw new RuntimeException("PhoneFactory probably already running");
-                    }else {
+                    } else {
                         try {
                             Thread.sleep(SOCKET_OPEN_RETRY_MILLIS);
                         } catch (InterruptedException er) {
@@ -129,28 +101,32 @@ public class PhoneFactory {
 
                 //Get preferredNetworkMode from Settings.System
                 int cdmaSubscription = Settings.System.getInt(context.getContentResolver(),
-                    Settings.System.PREFERRED_CDMA_SUBSCRIPTION, preferredCdmaSubscription); 
+                        Settings.System.PREFERRED_CDMA_SUBSCRIPTION, preferredCdmaSubscription);
                 Log.i(LOG_TAG, "Cdma Subscription set to " + Integer.toString(cdmaSubscription));
 
-                //reads the system proprieties and makes commandsinterface
-                sCommandsInterface = new RIL(context, networkMode, cdmaSubscription); 
+                //reads the system properties and makes commandsinterface
+                sCommandsInterface = new RIL(context, networkMode, cdmaSubscription);
 
                 switch(networkMode) {
+                    case RILConstants.NETWORK_MODE_WCDMA_PREF:
+                    case RILConstants.NETWORK_MODE_GSM_ONLY:
+                    case RILConstants.NETWORK_MODE_WCDMA_ONLY:
                     case RILConstants.NETWORK_MODE_GSM_UMTS:
-                        sPhone = new PhoneProxy(new GSMPhone(context, 
+                        sProxyPhone = new PhoneProxy(new GSMPhone(context,
                                 sCommandsInterface, sPhoneNotifier));
                         Log.i(LOG_TAG, "Creating GSMPhone");
                         break;
-                    case RILConstants.NETWORK_MODE_GLOBAL:
                     case RILConstants.NETWORK_MODE_CDMA:
-                    default:
-                        sPhone = new PhoneProxy(new CDMAPhone(context, 
+                    case RILConstants.NETWORK_MODE_CDMA_NO_EVDO:
+                    case RILConstants.NETWORK_MODE_EVDO_NO_CDMA:
+                        sProxyPhone = new PhoneProxy(new CDMAPhone(context,
                                 sCommandsInterface, sPhoneNotifier));
-                        // Check if the TTY mode is enabled, and enable/disable the icon
-                        int enabled = 
-                            android.provider.Settings.System.getInt(context.getContentResolver(),
-                            android.provider.Settings.System.TTY_MODE_ENABLED, preferredTTYMode);
-                        setTTYStatusBarIcon(context, ((enabled != 0) ? true : false));
+                        Log.i(LOG_TAG, "Creating CDMAPhone");
+                        break;
+                    case RILConstants.NETWORK_MODE_GLOBAL:
+                    default:
+                        sProxyPhone = new PhoneProxy(new CDMAPhone(context,
+                                sCommandsInterface, sPhoneNotifier));
                         Log.i(LOG_TAG, "Creating CDMAPhone");
                 }
                 sMadeDefaults = true;
@@ -163,22 +139,26 @@ public class PhoneFactory {
             throw new RuntimeException(
                 "PhoneFactory.getDefaultPhone must be called from Looper thread");
         }
-        
+
         if (!sMadeDefaults) {
             throw new IllegalStateException("Default phones haven't been made yet!");
         }
-       return sPhone;
+       return sProxyPhone;
     }
 
-    /**
-     * Tells the StatusBar whether the TTY mode is enabled or disabled
-     */
-    private static void setTTYStatusBarIcon(Context context, boolean enabled) {
-        Intent ttyModeChanged = new Intent(TtyIntent.TTY_ENABLED_CHANGE_ACTION);
-        ttyModeChanged.putExtra("ttyEnabled", enabled);
-        context.sendBroadcast(ttyModeChanged);
+    public static Phone getCdmaPhone() {
+        synchronized(PhoneProxy.lockForRadioTechnologyChange) {
+            Phone phone = new CDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
+            return phone;
+        }
     }
-    
+
+    public static Phone getGsmPhone() {
+        synchronized(PhoneProxy.lockForRadioTechnologyChange) {
+            Phone phone = new GSMPhone(sContext, sCommandsInterface, sPhoneNotifier);
+            return phone;
+        }
+    }
 }
 
 

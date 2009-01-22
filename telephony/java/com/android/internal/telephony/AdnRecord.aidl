@@ -18,4 +18,3 @@ package com.android.internal.telephony;
 
 parcelable AdnRecord;
 
-// TODO T: move to telephony and implement proxy-service as for all AIDL

@@ -568,11 +568,15 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
         // Set the preferred network mode to 0 = Global, CDMA default
         loadSetting(stmt, Settings.System.PREFERRED_NETWORK_MODE, 
-                RILConstants.NETWORK_MODE_GLOBAL);        
+                RILConstants.PREFERRED_NETWORK_MODE);
+
+        // Enable or disable Cell Broadcast SMS
+        loadSetting(stmt, Settings.System.CDMA_CELL_BROADCAST_SMS,
+                RILConstants.CDMA_CELL_BROADCAST_SMS_DISABLED);
 
         // Set the preferred cdma subscription to 0 = Subscription from RUIM, when available
         loadSetting(stmt, Settings.System.PREFERRED_CDMA_SUBSCRIPTION, 
-                RILConstants.SUBSCRIPTION_FROM_RUIM);        
+                RILConstants.PREFERRED_CDMA_SUBSCRIPTION);
 
         // Don't do this.  The SystemServer will initialize ADB_ENABLED from a
         // persistent system property instead.

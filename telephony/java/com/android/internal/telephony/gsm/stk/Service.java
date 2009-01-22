@@ -30,8 +30,8 @@ import android.graphics.drawable.Drawable;
 
 import com.android.internal.telephony.IccUtils;
 import com.android.internal.telephony.CommandsInterface;
-import com.android.internal.telephony.gsm.EncodeException;
-import com.android.internal.telephony.gsm.GsmAlphabet;
+import com.android.internal.telephony.EncodeException;
+import com.android.internal.telephony.GsmAlphabet;
 import com.android.internal.telephony.gsm.SimCard;
 import com.android.internal.telephony.gsm.SIMFileHandler;
 import com.android.internal.telephony.gsm.SIMRecords;
@@ -55,31 +55,31 @@ import java.util.List;
 /**
  * Enumeration for representing the tag value of COMPREHENSION-TLV objects. If
  * you want to get the actual value, call {@link #value() value} method.
- * 
+ *
  * {@hide}
  */
 enum ComprehensionTlvTag {
-    COMMAND_DETAILS(0x01), 
-    DEVICE_IDENTITIES(0x02), 
-    RESULT(0x03), 
-    DURATION(0x04), 
-    ALPHA_ID(0x05), 
-    USSD_STRING(0x0a), 
-    TEXT_STRING(0x0d), 
-    TONE(0x0e), 
-    ITEM(0x0f), 
-    ITEM_ID(0x10), 
-    RESPONSE_LENGTH(0x11), 
-    FILE_LIST(0x12), 
-    HELP_REQUEST(0x15), 
-    DEFAULT_TEXT(0x17), 
-    EVENT_LIST(0x19), 
+    COMMAND_DETAILS(0x01),
+    DEVICE_IDENTITIES(0x02),
+    RESULT(0x03),
+    DURATION(0x04),
+    ALPHA_ID(0x05),
+    USSD_STRING(0x0a),
+    TEXT_STRING(0x0d),
+    TONE(0x0e),
+    ITEM(0x0f),
+    ITEM_ID(0x10),
+    RESPONSE_LENGTH(0x11),
+    FILE_LIST(0x12),
+    HELP_REQUEST(0x15),
+    DEFAULT_TEXT(0x17),
+    EVENT_LIST(0x19),
     ICON_ID(0x1e),
     ITEM_ICON_ID_LIST(0x1f),
-    IMMEDIATE_RESPONSE(0x2b), 
-    LANGUAGE(0x2d), 
+    IMMEDIATE_RESPONSE(0x2b),
+    LANGUAGE(0x2d),
     URL(0x31),
-    BROWSER_TERMINATION_CAUSE(0x34), 
+    BROWSER_TERMINATION_CAUSE(0x34),
     TEXT_ATTRIBUTE(0x50);
 
     private int mValue;
@@ -90,7 +90,7 @@ enum ComprehensionTlvTag {
 
     /**
      * Returns the actual value of this COMPREHENSION-TLV object.
-     * 
+     *
      * @return Actual tag value of this object
      */
     public int value() {
@@ -102,24 +102,24 @@ enum ComprehensionTlvTag {
  * Enumeration for representing "Type of Command" of proactive commands. If you
  * want to create a CommandType object, call the static method {@link
  * #fromInt(int) fromInt}.
- * 
+ *
  * {@hide}
  */
 enum CommandType {
-    DISPLAY_TEXT(0x21), 
-    GET_INKEY(0x22), 
-    GET_INPUT(0x23), 
-    LAUNCH_BROWSER(0x15), 
-    PLAY_TONE(0x20), 
-    REFRESH(0x01), 
-    SELECT_ITEM(0x24), 
-    SEND_SS(0x11), 
-    SEND_USSD(0x12), 
-    SEND_SMS(0x13), 
-    SEND_DTMF(0x14), 
-    SET_UP_EVENT_LIST(0x05), 
-    SET_UP_IDLE_MODE_TEXT(0x28), 
-    SET_UP_MENU(0x25), 
+    DISPLAY_TEXT(0x21),
+    GET_INKEY(0x22),
+    GET_INPUT(0x23),
+    LAUNCH_BROWSER(0x15),
+    PLAY_TONE(0x20),
+    REFRESH(0x01),
+    SELECT_ITEM(0x24),
+    SEND_SS(0x11),
+    SEND_USSD(0x12),
+    SEND_SMS(0x13),
+    SEND_DTMF(0x14),
+    SET_UP_EVENT_LIST(0x05),
+    SET_UP_IDLE_MODE_TEXT(0x28),
+    SET_UP_MENU(0x25),
     SET_UP_CALL(0x10);
 
     private int mValue;
@@ -130,7 +130,7 @@ enum CommandType {
 
     /**
      * Create a CommandType object.
-     * 
+     *
      * @param value Integer value to be converted to a CommandType object.
      * @return CommandType object whose "Type of Command" value is {@code
      *         value}. If no CommandType object has that value, null is
@@ -148,7 +148,7 @@ enum CommandType {
 
 /**
  * Main class that implements SIM Toolkit Service.
- * 
+ *
  * {@hide}
  */
 public class Service extends Handler implements AppInterface {
@@ -156,9 +156,9 @@ public class Service extends Handler implements AppInterface {
     // Service members.
     private static Service sInstance;
     private CommandsInterface mCmdIf;
-    private SIMRecords mSimRecords;
+    private static SIMRecords mSimRecords;
     private Context mContext;
-    private SimCard mSimCard;
+    private static SimCard mSimCard;
     private CommandListener mCmdListener;
     private Object mCmdListenerLock = new Object();
     private CommandParams mCmdParams = null;
@@ -209,7 +209,7 @@ public class Service extends Handler implements AppInterface {
     public static final int UICC_EVENT_BROWSING_STATUS              = 0x0f;
     public static final int UICC_EVENT_FRAMES_INFO_CHANGE           = 0x10;
     public static final int UICC_EVENT_I_WLAN_ACESS_STATUS          = 0x11;
-    
+
     // Command Qualifier values
     static final int REFRESH_NAA_INIT_AND_FULL_FILE_CHANGE  = 0x00;
     static final int REFRESH_NAA_INIT_AND_FILE_CHANGE       = 0x02;
@@ -232,17 +232,17 @@ public class Service extends Handler implements AppInterface {
     static final int APP_INDICATOR_INSTALLED_NORMAL     = 2;
     static final int APP_INDICATOR_INSTALLED_SPECIAL    = 3;
     private static final int APP_INDICATOR_LAUNCHED     = 4;
-    // Use setAppIndication(APP_INSTALL_INDICATOR) to go back for the original 
+    // Use setAppIndication(APP_INSTALL_INDICATOR) to go back for the original
     // install indication.
     private static final int APP_INSTALL_INDICATOR      = 5;
 
-    // Container class to hold temporary icon identifier TLV object info. 
+    // Container class to hold temporary icon identifier TLV object info.
     class IconId {
         int recordNumber;
         boolean selfExplanatory;
     }
 
-    // Container class to hold temporary item icon identifier list TLV object info. 
+    // Container class to hold temporary item icon identifier list TLV object info.
     class ItemsIconId {
         int [] recordNumbers;
         boolean selfExplanatory;
@@ -282,10 +282,26 @@ public class Service extends Handler implements AppInterface {
         mSimCard.registerForAbsent(this, EVENT_SIM_ABSENT, null);
     }
 
+    public void dispose() {
+        mSimRecords.unregisterForRecordsLoaded(this);
+        mSimCard.unregisterForAbsent(this);
+        mCmdIf.unSetOnStkSessionEnd(this);
+        mCmdIf.unSetOnStkProactiveCmd(this);
+        mCmdIf.unSetOnStkEvent(this);
+        mCmdIf.unSetOnStkCallSetUp(this);
+
+        //removing instance
+        sInstance = null;
+    }
+
+    protected void finalize() {
+        Log.d(TAG, "Service finalized");
+    }
+
     /**
      * Used for retrieving the only Service object in the system. There is only
      * one Service object.
-     * 
+     *
      * @param ci CommandsInterface object
      * @param sr SIMRecords object
      * @return The only Service object in the system
@@ -298,6 +314,14 @@ public class Service extends Handler implements AppInterface {
                 return null;
             }
             sInstance = new Service(ci, sr, context, fh, sc);
+        } else if(mSimCard != sc && mSimRecords != sr) {
+            Log.d(TAG, "Reinitialize the Service with SimCard and SIMRecords.");
+            mSimCard = sc;
+            mSimRecords = sr;
+
+            // re-Register for SIM ready event.
+            mSimRecords.registerForRecordsLoaded(sInstance, EVENT_SIM_LOADED, null);
+            mSimCard.registerForAbsent(sInstance, EVENT_SIM_ABSENT, null);
         }
         return sInstance;
     }
@@ -305,7 +329,7 @@ public class Service extends Handler implements AppInterface {
     /**
      * Used for retrieving the only Service object in the system. There is only
      * one Service object.
-     * 
+     *
      * @return The only Service object in the system
      */
     public static Service getInstance() {
@@ -566,7 +590,7 @@ public class Service extends Handler implements AppInterface {
             result = ResultCode.HELP_INFO_REQUIRED;
         } else {
             resp = new GetInkeyInputResponseData(Character.toString(key),
-                    request.isUcs2, false);           
+                    request.isUcs2, false);
         }
 
         sendTerminalResponse(request.cmdDet, result, false, 0, resp);
@@ -590,7 +614,7 @@ public class Service extends Handler implements AppInterface {
         if (helpRequired) {
             result = ResultCode.HELP_INFO_REQUIRED;
         } else {
-            resp = new GetInkeyInputResponseData(yesNoResponse);            
+            resp = new GetInkeyInputResponseData(yesNoResponse);
         }
 
         sendTerminalResponse(cmdParams.cmdDet, result, false, 0, resp);
@@ -710,19 +734,19 @@ public class Service extends Handler implements AppInterface {
             throw new AssertionError("Unrecognized STK command: " + msg.what);
         }
     }
-    
+
     /**
      * Send terminal response for backward move in the proactive SIM session
      * requested by the user
-     * 
+     *
      * Only available when responding following proactive commands
-     *      DISPLAY_TEXT(0x21), 
-     *      GET_INKEY(0x22), 
-     *      GET_INPUT(0x23), 
+     *      DISPLAY_TEXT(0x21),
+     *      GET_INKEY(0x22),
+     *      GET_INPUT(0x23),
      *      SET_UP_MENU(0x25);
-     * 
+     *
      * @return true if stk can send backward move response
-     * 
+     *
      */
     public boolean backwardMove() {
         CtlvCommandDetails cmdDet = null;
@@ -740,14 +764,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Send terminal response for proactive SIM session terminated by the user
-     * 
+     *
      * Only available when responding following proactive commands
-     *      DISPLAY_TEXT(0x21), 
-     *      GET_INKEY(0x22), 
-     *      GET_INPUT(0x23), 
+     *      DISPLAY_TEXT(0x21),
+     *      GET_INKEY(0x22),
+     *      GET_INPUT(0x23),
      *      PLAY_TONE(0x20),
      *      SET_UP_MENU(0x25);
-     * 
+     *
      * @return true if stk can send terminate session response
      */
     public boolean terminateSession() {
@@ -777,7 +801,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Handles RIL_UNSOL_STK_SESSION_END unsolicited command from RIL.
-     * 
+     *
      * @param data Null object. Do not use this.
      */
     private void handleSessionEnd(Object data) {
@@ -922,7 +946,7 @@ public class Service extends Handler implements AppInterface {
      * This method parses the data transmitted from the SIM card, and handles
      * the command according to the "Type of Command". Each proactive command is
      * handled by a corresponding handleXXX() method.
-     * 
+     *
      * @param data String containing SAT/USAT proactive command in hexadecimal
      *        format starting with command tag
      */
@@ -1052,7 +1076,7 @@ public class Service extends Handler implements AppInterface {
             callStkApp(CommandType.DISPLAY_TEXT);
             break;
         case SELECT_ITEM:
-            
+
             SelectItemParams params = ((SelectItemParams) mNextCmdParams);
             Menu menu = params.mMenu;
             switch(params.mIconLoadState) {
@@ -1083,7 +1107,7 @@ public class Service extends Handler implements AppInterface {
                     + "command types!");
         }
     }
-    
+
     private void callStkApp(CommandType cmdType) {
         boolean needsResponse = false;
         mCmdParams = mNextCmdParams;
@@ -1211,10 +1235,10 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Search for a COMPREHENSION-TLV object with the given tag from a list
-     * 
+     *
      * @param tag A tag to search for
      * @param ctlvs List of ComprehensionTlv objects used to search in
-     * 
+     *
      * @return A ComprehensionTlv object that has the tag value of {@code tag}.
      *         If no object is found with the tag, null is returned.
      */
@@ -1229,10 +1253,10 @@ public class Service extends Handler implements AppInterface {
      * list iterated by {@code iter}. {@code iter} points to the object next to
      * the found object when this method returns. Used for searching the same
      * list for similar tags, usually item id.
-     * 
+     *
      * @param tag A tag to search for
      * @param iter Iterator for ComprehensionTlv objects used for search
-     * 
+     *
      * @return A ComprehensionTlv object that has the tag value of {@code tag}.
      *         If no object is found with the tag, null is returned.
      */
@@ -1250,7 +1274,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Search for a Command Details object from a list.
-     * 
+     *
      * @param ctlvs List of ComprehensionTlv objects used for search
      * @return An CtlvCommandDetails object found from the objects. If no
      *         Command Details object is found, ResultException is thrown.
@@ -1281,7 +1305,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Search for a Device Identities object from a list.
-     * 
+     *
      * @param ctlvs List of ComprehensionTlv objects used for search
      * @return An CtlvDeviceIdentities object found from the objects. If no
      *         Command Details object is found, ResultException is thrown.
@@ -1310,14 +1334,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes SETUP_CALL proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      */
     private void processSetupCall(CtlvCommandDetails cmdDet,
@@ -1373,14 +1397,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes DISPLAY_TEXT proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1399,8 +1423,8 @@ public class Service extends Handler implements AppInterface {
                 ctlvs);
         if (ctlv != null) {
             params.text = retrieveTextString(ctlv);
-        } 
-        // If the tlv object doesn't exist or the it is a null object reply 
+        }
+        // If the tlv object doesn't exist or the it is a null object reply
         // with command not understood.
         if (params.text == null) {
             throw new ResultException(ResultCode.CMD_DATA_NOT_UNDERSTOOD);
@@ -1432,13 +1456,13 @@ public class Service extends Handler implements AppInterface {
             mIconLoader.loadIcon(iconId.recordNumber, this
                     .obtainMessage(EVENT_LOAD_ICON_DONE));
             return true;
-        } 
+        }
         return false;
     }
 
     /**
      * Processes SET_UP_MENU proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
@@ -1446,7 +1470,7 @@ public class Service extends Handler implements AppInterface {
      * @param ctlvs Iterator for ComprehensionTlv objects following Command
      *        Details object and Device Identities object within the proactive
      *        command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1483,7 +1507,7 @@ public class Service extends Handler implements AppInterface {
                 if (first && item == null) {
                     removeExistingMenu = true;
                     break;
-                } 
+                }
                 menu.items.add(retrieveItem(ctlv));
                 first = false;
             } else {
@@ -1545,14 +1569,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes SET_UP_IDLE_MODE_TEXT proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1597,20 +1621,20 @@ public class Service extends Handler implements AppInterface {
             mIconLoader.loadIcon(iconId.recordNumber, this
                     .obtainMessage(EVENT_LOAD_ICON_DONE));
             return true;
-        } 
+        }
         return false;
     }
 
     /**
      * Processes GET_INKEY proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1662,14 +1686,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes GET_INPUT proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1744,7 +1768,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes REFRESH proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
@@ -1762,8 +1786,8 @@ public class Service extends Handler implements AppInterface {
         }
 
         // REFRESH proactive command is rerouted by the baseband and handled by
-        // the telephony layer. IDLE TEXT should be removed for a REFRESH command 
-        // with "initialization" or "reset" 
+        // the telephony layer. IDLE TEXT should be removed for a REFRESH command
+        // with "initialization" or "reset"
 
         if (mNm == null) {
             throw new ResultException(ResultCode.TERMINAL_CRNTLY_UNABLE_TO_PROCESS);
@@ -1785,14 +1809,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes SELECT_ITEM proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -1842,7 +1866,7 @@ public class Service extends Handler implements AppInterface {
             // subtract one.
             menu.defaultItem = retrieveItemId(ctlv) - 1;
         }
-        
+
         ctlv = searchForTag(ComprehensionTlvTag.ICON_ID, ctlvs);
         if (ctlv != null) {
             iconLoadState = SelectItemParams.LOAD_TITLE_ICON;
@@ -1902,7 +1926,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes EVENT_NOTIFY message from baseband.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
@@ -1947,14 +1971,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes SET_UP_EVENT_LIST proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      */
     private boolean processSetUpEventList(CtlvCommandDetails cmdDet,
@@ -1979,14 +2003,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes LAUNCH_BROWSER proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.
      * @throws ResultException
      */
@@ -2061,14 +2085,14 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Processes PLAY_TONE proactive command from the SIM card.
-     * 
+     *
      * @param cmdDet Command Details object retrieved from the proactive command
      *        object
      * @param devIds Device Identities object retrieved from the proactive
      *        command object
      * @param ctlvs List of ComprehensionTlv objects following Command Details
      *        object and Device Identities object within the proactive command
-     * @return true if the command is processing is pending and additional 
+     * @return true if the command is processing is pending and additional
      *         asynchronous processing is required.t
      * @throws ResultException
      */
@@ -2132,7 +2156,7 @@ public class Service extends Handler implements AppInterface {
     /**
      * Retrieves text from the Text COMPREHENSION-TLV object, and decodes it
      * into a {@link java.lang.String}.
-     * 
+     *
      * @param ctlv A Text COMPREHENSION-TLV object
      * @return A {@link java.lang.String} object decoded from the Text object
      * @throws ResultException
@@ -2180,7 +2204,7 @@ public class Service extends Handler implements AppInterface {
     /**
      * Retrieves Duration information from the Duration COMPREHENSION-TLV
      * object.
-     * 
+     *
      * @param ctlv A Text Attribute COMPREHENSION-TLV object
      * @return A Duration object
      * @throws ResultException
@@ -2204,7 +2228,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Retrieves Item information from the COMPREHENSION-TLV object.
-     * 
+     *
      * @param ctlv A Text Attribute COMPREHENSION-TLV object
      * @return An Item
      * @throws ResultException
@@ -2234,7 +2258,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Retrieves Item id information from the COMPREHENSION-TLV object.
-     * 
+     *
      * @param ctlv A Text Attribute COMPREHENSION-TLV object
      * @return An Item id
      * @throws ResultException
@@ -2309,7 +2333,7 @@ public class Service extends Handler implements AppInterface {
     /**
      * Retrieves text attribute information from the Text Attribute
      * COMPREHENSION-TLV object.
-     * 
+     *
      * @param ctlv A Text Attribute COMPREHENSION-TLV object
      * @return A list of TextAttribute objects
      * @throws ResultException
@@ -2368,7 +2392,7 @@ public class Service extends Handler implements AppInterface {
     /**
      * Retrieves alpha identifier from an Alpha Identifier COMPREHENSION-TLV
      * object.
-     * 
+     *
      * @param ctlv An Alpha Identifier COMPREHENSION-TLV object
      * @return String corresponding to the alpha identifier
      * @throws ResultException
@@ -2392,7 +2416,7 @@ public class Service extends Handler implements AppInterface {
 
     /**
      * Handles RIL_UNSOL_STK_EVENT_NOTIFY unsolicited command from RIL.
-     * 
+     *
      * @param data String containing SAT/USAT commands or responses sent by ME
      *        to SIM or commands handled by ME, in hexadecimal format starting
      *        with first byte of response data or command tag
@@ -2438,11 +2462,11 @@ public class Service extends Handler implements AppInterface {
         }
 
         // There are two scenarios for EVENT_NOTIFY messages:
-        // 1. A proactive command which is partially handled by the baseband and 
+        // 1. A proactive command which is partially handled by the baseband and
         //    requires UI processing from the application. This messages will be
         //    tagged with PROACTIVE COMMAND tag.
-        // 2. A notification for an action completed by the baseband. This 
-        //    messages will be tagged with UNKNOWN tag and the command type inside 
+        // 2. A notification for an action completed by the baseband. This
+        //    messages will be tagged with UNKNOWN tag and the command type inside
         //    the Command details object should indicate which action was completed.
         if (berTlv.getTag() == BerTlv.BER_PROACTIVE_COMMAND_TAG) {
             switch (cmdType) {

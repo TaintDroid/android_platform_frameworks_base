@@ -78,7 +78,7 @@ public class CdmaCellLocation extends CellLocation {
     /**
      * Set the cell location data.
      */
-     public void setCellLocationData(int baseStationId, int baseStationLatitude, 
+     public void setCellLocationData(int baseStationId, int baseStationLatitude,
          int baseStationLongitude) {
          // The following values have to be written in the correct sequence
          this.mBaseStationId = baseStationId;
@@ -114,7 +114,7 @@ public class CdmaCellLocation extends CellLocation {
     @Override
     public String toString() {
         return "[" + this.mBaseStationId + ","
-                   + this.mBaseStationLatitude + "," 
+                   + this.mBaseStationLatitude + ","
                    + this.mBaseStationLongitude + "]";
     }
 

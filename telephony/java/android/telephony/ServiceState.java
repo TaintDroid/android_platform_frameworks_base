@@ -35,7 +35,7 @@ import android.util.Log;
  */
 public class ServiceState implements Parcelable {
 
-    static final String LOG_TAG = "ServiceState";
+    static final String LOG_TAG = "PHONE";
 
     /**
      * Normal operation condition, the phone is registered
@@ -278,7 +278,7 @@ public class ServiceState implements Parcelable {
     @Override
     public boolean equals (Object o) {
         ServiceState s;
-        
+
         try {
             s = (ServiceState) o;
         } catch (ClassCastException ex) {
@@ -400,7 +400,7 @@ public class ServiceState implements Parcelable {
     public void setIsManualSelection(boolean isManual) {
         mIsManualNetworkSelection = isManual;
     }
-    
+
     /**
      * Test whether two objects hold the same data values or both are null
      *

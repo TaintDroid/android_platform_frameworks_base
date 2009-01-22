@@ -52,7 +52,7 @@ import com.android.internal.R;
 import com.android.internal.location.GpsLocationProvider;
 import com.android.internal.telephony.IccCard;
 import com.android.internal.telephony.TelephonyIntents;
-import android.telephony.cdma.TtyIntent;
+import com.android.internal.telephony.cdma.TtyIntent;
 
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -193,7 +193,7 @@ public class StatusBarPolicy {
     private IBinder mVolumeIcon;
     private IconData mVolumeData;
     private boolean mVolumeVisible;
-    
+
     // bluetooth device status
     private IBinder mBluetoothIcon;
     private IconData mBluetoothData;
@@ -325,13 +325,13 @@ public class StatusBarPolicy {
         mWifiIcon = service.addIcon(mWifiData, null);
         service.setIconVisibility(mWifiIcon, false);
         // wifi will get updated by the sticky intents
-        
+
         // TTY status
         mTTYModeEnableIconData = IconData.makeIcon("tty",
                 null, com.android.internal.R.drawable.stat_sys_tty_mode, 0, 0);
         mTTYModeIcon = service.addIcon(mTTYModeEnableIconData, null);
         service.setIconVisibility(mTTYModeIcon, false);
-        
+
         // bluetooth status
         mBluetoothData = IconData.makeIcon("bluetooth",
                 null, com.android.internal.R.drawable.stat_sys_data_bluetooth, 0, 0);
@@ -366,7 +366,7 @@ public class StatusBarPolicy {
                 null, com.android.internal.R.drawable.stat_sys_ringer_silent, 0, 0);
         mVolumeIcon = service.addIcon(mVolumeData, null);
         service.setIconVisibility(mVolumeIcon, false);
-        
+
         IntentFilter filter = new IntentFilter();
 
         // Register for Intent broadcasts for...
@@ -520,7 +520,7 @@ public class StatusBarPolicy {
                 com.android.internal.R.styleable.Theme);
         lp.dimAmount = a.getFloat(android.R.styleable.Theme_backgroundDimAmount, 0.5f);
         a.recycle();
-        
+
         lp.setTitle("Battery");
 
         TextView levelTextView = (TextView)v.findViewById(com.android.internal.R.id.level_percent);
@@ -729,15 +729,15 @@ public class StatusBarPolicy {
                 || ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95A
                 || ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95B) {
             switch(ss.getExtendedCdmaRoaming()) {
-                case ServiceState.REGISTRATION_STATE_ROAMING:
-                    iconList = this.sSignalImages_r_cdma;
-                    break;
-                case ServiceState.REGISTRATION_STATE_ROAMING_AFFILIATE:
-                    iconList = this.sSignalImages_ra_cdma;
-                    break;
-                default:
-                    iconList = this.sSignalImages_cdma;
-                break;   
+            case ServiceState.REGISTRATION_STATE_ROAMING:
+                iconList = this.sSignalImages_r_cdma;
+                break;
+            case ServiceState.REGISTRATION_STATE_ROAMING_AFFILIATE:
+                iconList = this.sSignalImages_ra_cdma;
+                break;
+            default:
+                iconList = this.sSignalImages_cdma;
+            break;
             }
         }
 
@@ -750,31 +750,31 @@ public class StatusBarPolicy {
         ServiceState ss = this.mServiceState;
 
         switch (net) {
-            case TelephonyManager.NETWORK_TYPE_EDGE:
-                mDataIconList = sDataNetType_e;
-                break;
-            case TelephonyManager.NETWORK_TYPE_UMTS:
-                mDataIconList = sDataNetType_3g;
-                break;
-            case TelephonyManager.NETWORK_TYPE_CDMA:
-            //TODO check if IS95 has to be displayed or if the warning can be removed!
-                if( (ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95A) ||
-                        ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95B) {
-                    Log.w(TAG, "Warning! CDMA radio technology is either IS95A or IS95B,"
-                         + " but you will see 1xRTT!");
-                }
-                mDataIconList = this.sDataNetType_1xrtt;
-                break;
+        case TelephonyManager.NETWORK_TYPE_EDGE:
+            mDataIconList = sDataNetType_e;
+            break;
+        case TelephonyManager.NETWORK_TYPE_UMTS:
+            mDataIconList = sDataNetType_3g;
+            break;
+        case TelephonyManager.NETWORK_TYPE_CDMA:
+            // display 1xRTT for IS95A/B
+            if( (ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95A) ||
+                    ss.getRadioTechnology() == ServiceState.RADIO_TECHNOLOGY_IS95B) {
+                Log.w(TAG, "Warning! CDMA radio technology is either IS95A or IS95B,"
+                     + " but you will see 1xRTT!");
+            }
+            mDataIconList = this.sDataNetType_1xrtt;
+            break;
         case TelephonyManager.NETWORK_TYPE_1xRTT:
             mDataIconList = this.sDataNetType_1xrtt;
             break;
-            case TelephonyManager.NETWORK_TYPE_EVDO_0: //fall through 
-            case TelephonyManager.NETWORK_TYPE_EVDO_A:
-                mDataIconList = sDataNetType_evdo;
+        case TelephonyManager.NETWORK_TYPE_EVDO_0: //fall through
+        case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            mDataIconList = sDataNetType_evdo;
             break;
-            default:
-                mDataIconList = sDataNetType_g;
-                break;
+        default:
+            mDataIconList = sDataNetType_g;
+        break;
         }
     }
 
@@ -784,7 +784,7 @@ public class StatusBarPolicy {
 
         if (mSimState == IccCard.State.READY || mSimState == IccCard.State.UNKNOWN) {
             int data = mDataState;
-            
+
             int[] list = mDataIconList;
 
             ServiceState ss = mServiceState;
@@ -827,7 +827,7 @@ public class StatusBarPolicy {
 
     private final void updateVolume(Intent intent) {
         // This can be called from two different received intents, so don't use extras.
-        
+
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         final int ringerMode = audioManager.getRingerMode();
         final boolean visible = ringerMode == AudioManager.RINGER_MODE_SILENT ||
@@ -881,17 +881,17 @@ public class StatusBarPolicy {
     private final void updateWifi(Intent intent) {
         final String action = intent.getAction();
         if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-            
+
             final boolean enabled = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
                     WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_ENABLED;
-            
+
             if (!enabled) {
                 // If disabled, hide the icon. (We show icon when connected.)
                 mService.setIconVisibility(mWifiIcon, false);
             }
-            
+
         } else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-            
+
             final NetworkInfo networkInfo = (NetworkInfo) 
                     intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
             
@@ -903,10 +903,10 @@ public class StatusBarPolicy {
                 } else {
                     iconId = sWifiSignalImages[mLastWifiSignalLevel];
                 }
-                
+
                 // Show the icon since wi-fi is connected
                 mService.setIconVisibility(mWifiIcon, true);
-                
+
             } else {
                 mLastWifiSignalLevel = -1;
                 mIsWifiConnected = false;
@@ -956,16 +956,16 @@ public class StatusBarPolicy {
         final String action = intent.getAction();
         final boolean enabled = intent.getBooleanExtra(TtyIntent.TTY_ENABLED, false);
 
-        Log.w(TAG, "updateTTY: enabled: " + enabled);
-        
+        Log.i(TAG, "updateTTY: enabled: " + enabled);
+
         if (enabled) {
             // TTY is on
-            Log.w(TAG, "updateTTY: set TTY on");
+            Log.i(TAG, "updateTTY: set TTY on");
             mService.updateIcon(mTTYModeIcon, mTTYModeEnableIconData, null);
             mService.setIconVisibility(mTTYModeIcon, true);          
         } else {
             // TTY is off
-            Log.w(TAG, "updateTTY: set TTY off");
+            Log.i(TAG, "updateTTY: set TTY off");
             mService.setIconVisibility(mTTYModeIcon, false);           
         }
     }

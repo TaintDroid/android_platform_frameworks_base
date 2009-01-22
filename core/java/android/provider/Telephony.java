@@ -28,16 +28,16 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.telephony.PhoneNumberUtils;
+import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
-import android.telephony.gsm.SmsMessage;
 import android.text.TextUtils;
 import android.text.util.Regex;
 import android.util.Config;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * The Telephony provider contains data related to phone operation.
@@ -48,6 +48,10 @@ public final class Telephony {
     private static final String TAG = "Telephony";
     private static final boolean DEBUG = false;
     private static final boolean LOCAL_LOGV = DEBUG ? Config.LOGD : Config.LOGV;
+
+    // Constructor
+    public Telephony() {
+    }
 
     /**
      * Base columns for tables that contain text based SMSs.

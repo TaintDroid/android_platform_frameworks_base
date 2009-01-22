@@ -51,9 +51,9 @@ public interface IccConstants {
     public static final int EF_INFO_CPHS = 0x6f16;
 
     // CDMA RUIM file ids from 3GPP2 C.S0023-0
-    // TODO: add necessary RUIM file ids here
-    public static final int EF_CST = 0x6f32;    
-    
+    public static final int EF_CST = 0x6f32;
+    public static final int EF_RUIM_SPN =0x6F41;
+
     // SMS record length from TS 51.011 10.5.3
     static public final int SMS_RECORD_LENGTH = 176;
 }

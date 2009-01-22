@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 import android.os.Handler;
 import android.os.Registrant;
@@ -24,14 +24,13 @@ import android.os.Registrant;
  *
  * {@hide}
  */
-abstract class DataLink extends Handler implements DataLinkInterface {
+public abstract class DataLink extends Handler implements DataLinkInterface {
 
     /** Registrant for link status change notifications. */
-    Registrant mLinkChangeRegistrant;
-    
+    protected Registrant mLinkChangeRegistrant;
     protected DataConnectionTracker dataConnection;
 
-    DataLink(DataConnectionTracker dc) {
+    protected DataLink(DataConnectionTracker dc) {
         dataConnection = dc;
     }
 

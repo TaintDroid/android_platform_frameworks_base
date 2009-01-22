@@ -14,20 +14,20 @@
 ** limitations under the License.
 */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 import android.app.PendingIntent;
-import com.android.internal.telephony.gsm.SmsRawData;
+import com.android.internal.telephony.SmsRawData;
 
-/** Interface for applications to access the SIM phone book.
+/** Interface for applications to access the ICC phone book.
  *
  * <p>The following code snippet demonstrates a static method to
- * retrieve the ISimSms interface from Android:</p>
- * <pre>private static ISimSms getSimSmsInterface()
+ * retrieve the ISms interface from Android:</p>
+ * <pre>private static ISms getSmsInterface()
             throws DeadObjectException {
     IServiceManager sm = ServiceManagerNative.getDefault();
-    ISimSms ss;
-    ss = ISimSms.Stub.asInterface(sm.getService("isms"));
+    ISms ss;
+    ss = ISms.Stub.asInterface(sm.getService("isms"));
     return ss;
 }
  * </pre>
@@ -35,45 +35,45 @@ import com.android.internal.telephony.gsm.SmsRawData;
 
 interface ISms {
     /**
-     * Retrieves all messages currently stored on SIM.
+     * Retrieves all messages currently stored on ICC.
      *
-     * @return list of SmsRawData of all sms on SIM
+     * @return list of SmsRawData of all sms on ICC
      */
-     List<SmsRawData> getAllMessagesFromSimEf();
+     List<SmsRawData> getAllMessagesFromIccEf();
 
     /**
-     * Update the specified message on the SIM.
+     * Update the specified message on the ICC.
      *
      * @param messageIndex record index of message to update
-     * @param newStatus new message status (STATUS_ON_SIM_READ,
-     *                  STATUS_ON_SIM_UNREAD, STATUS_ON_SIM_SENT,
-     *                  STATUS_ON_SIM_UNSENT, STATUS_ON_SIM_FREE)
+     * @param newStatus new message status (STATUS_ON_ICC_READ,
+     *                  STATUS_ON_ICC_UNREAD, STATUS_ON_ICC_SENT,
+     *                  STATUS_ON_ICC_UNSENT, STATUS_ON_ICC_FREE)
      * @param pdu the raw PDU to store
      * @return success or not
      *
      */
-     boolean updateMessageOnSimEf(int messageIndex, int newStatus,
+     boolean updateMessageOnIccEf(int messageIndex, int newStatus,
             in byte[] pdu);
 
     /**
-     * Copy a raw SMS PDU to the SIM.
+     * Copy a raw SMS PDU to the ICC.
      *
      * @param pdu the raw PDU to store
-     * @param status message status (STATUS_ON_SIM_READ, STATUS_ON_SIM_UNREAD,
-     *               STATUS_ON_SIM_SENT, STATUS_ON_SIM_UNSENT)
+     * @param status message status (STATUS_ON_ICC_READ, STATUS_ON_ICC_UNREAD,
+     *               STATUS_ON_ICC_SENT, STATUS_ON_ICC_UNSENT)
      * @return success or not
      *
      */
-    boolean copyMessageToSimEf(int status, in byte[] pdu, in byte[] smsc);
+    boolean copyMessageToIccEf(int status, in byte[] pdu, in byte[] smsc);
 
     /**
      * Send a SMS
      *
      * @param smsc the SMSC to send the message through, or NULL for the
-     *  defatult SMSC
+     *  default SMSC
      * @param pdu the raw PDU to send
      * @param sentIntent if not NULL this <code>Intent</code> is
-     *  broadcast when the message is sucessfully sent, or failed.
+     *  broadcast when the message is successfully sent, or failed.
      *  The result code will be <code>Activity.RESULT_OK<code> for success,
      *  or one of these errors:
      *  <code>RESULT_ERROR_GENERIC_FAILURE</code>
@@ -88,13 +88,13 @@ interface ISms {
 
     /**
      * Send a multi-part text based SMS.
-     * 
+     *
      * @param destinationAddress the address to send the message to
      * @param scAddress is the service center address or null to use
      *   the current default SMSC
      * @param parts an <code>ArrayList</code> of strings that, in order,
      *   comprise the original message
-     * @param sentIntents if not null, an <code>ArrayList</code> of 
+     * @param sentIntents if not null, an <code>ArrayList</code> of
      *   <code>PendingIntent</code>s (one for each message part) that is
      *   broadcast when the corresponding message part has been sent.
      *   The result code will be <code>Activity.RESULT_OK<code> for success,
@@ -102,7 +102,7 @@ interface ISms {
      *   <code>RESULT_ERROR_GENERIC_FAILURE</code>
      *   <code>RESULT_ERROR_RADIO_OFF</code>
      *   <code>RESULT_ERROR_NULL_PDU</code>.
-     * @param deliveryIntents if not null, an <code>ArrayList</code> of 
+     * @param deliveryIntents if not null, an <code>ArrayList</code> of
      *   <code>PendingIntent</code>s (one for each message part) that is
      *   broadcast when the corresponding message part has been delivered
      *   to the recipient.  The raw pdu of the status report is in the

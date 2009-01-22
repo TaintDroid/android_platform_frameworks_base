@@ -16,9 +16,10 @@
 package com.android.internal.telephony;
 
 import android.content.Context;
-
+import android.util.Log;
 
 public class PhoneSubInfo extends IPhoneSubInfo.Stub {
+    static final String LOG_TAG = "PHONE";
     private Phone mPhone;
     private Context mContext;
     private static final String READ_PHONE_STATE =
@@ -28,8 +29,16 @@ public class PhoneSubInfo extends IPhoneSubInfo.Stub {
         mPhone = phone;
         mContext = phone.getContext();
     }
+
+    public void dispose() {
+    }
+
+    protected void finalize() {
+        Log.d(LOG_TAG, "PhoneSubInfo finalized");
+    }
+
     /**
-     * Retrieves the unique device ID, e.g., IMEI for GSM phones.
+     * Retrieves the unique device ID, e.g., IMEI for GSM phones and MEID for CDMA phones.
      */
     public String getDeviceId() {
         mContext.enforceCallingOrSelfPermission(READ_PHONE_STATE, "Requires READ_PHONE_STATE");

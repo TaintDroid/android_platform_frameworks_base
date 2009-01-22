@@ -17,40 +17,42 @@
 package com.android.internal.telephony.cdma;
 
 import android.os.AsyncResult;
-import android.os.RemoteException;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Registrant;
 import android.os.RegistrantList;
+import android.os.RemoteException;
 import android.util.Log;
 
 import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.telephony.IccCard;
-import com.android.internal.telephony.TelephonyProperties;
 import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.PhoneProxy;
 import com.android.internal.telephony.TelephonyIntents;
+import com.android.internal.telephony.TelephonyProperties;
 
+import android.app.ActivityManagerNative;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.app.ActivityManagerNative;
 
 import static android.Manifest.permission.READ_PHONE_STATE;
 
 /**
+ * Note: this class shares common code with SimCard, consider a base class to minimize code
+ * duplication.
  * {@hide}
  */
-// TODO to be implemented
 public final class RuimCard extends Handler implements IccCard {
     static final String LOG_TAG="CDMA";
-    
+
     //***** Instance Variables
     private static final boolean DBG = true;
 
     private CDMAPhone phone;
-    
+
     private CommandsInterface.IccStatus status = null;
     private boolean mDesiredPinLocked;
-    private boolean mDesiredFdnEnabled; 
+    private boolean mDesiredFdnEnabled;
     private boolean mRuimPinLocked = true; // default to locked
     private boolean mRuimFdnEnabled = false; // Default to disabled.
                                             // Will be updated when RUIM_READY.
@@ -91,7 +93,7 @@ public final class RuimCard extends Handler implements IccCard {
 
         updateStateProperty();
     }
-    
+
     //***** RuimCard implementation
 
     public State
@@ -111,6 +113,9 @@ public final class RuimCard extends Handler implements IccCard {
                     return State.UNKNOWN;
                 case RUIM_READY:
                     return State.READY;
+                case NV_READY:
+                case NV_NOT_READY:
+                    return State.ABSENT;
             }
         } else {
             switch (status) {
@@ -127,7 +132,17 @@ public final class RuimCard extends Handler implements IccCard {
         return State.UNKNOWN;
     }
 
-//********* TODO BEGIN: this is something for the base class
+    public void dispose() {
+        //Unregister for all events
+        phone.mCM.unregisterForRUIMLockedOrAbsent(this);
+        phone.mCM.unregisterForOffOrNotAvailable(this);
+        phone.mCM.unregisterForRUIMReady(this);
+    }
+
+    protected void finalize() {
+        if(DBG) Log.d(LOG_TAG, "RuimCard finalized");
+    }
+
     private RegistrantList absentRegistrants = new RegistrantList();
     private RegistrantList pinLockedRegistrants = new RegistrantList();
     private RegistrantList networkLockedRegistrants = new RegistrantList();
@@ -142,7 +157,7 @@ public final class RuimCard extends Handler implements IccCard {
             r.notifyRegistrant();
         }
     }
-    
+
     public void unregisterForAbsent(Handler h) {
         absentRegistrants.remove(h);
     }
@@ -160,7 +175,7 @@ public final class RuimCard extends Handler implements IccCard {
     public void unregisterForNetworkLocked(Handler h) {
         networkLockedRegistrants.remove(h);
     }
-    
+
     public void registerForLocked(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
@@ -174,30 +189,27 @@ public final class RuimCard extends Handler implements IccCard {
     public void unregisterForLocked(Handler h) {
         pinLockedRegistrants.remove(h);
     }
-//********* TODO END: this is something for the base class
 
     public void supplyPin (String pin, Message onComplete) {
-        phone.mCM.supplyIccPin(pin, 
-                            obtainMessage(EVENT_PINPUK_DONE, onComplete));
+        phone.mCM.supplyIccPin(pin, obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
 
     public void supplyPuk (String puk, String newPin, Message onComplete) {
-        phone.mCM.supplyIccPuk(puk, newPin,
-                        obtainMessage(EVENT_PINPUK_DONE, onComplete));
+        phone.mCM.supplyIccPuk(puk, newPin, obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
+
     public void supplyPin2 (String pin2, Message onComplete) {
-        phone.mCM.supplyIccPin2(pin2, 
-                        obtainMessage(EVENT_PINPUK_DONE, onComplete));
+        phone.mCM.supplyIccPin2(pin2, obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
+
     public void supplyPuk2 (String puk2, String newPin2, Message onComplete) {
-        phone.mCM.supplyIccPuk2(puk2, newPin2,
-                obtainMessage(EVENT_PINPUK_DONE, onComplete));
+        phone.mCM.supplyIccPuk2(puk2, newPin2, obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
 
     public void supplyNetworkDepersonalization (String pin, Message onComplete) {
         if(DBG) log("Network Despersonalization: " + pin);
         phone.mCM.supplyNetworkDepersonalization(pin,
-                        obtainMessage(EVENT_PINPUK_DONE, onComplete));
+                obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
 
     public boolean getIccLockEnabled() {
@@ -242,7 +254,6 @@ public final class RuimCard extends Handler implements IccCard {
         if(DBG) log("Change Pin1 old: " + oldPassword + " new: " + newPassword);
         phone.mCM.changeIccPin(oldPassword, newPassword,
                 obtainMessage(EVENT_CHANGE_RUIM_PASSWORD_DONE, onComplete));
-
     }
 
     public void changeIccFdnPassword(String oldPassword, String newPassword,
@@ -250,13 +261,10 @@ public final class RuimCard extends Handler implements IccCard {
         if(DBG) log("Change Pin2 old: " + oldPassword + " new: " + newPassword);
         phone.mCM.changeIccPin2(oldPassword, newPassword,
                 obtainMessage(EVENT_CHANGE_RUIM_PASSWORD_DONE, onComplete));
-
     }
 
-    public String getServiceProviderName () {
-        // TODO: SIMRecords getServiceProvideName is not implemented yet
-        return "CDMA Test Provider";
-        //return phone.mSIMRecords.getServiceProvideName();
+    public String getServiceProviderName() {
+        return phone.mRuimRecords.getServiceProviderName();
     }
 
     //***** Handler implementation
@@ -271,13 +279,13 @@ public final class RuimCard extends Handler implements IccCard {
 
         switch (msg.what) {
             case EVENT_RADIO_OFF_OR_NOT_AVAILABLE:
-                Log.d(LOG_TAG, "Event EVENT_RADIO_OFF_OR_NOT_AVAILABLE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_RADIO_OFF_OR_NOT_AVAILABLE Received");
                 status = null;
                 updateStateProperty();
-                broadcastSimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_NOT_READY, null);
-                break;            
+                broadcastRuimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_NOT_READY, null);
+                break;
             case EVENT_RUIM_READY:
-                Log.d(LOG_TAG, "Event EVENT_RUIM_READY Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_RUIM_READY Received");
                 //TODO: put facility read in SIM_READY now, maybe in REG_NW
                 phone.mCM.getIccStatus(obtainMessage(EVENT_GET_RUIM_STATUS_DONE));
                 phone.mCM.queryFacilityLock (
@@ -288,20 +296,20 @@ public final class RuimCard extends Handler implements IccCard {
                         obtainMessage(EVENT_QUERY_FACILITY_FDN_DONE));
                 break;
             case EVENT_RUIM_LOCKED_OR_ABSENT:
-                Log.d(LOG_TAG, "Event EVENT_RUIM_LOCKED_OR_ABSENT Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_RUIM_LOCKED_OR_ABSENT Received");
                 phone.mCM.getIccStatus(obtainMessage(EVENT_GET_RUIM_STATUS_DONE));
                 phone.mCM.queryFacilityLock (
                         CommandsInterface.CB_FACILITY_BA_SIM, "", serviceClassX,
                         obtainMessage(EVENT_QUERY_FACILITY_LOCK_DONE));
                 break;
             case EVENT_GET_RUIM_STATUS_DONE:
-                Log.d(LOG_TAG, "Event EVENT_GET_RUIM_STATUS_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_GET_RUIM_STATUS_DONE Received");
                 ar = (AsyncResult)msg.obj;
 
                 getRuimStatusDone(ar);
                 break;
             case EVENT_PINPUK_DONE:
-                Log.d(LOG_TAG, "Event EVENT_PINPUK_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_PINPUK_DONE Received");
                 // a PIN/PUK/PIN2/PUK2/Network Personalization
                 // request has completed. ar.userObj is the response Message
                 // Repoll before returning
@@ -313,7 +321,7 @@ public final class RuimCard extends Handler implements IccCard {
                     obtainMessage(EVENT_REPOLL_STATUS_DONE, ar.userObj));
                 break;
             case EVENT_REPOLL_STATUS_DONE:
-                Log.d(LOG_TAG, "Event EVENT_REPOLL_STATUS_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_REPOLL_STATUS_DONE Received");
                 // Finished repolling status after PIN operation
                 // ar.userObj is the response messaeg
                 // ar.userObj.obj is already an AsyncResult with an
@@ -324,17 +332,17 @@ public final class RuimCard extends Handler implements IccCard {
                 ((Message)ar.userObj).sendToTarget();
                 break;
             case EVENT_QUERY_FACILITY_LOCK_DONE:
-                Log.d(LOG_TAG, "Event EVENT_QUERY_FACILITY_LOCK_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_QUERY_FACILITY_LOCK_DONE Received");
                 ar = (AsyncResult)msg.obj;
                 onQueryFacilityLock(ar);
                 break;
             case EVENT_QUERY_FACILITY_FDN_DONE:
-                Log.d(LOG_TAG, "Event EVENT_QUERY_FACILITY_FDN_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_QUERY_FACILITY_FDN_DONE Received");
                 ar = (AsyncResult)msg.obj;
                 onQueryFdnEnabled(ar);
                 break;
             case EVENT_CHANGE_FACILITY_LOCK_DONE:
-                Log.d(LOG_TAG, "Event EVENT_CHANGE_FACILITY_LOCK_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_CHANGE_FACILITY_LOCK_DONE Received");
                 ar = (AsyncResult)msg.obj;
                 if (ar.exception == null) {
                     mRuimPinLocked = mDesiredPinLocked;
@@ -349,7 +357,7 @@ public final class RuimCard extends Handler implements IccCard {
                 ((Message)ar.userObj).sendToTarget();
                 break;
             case EVENT_CHANGE_FACILITY_FDN_DONE:
-                Log.d(LOG_TAG, "Event EVENT_CHANGE_FACILITY_FDN_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_CHANGE_FACILITY_FDN_DONE Received");
                 ar = (AsyncResult)msg.obj;
 
                 if (ar.exception == null) {
@@ -365,7 +373,7 @@ public final class RuimCard extends Handler implements IccCard {
                 ((Message)ar.userObj).sendToTarget();
                 break;
             case EVENT_CHANGE_RUIM_PASSWORD_DONE:
-                Log.d(LOG_TAG, "Event EVENT_CHANGE_RUIM_PASSWORD_DONE Received"); //TODO
+                Log.d(LOG_TAG, "Event EVENT_CHANGE_RUIM_PASSWORD_DONE Received");
                 ar = (AsyncResult)msg.obj;
                 if(ar.exception != null) {
                     Log.e(LOG_TAG, "Error in change sim password with exception"
@@ -382,9 +390,8 @@ public final class RuimCard extends Handler implements IccCard {
 
     //***** Private methods
 
-//********* TODO BEGIN: this is something for the base class
     /**
-     * Interperate EVENT_QUERY_FACILITY_LOCK_DONE
+     * Interpret EVENT_QUERY_FACILITY_LOCK_DONE
      * @param ar is asyncResult of Query_Facility_Locked
      */
     private void onQueryFacilityLock(AsyncResult ar) {
@@ -403,7 +410,7 @@ public final class RuimCard extends Handler implements IccCard {
     }
 
     /**
-     * Interperate EVENT_QUERY_FACILITY_LOCK_DONE
+     * Interpret EVENT_QUERY_FACILITY_LOCK_DONE
      * @param ar is asyncResult of Query_Facility_Locked
      */
     private void onQueryFdnEnabled(AsyncResult ar) {
@@ -420,8 +427,7 @@ public final class RuimCard extends Handler implements IccCard {
             Log.e(LOG_TAG, "[CdmaRuimCard] Bogus facility lock response");
         }
     }
-//********* TODO END: this is something for the base class
-    
+
     private void
     getRuimStatusDone(AsyncResult ar) {
         if (ar.exception != null) {
@@ -431,7 +437,7 @@ public final class RuimCard extends Handler implements IccCard {
             return;
         }
 
-        CommandsInterface.IccStatus newStatus 
+        CommandsInterface.IccStatus newStatus
             = (CommandsInterface.IccStatus)  ar.result;
 
         handleRuimStatus(newStatus);
@@ -442,7 +448,7 @@ public final class RuimCard extends Handler implements IccCard {
         boolean transitionedIntoPinLocked;
         boolean transitionedIntoAbsent;
         boolean transitionedIntoNetworkLocked;
-        
+
         RuimCard.State oldState, newState;
 
         oldState = getState();
@@ -461,24 +467,22 @@ public final class RuimCard extends Handler implements IccCard {
         if (transitionedIntoPinLocked) {
             if(DBG) log("Notify RUIM pin or puk locked.");
             pinLockedRegistrants.notifyRegistrants();
-            broadcastSimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_LOCKED, 
+            broadcastRuimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_LOCKED,
                     (newState == State.PIN_REQUIRED) ?
                        INTENT_VALUE_LOCKED_ON_PIN : INTENT_VALUE_LOCKED_ON_PUK);
         } else if (transitionedIntoAbsent) {
             if(DBG) log("Notify RUIM missing.");
             absentRegistrants.notifyRegistrants();
-            broadcastSimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_ABSENT, null);
+            broadcastRuimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_ABSENT, null);
         } else if (transitionedIntoNetworkLocked) {
             if(DBG) log("Notify RUIM network locked.");
             networkLockedRegistrants.notifyRegistrants();
-            broadcastSimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_LOCKED,
+            broadcastRuimStateChangedIntent(RuimCard.INTENT_VALUE_ICC_LOCKED,
                   INTENT_VALUE_LOCKED_NETWORK);
         }
     }
 
-    // TODO: should probably be renamed to broadcastIccStateChangedIntent in SIMRecords.java
-    public void broadcastSimStateChangedIntent(String value, String reason) {
-        // TODO: check if intent has to be renamed
+    public void broadcastRuimStateChangedIntent(String value, String reason) {
         Intent intent = new Intent(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
         intent.putExtra(Phone.PHONE_NAME_KEY, phone.getPhoneName());
         intent.putExtra(RuimCard.INTENT_KEY_ICC_STATE, value);
@@ -488,7 +492,6 @@ public final class RuimCard extends Handler implements IccCard {
         ActivityManagerNative.broadcastStickyIntent(intent, READ_PHONE_STATE);
     }
 
-    // TODO: check if this is valid for CDMA
     public void updateImsiConfiguration(String imsi) {
         if (imsi.length() >= 6) {
             Configuration config = new Configuration();

@@ -16,17 +16,18 @@
 
 package com.android.internal.telephony.gsm;
 
-import com.android.internal.telephony.*;
+import android.os.AsyncResult;
 import android.os.Handler;
-import android.os.Registrant;
 import android.os.Looper;
 import android.os.Message;
-import android.os.AsyncResult;
+import android.os.Registrant;
 import android.os.SystemClock;
-import android.util.Log;
 import android.util.Config;
+import android.util.Log;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.ServiceState;
+
+import com.android.internal.telephony.*;
 
 /**
  * {@hide}
@@ -41,9 +42,9 @@ public class GsmConnection extends Connection {
 
     String address;     // MAY BE NULL!!!
     String dialString;          // outgoing calls only
-    String postDialString;      // outgoing calls only    
+    String postDialString;      // outgoing calls only
     boolean isIncoming;
-    boolean disconnected; 
+    boolean disconnected;
 
     int index;          // index in GsmCallTracker.connections[], -1 if unassigned
                         // The GSM index is 1 + this
@@ -63,7 +64,7 @@ public class GsmConnection extends Connection {
      */
     long connectTimeReal;
     long duration;
-    long holdingStartTime;  // The time when the Connection last transitioned 
+    long holdingStartTime;  // The time when the Connection last transitioned
                             // into HOLDING
 
     int nextPostDialChar;       // index into postDialString
@@ -91,6 +92,7 @@ public class GsmConnection extends Connection {
 
         public void
         handleMessage(Message msg) {
+
             switch (msg.what) {
                 case EVENT_NEXT_POST_DIAL:
                 case EVENT_DTMF_DONE:
@@ -140,7 +142,10 @@ public class GsmConnection extends Connection {
         this.parent = parent;
         parent.attachFake(this, GsmCall.State.DIALING);
     }
-    
+
+    public void dispose() {
+    }
+
     static boolean
     equalsHandlesNulls (Object a, Object b) {
         return (a == null) ? (b == null) : a.equals (b);
@@ -159,7 +164,7 @@ public class GsmConnection extends Connection {
         // no control over when they begin, so we might as well
 
         String cAddress = PhoneNumberUtils.stringFromStringAndTOA(c.number, c.TOA);
-        return isIncoming == c.isMT && equalsHandlesNulls(address, cAddress); 
+        return isIncoming == c.isMT && equalsHandlesNulls(address, cAddress);
     }
 
     public String
@@ -168,9 +173,8 @@ public class GsmConnection extends Connection {
     }
 
     public String getAddress() {
-        return address; 
+        return address;
     }
-
 
     public GsmCall getCall() {
         return parent;
@@ -218,13 +222,13 @@ public class GsmConnection extends Connection {
     public GsmCall.State getState() {
         if (disconnected) {
             return GsmCall.State.DISCONNECTED;
-        } else {   
+        } else {
             return super.getState();
         }
     }
 
     public void hangup() throws CallStateException {
-        if (!disconnected) {        
+        if (!disconnected) {
             owner.hangup(this);
         } else {
             throw new CallStateException ("disconnected");
@@ -232,7 +236,7 @@ public class GsmConnection extends Connection {
     }
 
     public void separate() throws CallStateException {
-        if (!disconnected) {        
+        if (!disconnected) {
             owner.separate(this);
         } else {
             throw new CallStateException ("disconnected");
@@ -245,7 +249,7 @@ public class GsmConnection extends Connection {
 
     public void proceedAfterWaitChar() {
         if (postDialState != PostDialState.WAIT) {
-            Log.w(LOG_TAG, "GsmConnection.proceedAfterWaitChar(): Expected " 
+            Log.w(LOG_TAG, "GsmConnection.proceedAfterWaitChar(): Expected "
                 + "getPostDialState() to be WAIT but was " + postDialState);
             return;
         }
@@ -254,10 +258,10 @@ public class GsmConnection extends Connection {
 
         processNextPostDialChar();
     }
-    
+
     public void proceedAfterWildChar(String str) {
         if (postDialState != PostDialState.WILD) {
-            Log.w(LOG_TAG, "GsmConnection.proceedAfterWaitChar(): Expected " 
+            Log.w(LOG_TAG, "GsmConnection.proceedAfterWaitChar(): Expected "
                 + "getPostDialState() to be WILD but was " + postDialState);
             return;
         }
@@ -294,22 +298,22 @@ public class GsmConnection extends Connection {
             postDialString = buf.toString();
             nextPostDialChar = 0;
             if (Phone.DEBUG_PHONE) {
-                log("proceedAfterWildChar: new postDialString is " + 
+                log("proceedAfterWildChar: new postDialString is " +
                         postDialString);
             }
 
             processNextPostDialChar();
         }
     }
-    
+
     public void cancelPostDial() {
         postDialState = PostDialState.CANCELLED;
     }
 
-    /** 
+    /**
      * Called when this Connection is being hung up locally (eg, user pressed "end")
      * Note that at this point, the hangup request has been dispatched to the radio
-     * but no response has yet been received so update() has not yet been called 
+     * but no response has yet been received so update() has not yet been called
      */
     void
     onHangupLocal() {
@@ -322,7 +326,7 @@ public class GsmConnection extends Connection {
          * See 22.001 Annex F.4 for mapping of cause codes
          * to local tones
          */
-    
+
         switch (causeCode) {
             case CallFailCause.USER_BUSY:
                 return DisconnectCause.BUSY;
@@ -345,7 +349,7 @@ public class GsmConnection extends Connection {
                 return DisconnectCause.FDN_BLOCKED;
 
             case CallFailCause.ERROR_UNSPECIFIED:
-            case CallFailCause.NORMAL_CLEARING: 
+            case CallFailCause.NORMAL_CLEARING:
             default:
                 GSMPhone phone = owner.phone;
                 int serviceState = phone.getServiceState().getState();
@@ -355,7 +359,7 @@ public class GsmConnection extends Connection {
                         || serviceState == ServiceState.STATE_EMERGENCY_ONLY ) {
                     return DisconnectCause.OUT_OF_SERVICE;
                 } else if (phone.getIccCard().getState() != SimCard.State.READY) {
-                    return DisconnectCause.SIM_ERROR;
+                    return DisconnectCause.ICC_ERROR;
                 } else {
                     return DisconnectCause.NORMAL;
                 }
@@ -371,10 +375,10 @@ public class GsmConnection extends Connection {
     /*package*/ void
     onDisconnect(DisconnectCause cause) {
         this.cause = cause;
-        
-        if (!disconnected) {        
+
+        if (!disconnected) {
             index = -1;
-            
+
             disconnectTime = System.currentTimeMillis();
             duration = SystemClock.elapsedRealtime() - connectTimeReal;
             disconnected = true;
@@ -385,7 +389,7 @@ public class GsmConnection extends Connection {
             owner.phone.notifyDisconnect(this);
 
             if (parent != null) {
-                parent.connectionDisconnected(this);            
+                parent.connectionDisconnected(this);
             }
         }
     }
@@ -506,21 +510,21 @@ public class GsmConnection extends Connection {
         } else if (c == PhoneNumberUtils.PAUSE) {
             // From TS 22.101:
 
-            // "The first occurrence of the "DTMF Control Digits Separator" 
-            //  shall be used by the ME to distinguish between the addressing 
+            // "The first occurrence of the "DTMF Control Digits Separator"
+            //  shall be used by the ME to distinguish between the addressing
             //  digits (i.e. the phone number) and the DTMF digits...."
 
             if (nextPostDialChar == 1) {
                 // The first occurrence.
                 // We don't need to pause here, but wait for just a bit anyway
-                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE), 
+                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE),
                                             PAUSE_DELAY_FIRST_MILLIS);
             } else {
                 // It continues...
-                // "Upon subsequent occurrences of the separator, the UE shall 
-                //  pause again for 3 seconds (\u00B1 20 %) before sending any 
+                // "Upon subsequent occurrences of the separator, the UE shall
+                //  pause again for 3 seconds (\u00B1 20 %) before sending any
                 //  further DTMF digits."
-                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE), 
+                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE),
                                             PAUSE_DELAY_MILLIS);
             }
         } else if (c == PhoneNumberUtils.WAIT) {
@@ -536,7 +540,7 @@ public class GsmConnection extends Connection {
 
     public String
     getRemainingPostDialString() {
-        if (postDialState == PostDialState.CANCELLED 
+        if (postDialState == PostDialState.CANCELLED
             || postDialState == PostDialState.COMPLETE
             || postDialString == null
             || postDialString.length() <= nextPostDialChar
@@ -546,7 +550,7 @@ public class GsmConnection extends Connection {
 
         return postDialString.substring(nextPostDialChar);
     }
-    
+
     private void
     processNextPostDialChar() {
         char c = 0;
@@ -565,7 +569,7 @@ public class GsmConnection extends Connection {
             c = 0;
         } else {
             boolean isValid;
-            
+
             postDialState = PostDialState.STARTED;
 
             c = postDialString.charAt(nextPostDialChar++);
@@ -585,7 +589,8 @@ public class GsmConnection extends Connection {
 
         Message notifyMessage;
 
-        if (postDialHandler != null && (notifyMessage = postDialHandler.messageForRegistrant()) != null) {
+        if (postDialHandler != null
+                && (notifyMessage = postDialHandler.messageForRegistrant()) != null) {
             // The AsyncResult.result is the Connection object
             PostDialState state = postDialState;
             AsyncResult ar = AsyncResult.forMessage(notifyMessage);
@@ -598,15 +603,6 @@ public class GsmConnection extends Connection {
             //Log.v("GSM", "##### processNextPostDialChar: send msg to postDialHandler, arg1=" + c);
             notifyMessage.sendToTarget();
         }
-//moved indent due to maximum character length
-/*
-else {
-if (postDialHandler == null)
-Log.v("GSM", "##### processNextPostDialChar: postDialHandler is NULL!");
-else
-Log.v("GSM", "##### processNextPostDialChar: postDialHandler.messageForRegistrant() returned NULL!");
-}
-*/
     }
 
 
@@ -615,8 +611,8 @@ Log.v("GSM", "##### processNextPostDialChar: postDialHandler.messageForRegistran
      */
     private boolean
     isConnectingInOrOut() {
-        return parent == null || parent == owner.ringingCall 
-            || parent.state == GsmCall.State.DIALING 
+        return parent == null || parent == owner.ringingCall
+            || parent.state == GsmCall.State.DIALING
             || parent.state == GsmCall.State.ALERTING;
     }
 

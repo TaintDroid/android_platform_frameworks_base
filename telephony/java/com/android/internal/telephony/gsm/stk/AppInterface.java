@@ -141,7 +141,7 @@ public interface AppInterface {
     void notifyBrowserTermination(boolean isErrorTermination);
 
     /**
-     * Notifies the SIM about the launch browser confirmation. This method 
+     * Notifies the SIM about the launch browser confirmation. This method
      * should be called only after the application gets notified by {@code
      * CommandListener.onLaunchBrowser()} or inside that method.
      *
@@ -165,19 +165,19 @@ public interface AppInterface {
      *
      * @param input         The text string that the user has typed.
      * @param helpRequired  True if just help information is requested on a menu
-     *                      item rather than menu selection. False if the menu 
+     *                      item rather than menu selection. False if the menu
      *                      item is actually selected.
      */
     void notifyInput(String input, boolean helpRequired);
 
     /**
-     * Notifies the SIM that the user input a key in Yes/No scenario. 
-     * This method should be called only after the application gets notified by 
+     * Notifies the SIM that the user input a key in Yes/No scenario.
+     * This method should be called only after the application gets notified by
      * {@code CommandListener.onGetInkey()} or inside that method.
      *
      * @param yesNoResponse User's choice for Yes/No scenario.
      * @param helpRequired  True if just help information is requested on a menu
-     *                      item rather than menu selection. False if the menu 
+     *                      item rather than menu selection. False if the menu
      *                      item is actually selected.
      */
     void notifyInkey(boolean yesNoResponse, boolean helpRequired);
@@ -189,7 +189,7 @@ public interface AppInterface {
      *
      * @param key           The key that the user has typed. If the SIM required
      * @param helpRequired  True if just help information is requested on a menu
-     *                      item rather than menu selection. False if the menu 
+     *                      item rather than menu selection. False if the menu
      *                      item is actually selected.
      */
     void notifyInkey(char key, boolean helpRequired);
@@ -236,12 +236,12 @@ public interface AppInterface {
      * @param wantsHelp Indicates if the user requested help for the id item.
      */
     void notifySelectedItem(int id, boolean wantsHelp);
-    
+
     /**
-     * Notifies the SIM that No response was received from the user for display 
+     * Notifies the SIM that No response was received from the user for display
      * text message dialog.
-     * 
-     * * @param terminationCode indication for display text termination. Uses  
+     *
+     * * @param terminationCode indication for display text termination. Uses
      * {@code ResultCode } values.
      */
     public void notifyDisplayTextEnded(ResultCode terminationCode);

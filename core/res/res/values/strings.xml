@@ -67,6 +67,12 @@
     <string name="BaMmi">Call barring</string>
     <string name="PwdMmi">Password change</string>
     <string name="PinMmi">PIN change</string>
+    <string name="CnipMmi">Calling number present</string>
+    <string name="CnirMmi">Calling number restricted</string>
+    <string name="ThreeWCMmi">Three way calling</string>
+    <string name="RuacMmi">Rejection of undesired annoying calls</string>
+    <string name="CndMmi">Calling number delivery</string>
+    <string name="DndMmi">Do not disturb</string>
 
     <string name="CLIRDefaultOnNextCallOn">Caller ID defaults to restricted. Next call: Restricted</string>
     <string name="CLIRDefaultOnNextCallOff">Caller ID defaults to restricted. Next call: Not restricted</string>

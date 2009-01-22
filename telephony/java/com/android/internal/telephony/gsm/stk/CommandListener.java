@@ -40,7 +40,7 @@ public interface CommandListener {
      * Call back function to be called when the SIM wants a call to be set up.
      * Application must call {@code AppInterface.acceptOrRejectCall()} after
      * this method returns or inside this method.
-     * 
+     *
      * @param confirmMsg     User confirmation phase message.
      * @param textAttrs      List of text attributes to be applied. Can be null.
      * @param callMsg        Call set up phase message.
@@ -65,7 +65,7 @@ public interface CommandListener {
      * Call back function to be called for handling SET_UP_MENU proactive
      * commands. The menu can be retrieved by calling {@code
      * AppInterface.getMainMenu}.
-     * 
+     *
      * @param menu application main menu.
      */
     void onSetUpMenu(Menu menu);
@@ -95,7 +95,7 @@ public interface CommandListener {
      * Call back function to be called for handling GET_INPUT proactive
      * commands. Application must call {@code AppInterface.notifyInput()} after
      * this method returns or inside this method.
-     * 
+     *
      * @param text A text to be used as a prompt
      * @param defaultText A text to be used as a default input
      * @param minLen Mininum length of response (0 indicates there is no mininum
@@ -160,7 +160,7 @@ public interface CommandListener {
     /**
      * Call back function to be called for handling LAUNCH_BROWSER proactive
      * commands.
-     * 
+     *
      * @param useDefaultUrl     If true, use the system default URL, otherwise use
      *                          {@code url} as the URL.
      * @param confirmMsg        A text to be used as the user confirmation message. Can
@@ -175,7 +175,7 @@ public interface CommandListener {
     /**
      * Call back function to be called for handling PLAY_TONE proactive
      * commands.
-     * 
+     *
      * @param tone      Tone to be played
      * @param text      A text to be displayed. Can be null.
      * @param textAttrs List of text attributes to be applied. Can be null.

@@ -16,9 +16,9 @@
 
 package com.android.internal.telephony;
 
-//import com.android.internal.telephony.*;
 import android.os.Message;
 import android.os.Handler;
+
 
 /**
  * {@hide}
@@ -28,12 +28,12 @@ public interface CommandsInterface {
         RADIO_OFF,         /* Radio explictly powered off (eg CFUN=0) */
         RADIO_UNAVAILABLE, /* Radio unavailable (eg, resetting or not booted) */
         SIM_NOT_READY,     /* Radio is on, but the SIM interface is not ready */
-        SIM_LOCKED_OR_ABSENT,  /* SIM PIN locked, PUK required, network 
+        SIM_LOCKED_OR_ABSENT,  /* SIM PIN locked, PUK required, network
                                personalization, or SIM absent */
         SIM_READY,         /* Radio is on and SIM interface is available */
         RUIM_NOT_READY,    /* Radio is on, but the RUIM interface is not ready */
         RUIM_READY,        /* Radio is on and the RUIM interface is available */
-        RUIM_LOCKED_OR_ABSENT, /* RUIM PIN locked, PUK required, network 
+        RUIM_LOCKED_OR_ABSENT, /* RUIM PIN locked, PUK required, network
                                   personalization locked, or RUIM absent */
         NV_NOT_READY,      /* Radio is on, but the NV interface is not available */
         NV_READY;          /* Radio is on and the NV interface is available */
@@ -49,32 +49,30 @@ public interface CommandsInterface {
                     || this == NV_READY;
         }
 
-        boolean isAvailable() {
+        public boolean isAvailable() {
             return this != RADIO_UNAVAILABLE;
         }
 
-        boolean isSIMReady() {
+        public boolean isSIMReady() {
             return this == SIM_READY;
         }
-        
-        boolean isRUIMReady() {
+
+        public boolean isRUIMReady() {
             return this == RUIM_READY;
         }
-        
-        boolean isNVReady() {
+
+        public boolean isNVReady() {
             return this == NV_READY;
         }
-        boolean isGsm() {
-            return this == RADIO_OFF 
-                    || this == RADIO_UNAVAILABLE
-                    || this == SIM_NOT_READY
+
+        public boolean isGsm() {
+            return this == SIM_NOT_READY
                     || this == SIM_LOCKED_OR_ABSENT
                     || this == SIM_READY;
         }
-        boolean isCdma() {
-            return this ==  RADIO_OFF 
-                    || this == RADIO_UNAVAILABLE
-                    || this == RUIM_NOT_READY
+
+        public boolean isCdma() {
+            return this ==  RUIM_NOT_READY
                     || this == RUIM_READY
                     || this == RUIM_LOCKED_OR_ABSENT
                     || this == NV_NOT_READY
@@ -124,7 +122,7 @@ public interface CommandsInterface {
     static final String CB_FACILITY_BA_MT        = "AC";
     static final String CB_FACILITY_BA_SIM       = "SC";
     static final String CB_FACILITY_BA_FD        = "FD";
-                  
+
 
     // Used for various supp services apis
     // See 27.007 +CCFC or +CLCK
@@ -133,7 +131,7 @@ public interface CommandsInterface {
     static final int SERVICE_CLASS_DATA     = (1 << 1); //synoym for 16+32+64+128
     static final int SERVICE_CLASS_FAX      = (1 << 2);
     static final int SERVICE_CLASS_SMS      = (1 << 3);
-    static final int SERVICE_CLASS_DATA_SYNC = (1 << 4); 
+    static final int SERVICE_CLASS_DATA_SYNC = (1 << 4);
     static final int SERVICE_CLASS_DATA_ASYNC = (1 << 5);
     static final int SERVICE_CLASS_PACKET   = (1 << 6);
     static final int SERVICE_CLASS_PAD      = (1 << 7);
@@ -153,8 +151,8 @@ public interface CommandsInterface {
 
     RadioState getRadioState();
 
-    /** 
-     * Fires on any RadioState transition 
+    /**
+     * Fires on any RadioState transition
      * Always fires immediately as well
      *
      * do not attempt to calculate transitions by storing getRadioState() values
@@ -162,68 +160,86 @@ public interface CommandsInterface {
      * registration methods
      */
     void registerForRadioStateChanged(Handler h, int what, Object obj);
+    void unregisterForRadioStateChanged(Handler h);
 
-    /** 
-     * Fires on any transition into RadioState.isOn() 
+    /**
+     * Fires on any transition into RadioState.isOn()
      * Fires immediately if currently in that state
      * In general, actions should be idempotent. State may change
      * before event is received.
      */
     void registerForOn(Handler h, int what, Object obj);
+    void unregisterForOn(Handler h);
 
-    /** 
-     * Fires on any transition out of RadioState.isAvailable() 
+    /**
+     * Fires on any transition out of RadioState.isAvailable()
      * Fires immediately if currently in that state
      * In general, actions should be idempotent. State may change
      * before event is received.
      */
     void registerForAvailable(Handler h, int what, Object obj);
-    //void unregisterForAvailable(Handler h);
-    /** 
+    void unregisterForAvailable(Handler h);
+
+    /**
      * Fires on any transition into !RadioState.isAvailable()
      * Fires immediately if currently in that state
      * In general, actions should be idempotent. State may change
      * before event is received.
      */
     void registerForNotAvailable(Handler h, int what, Object obj);
-    //void unregisterForNotAvailable(Handler h);
-    /** 
+    void unregisterForNotAvailable(Handler h);
+
+    /**
      * Fires on any transition into RADIO_OFF or !RadioState.isAvailable()
      * Fires immediately if currently in that state
      * In general, actions should be idempotent. State may change
      * before event is received.
      */
     void registerForOffOrNotAvailable(Handler h, int what, Object obj);
-    //void unregisterForNotAvailable(Handler h);
+    void unregisterForOffOrNotAvailable(Handler h);
 
-    /** 
+    /**
      * Fires on any transition into SIM_READY
      * Fires immediately if if currently in that state
      * In general, actions should be idempotent. State may change
      * before event is received.
      */
     void registerForSIMReady(Handler h, int what, Object obj);
-    //void unregisterForSIMReady(Handler h);
+    void unregisterForSIMReady(Handler h);
+
     /** Any transition into SIM_LOCKED_OR_ABSENT */
     void registerForSIMLockedOrAbsent(Handler h, int what, Object obj);
-    //void unregisterForSIMLockedOrAbsent(Handler h);
+    void unregisterForSIMLockedOrAbsent(Handler h);
 
     void registerForCallStateChanged(Handler h, int what, Object obj);
-    //void unregisterForCallStateChanged(Handler h);
+    void unregisterForCallStateChanged(Handler h);
     void registerForNetworkStateChanged(Handler h, int what, Object obj);
-    //void unregisterForNetworkStateChanged(Handler h);
-    void registerForPDPStateChanged(Handler h, int what, Object obj);
-    //void unregisterForPDPStateChanged(Handler h);
+    void unregisterForNetworkStateChanged(Handler h);
+    void registerForDataStateChanged(Handler h, int what, Object obj);
+    void unregisterForDataStateChanged(Handler h);
 
     void registerForRadioTechnologyChanged(Handler h, int what, Object obj);
-    //void unregisterForRadioTechnologyChanged(Handler h);
+    void unregisterForRadioTechnologyChanged(Handler h);
     void registerForNVReady(Handler h, int what, Object obj);
-    //void unregisterForNVReady(Handler h, int what, Object obj);
+    void unregisterForNVReady(Handler h);
     void registerForRUIMLockedOrAbsent(Handler h, int what, Object obj);
-    //void unregisterForRUIMLockedOrAbsent(Handler h, int what, Object obj);
+    void unregisterForRUIMLockedOrAbsent(Handler h);
+
+    /** InCall voice privacy notifications */
+    void registerForInCallVoicePrivacyOn(Handler h, int what, Object obj);
+    void unregisterForInCallVoicePrivacyOn(Handler h);
+    void registerForInCallVoicePrivacyOff(Handler h, int what, Object obj);
+    void unregisterForInCallVoicePrivacyOff(Handler h);
+
+    /**
+     * Fires on any transition into RUIM_READY
+     * Fires immediately if if currently in that state
+     * In general, actions should be idempotent. State may change
+     * before event is received.
+     */
     void registerForRUIMReady(Handler h, int what, Object obj);
-    //void unregisterForRUIMReady(Handler h, int what, Object obj);
-    
+    void unregisterForRUIMReady(Handler h);
+
     /**
      * unlike the register* methods, there's only one new SMS handler
      * if you need to unregister, you should also tell the radio to stop
@@ -232,27 +248,30 @@ public interface CommandsInterface {
      * AsyncResult.result is a String containing the SMS PDU
      */
     void setOnNewSMS(Handler h, int what, Object obj);
+    void unSetOnNewSMS(Handler h);
 
    /**
-     * Register for NEW_SMS_ON_SIM unsolicited message 
+     * Register for NEW_SMS_ON_SIM unsolicited message
      *
      * AsyncResult.result is an int array containing the index of new SMS
      */
     void setOnSmsOnSim(Handler h, int what, Object obj);
+    void unSetOnSmsOnSim(Handler h);
 
     /**
-     * Register for NEW_SMS_STATUS_REPORT unsolicited message 
+     * Register for NEW_SMS_STATUS_REPORT unsolicited message
      *
      * AsyncResult.result is a String containing the status report PDU
      */
     void setOnSmsStatus(Handler h, int what, Object obj);
-    
+    void unSetOnSmsStatus(Handler h);
+
     /**
      * unlike the register* methods, there's only one NITZ time handler
      *
      * AsyncResult.result is an Object[]
      * ((Object[])AsyncResult.result)[0] is a String containing the NITZ time string
-     * ((Object[])AsyncResult.result)[0] is an Integer containing 
+     * ((Object[])AsyncResult.result)[0] is an Integer containing
      *                                   the UNIX time_t returned by time() when
      *                                   this NITZ time was posted.
      *
@@ -260,13 +279,14 @@ public interface CommandsInterface {
      * seconds on system startup
      */
     void setOnNITZTime(Handler h, int what, Object obj);
+    void unSetOnNITZTime(Handler h);
 
     /**
      * unlike the register* methods, there's only one USSD notify handler
      *
      * Represents the arrival of a USSD "notify" message, which may
      * or may not have been triggered by a previous USSD send
-     * 
+     *
      * AsyncResult.result is a String[]
      * ((String[])(AsyncResult.result))[0] contains status code
      *      "0"   USSD-Notify -- text in ((const char **)data)[1]
@@ -281,26 +301,29 @@ public interface CommandsInterface {
      */
 
     void setOnUSSD(Handler h, int what, Object obj);
+    void unSetOnUSSD(Handler h);
 
     /**
      * unlike the register* methods, there's only one signal strength handler
-     * AsyncResult.result is an int[2]     
-     * response.obj.result[0] is received signal strength (0-31, 99) 
-     * response.obj.result[1] is  bit error rate (0-7, 99) 
+     * AsyncResult.result is an int[2]
+     * response.obj.result[0] is received signal strength (0-31, 99)
+     * response.obj.result[1] is  bit error rate (0-7, 99)
      * as defined in TS 27.007 8.5
      */
 
     void setOnSignalStrengthUpdate(Handler h, int what, Object obj);
+    void unSetOnSignalStrengthUpdate(Handler h);
 
     /**
-     * Sets the handler for SIM SMS storage full unsolicited message.
+     * Sets the handler for SIM/RUIM SMS storage full unsolicited message.
      * Unlike the register* methods, there's only one notification handler
      *
      * @param h Handler for notification message.
      * @param what User-defined message code.
      * @param obj User object.
      */
-    void setOnSimSmsFull(Handler h, int what, Object obj);
+    void setOnIccSmsFull(Handler h, int what, Object obj);
+    void unSetOnIccSmsFull(Handler h);
 
     /**
      * Sets the handler for SIM Refresh notifications.
@@ -311,7 +334,8 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnIccRefresh(Handler h, int what, Object obj);
-    
+    void unSetOnIccRefresh(Handler h);
+
     /**
      * Sets the handler for RING notifications.
      * Unlike the register* methods, there's only one notification handler
@@ -321,7 +345,8 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnCallRing(Handler h, int what, Object obj);
-    
+    void unSetOnCallRing(Handler h);
+
     /**
      * Sets the handler for Supplementary Service Notifications.
      * Unlike the register* methods, there's only one notification handler
@@ -331,6 +356,7 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnSuppServiceNotification(Handler h, int what, Object obj);
+    void unSetOnSuppServiceNotification(Handler h);
 
     /**
      * Sets the handler for Session End Notifications for STK.
@@ -341,6 +367,7 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnStkSessionEnd(Handler h, int what, Object obj);
+    void unSetOnStkSessionEnd(Handler h);
 
     /**
      * Sets the handler for Proactive Commands for STK.
@@ -351,6 +378,7 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnStkProactiveCmd(Handler h, int what, Object obj);
+    void unSetOnStkProactiveCmd(Handler h);
 
     /**
      * Sets the handler for Event Notifications for STK.
@@ -361,6 +389,7 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnStkEvent(Handler h, int what, Object obj);
+    void unSetOnStkEvent(Handler h);
 
     /**
      * Sets the handler for Call Set Up Notifications for STK.
@@ -371,6 +400,7 @@ public interface CommandsInterface {
      * @param obj User object.
      */
     void setOnStkCallSetUp(Handler h, int what, Object obj);
+    void unSetOnStkCallSetUp(Handler h);
 
     /**
      * Enables/disbables supplementary service related notifications from
@@ -380,19 +410,21 @@ public interface CommandsInterface {
      * @param result Message to be posted when command completes.
      */
     void setSuppServiceNotifications(boolean enable, Message result);
+    //void unSetSuppServiceNotifications(Handler h);
+
 
     /**
      * Returns current ICC status.
      *
      * AsyncResult.result is IccStatus
-     * 
+     *
      */
 
-    void getIccStatus(Message result);    
+    void getIccStatus(Message result);
 
     /**
      * Supply the ICC PIN to the ICC card
-     * 
+     *
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -406,7 +438,7 @@ public interface CommandsInterface {
 
     /**
      * Supply the ICC PUK to the ICC card
-     * 
+     *
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -422,7 +454,7 @@ public interface CommandsInterface {
      * Supply the ICC PIN2 to the ICC card
      * Only called following operation where ICC_PIN2 was
      * returned as a a failure from a previous operation
-     * 
+     *
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -438,7 +470,7 @@ public interface CommandsInterface {
      * Supply the SIM PUK2 to the SIM card
      * Only called following operation where SIM_PUK2 was
      * returned as a a failure from a previous operation
-     * 
+     *
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -457,7 +489,7 @@ public interface CommandsInterface {
 
     void supplyNetworkDepersonalization(String netpin, Message result);
 
-    /** 
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -467,16 +499,26 @@ public interface CommandsInterface {
      */
     void getCurrentCalls (Message result);
 
-    /** 
+    /**
+     *  returned message
+     *  retMsg.obj = AsyncResult ar
+     *  ar.exception carries exception on failure
+     *  ar.userObject contains the orignal value of result.obj
+     *  ar.result contains a List of PDPContextState
+     *  @deprecated
+     */
+    void getPDPContextList(Message result);
+
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result contains a List of PDPContextState
      */
-    void getPDPContextList(Message result);
+    void getDataCallList(Message result);
 
-    /** 
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -489,7 +531,7 @@ public interface CommandsInterface {
      */
     void dial (String address, int clirMode, Message result);
 
-    /** 
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -498,7 +540,7 @@ public interface CommandsInterface {
      */
     void getIMSI(Message result);
 
-    /** 
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -507,7 +549,7 @@ public interface CommandsInterface {
      */
     void getIMEI(Message result);
 
-    /** 
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
@@ -516,7 +558,7 @@ public interface CommandsInterface {
      */
     void getIMEISV(Message result);
 
-    /** 
+    /**
      * Hang up one individual connection.
      *  returned message
      *  retMsg.obj = AsyncResult ar
@@ -541,7 +583,7 @@ public interface CommandsInterface {
 
     /**
      * 3GPP 22.030 6.5.5
-     * "Releases all active calls (if any exist) and accepts 
+     * "Releases all active calls (if any exist) and accepts
      *  the other (held or waiting) call."
      *
      *  ar.exception carries exception on failure
@@ -552,7 +594,7 @@ public interface CommandsInterface {
 
     /**
      * 3GPP 22.030 6.5.5
-     * "Places all active calls (if any exist) on hold and accepts 
+     * "Places all active calls (if any exist) on hold and accepts
      *  the other (held or waiting) call."
      *
      *  ar.exception carries exception on failure
@@ -568,7 +610,7 @@ public interface CommandsInterface {
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result is null on success and failure
-     */    
+     */
     void conference (Message result);
 
     /**
@@ -578,7 +620,7 @@ public interface CommandsInterface {
      * @param result is a callback message
      */
     void setPreferredVoicePrivacy(boolean enable, Message result);
-    
+
     /**
      * Get currently set preferred Voice Privacy (VP) mode.
      *
@@ -588,7 +630,7 @@ public interface CommandsInterface {
 
     /**
      * 3GPP 22.030 6.5.5
-     * "Places all active calls on hold except call X with which 
+     * "Places all active calls on hold except call X with which
      *  communication shall be supported."
      */
     void separateConnection (int gsmIndex, Message result);
@@ -598,15 +640,15 @@ public interface CommandsInterface {
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result is null on success and failure
-     */    
+     */
     void acceptCall (Message result);
 
-    /** 
+    /**
      *  also known as UDUB
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result is null on success and failure
-     */    
+     */
     void rejectCall (Message result);
 
     /**
@@ -630,13 +672,20 @@ public interface CommandsInterface {
     void getLastCallFailCause (Message result);
 
 
-    /** 
+    /**
      * Reason for last PDP context deactivate or failure to activate
      * cause code returned as int[0] in Message.obj.response
      * returns an integer cause code defined in TS 24.008
      * section 6.1.3.1.3 or close approximation
+     * @deprecated
      */
     void getLastPdpFailCause (Message result);
+
+    /**
+     * The preferred new alternative to getLastPdpFailCause
+     * that is also CDMA-compatible.
+     */
+    void getLastDataCallFailCause (Message result);
 
     void setMute (boolean enableMute, Message response);
 
@@ -645,8 +694,8 @@ public interface CommandsInterface {
     /**
      * response.obj is an AsyncResult
      * response.obj.result is an int[2]
-     * response.obj.result[0] is received signal strength (0-31, 99) 
-     * response.obj.result[1] is  bit error rate (0-7, 99) 
+     * response.obj.result[0] is received signal strength (0-31, 99)
+     * response.obj.result[1] is  bit error rate (0-7, 99)
      * as defined in TS 27.007 8.5
      */
     void getSignalStrength (Message response);
@@ -656,21 +705,21 @@ public interface CommandsInterface {
      * response.obj.result is an int[3]
      * response.obj.result[0] is registration state 0-5 from TS 27.007 7.2
      * response.obj.result[1] is LAC if registered or -1 if not
-     * response.obj.result[2] is CID if registered or -1 if not 
+     * response.obj.result[2] is CID if registered or -1 if not
      * valid LAC and CIDs are 0x0000 - 0xffff
-     * 
+     *
      * Please note that registration state 4 ("unknown") is treated
      * as "out of service" above
      */
     void getRegistrationState (Message response);
-    
+
     /**
      * response.obj.result is an int[3]
      * response.obj.result[0] is registration state 0-5 from TS 27.007 7.2
      * response.obj.result[1] is LAC if registered or -1 if not
-     * response.obj.result[2] is CID if registered or -1 if not 
+     * response.obj.result[2] is CID if registered or -1 if not
      * valid LAC and CIDs are 0x0000 - 0xffff
-     * 
+     *
      * Please note that registration state 4 ("unknown") is treated
      * as "out of service" above
      */
@@ -681,14 +730,14 @@ public interface CommandsInterface {
      * response.obj.result[0] is long alpha or null if unregistered
      * response.obj.result[1] is short alpha or null if unregistered
      * response.obj.result[2] is numeric or null if unregistered
-     */ 
+     */
     void getOperator(Message response);
 
     /**
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result is null on success and failure
-     */    
+     */
     void sendDtmf(char c, Message result);
 
 
@@ -711,26 +760,40 @@ public interface CommandsInterface {
      * smscPDU is smsc address in PDU form GSM BCD format prefixed
      *      by a length byte (as expected by TS 27.005) or NULL for default SMSC
      * pdu is SMS in PDU format as an ASCII hex string
-     *      less the SMSC address     
+     *      less the SMSC address
      */
     void sendSMS (String smscPDU, String pdu, Message response);
 
     /**
+     * @param pdu is CDMA-SMS in internal pseudo-PDU format
+     * @param response sent when operation completes
+     */
+    void sendCdmaSms(byte[] pdu, Message response);
+
+    /**
      * Deletes the specified SMS record from SIM memory (EF_SMS).
-     * 
+     *
      * @param index index of the SMS record to delete
      * @param response sent when operation completes
      */
     void deleteSmsOnSim(int index, Message response);
 
     /**
+     * Deletes the specified SMS record from RUIM memory (EF_SMS in DF_CDMA).
+     *
+     * @param index index of the SMS record to delete
+     * @param response sent when operation completes
+     */
+    void deleteSmsOnRuim(int index, Message response);
+
+    /**
      * Writes an SMS message to SIM memory (EF_SMS).
-     * 
+     *
      * @param status status of message on SIM.  One of:
-     *                  SmsManger.STATUS_ON_SIM_READ
-     *                  SmsManger.STATUS_ON_SIM_UNREAD
-     *                  SmsManger.STATUS_ON_SIM_SENT
-     *                  SmsManger.STATUS_ON_SIM_UNSENT
+     *                  SmsManger.STATUS_ON_ICC_READ
+     *                  SmsManger.STATUS_ON_ICC_UNREAD
+     *                  SmsManger.STATUS_ON_ICC_SENT
+     *                  SmsManger.STATUS_ON_ICC_UNSENT
      * @param pdu message PDU, as hex string
      * @param response sent when operation completes.
      *                  response.obj will be an AsyncResult, and will indicate
@@ -738,89 +801,105 @@ public interface CommandsInterface {
      */
     void writeSmsToSim(int status, String smsc, String pdu, Message response);
 
+    void writeSmsToRuim(int status, String pdu, Message response);
+
+    /**
+     * @deprecated
+     * @param apn
+     * @param user
+     * @param password
+     * @param response
+     */
     void setupDefaultPDP(String apn, String user, String password, Message response);
 
+    /**
+     * @deprecated
+     * @param cid
+     * @param response
+     */
     void deactivateDefaultPDP(int cid, Message response);
 
     void setRadioPower(boolean on, Message response);
 
     void acknowledgeLastIncomingSMS(boolean success, Message response);
 
-    /** 
-     * parameters equivilient to 27.007 AT+CRSM command 
+    void acknowledgeLastIncomingCdmaSms(boolean success, Message response);
+
+    /**
+     * parameters equivilient to 27.007 AT+CRSM command
      * response.obj will be an AsyncResult
      * response.obj.userObj will be a IccIoResult on success
      */
-    void iccIO (int command, int fileid, String path, int p1, int p2, int p3, 
+    void iccIO (int command, int fileid, String path, int p1, int p2, int p3,
             String data, String pin2, Message response);
 
     /**
      * (AsyncResult)response.obj).result is an int[] with element [0] set to
-     * 1 for "CLIP is provisioned", and 0 for "CLIP is not provisioned". 
+     * 1 for "CLIP is provisioned", and 0 for "CLIP is not provisioned".
      *
      * @param response is callback message
      */
-    
+
     void queryCLIP(Message response);
 
     /**
      * response.obj will be a an int[2]
      *
      * response.obj[0] will be TS 27.007 +CLIR parameter 'n'
-     *  0 presentation indicator is used according to the subscription of the CLIR service 
-     *  1 CLIR invocation 
-     *  2 CLIR suppression 
+     *  0 presentation indicator is used according to the subscription of the CLIR service
+     *  1 CLIR invocation
+     *  2 CLIR suppression
      *
      * response.obj[1] will be TS 27.007 +CLIR parameter 'm'
-     *  0 CLIR not provisioned 
-     *  1 CLIR provisioned in permanent mode 
-     *  2 unknown (e.g. no network, etc.) 
-     *  3 CLIR temporary mode presentation restricted 
-     *  4 CLIR temporary mode presentation allowed 
+     *  0 CLIR not provisioned
+     *  1 CLIR provisioned in permanent mode
+     *  2 unknown (e.g. no network, etc.)
+     *  3 CLIR temporary mode presentation restricted
+     *  4 CLIR temporary mode presentation allowed
      */
 
     void getCLIR(Message response);
-    
+
     /**
      * clirMode is one of the CLIR_* constants above
      *
      * response.obj is null
      */
-    
+
     void setCLIR(int clirMode, Message response);
 
     /**
      * (AsyncResult)response.obj).result is an int[] with element [0] set to
-     * 0 for disabled, 1 for enabled. 
+     * 0 for disabled, 1 for enabled.
      *
      * @param serviceClass is a sum of SERVICE_CLASS_*
      * @param response is callback message
      */
-    
+
     void queryCallWaiting(int serviceClass, Message response);
-    
+
     /**
      * @param enable is true to enable, false to disable
      * @param serviceClass is a sum of SERVICE_CLASS_*
      * @param response is callback message
      */
-    
+
     void setCallWaiting(boolean enable, int serviceClass, Message response);
 
     /**
      * @param action is one of CF_ACTION_*
      * @param cfReason is one of CF_REASON_*
-     * @param serviceClass is a sum of SERVICE_CLASSS_* 
+     * @param serviceClass is a sum of SERVICE_CLASSS_*
      */
-    void setCallForward(int action, int cfReason, int serviceClass, 
-                String number, int timeSeconds, Message response); 
+    void setCallForward(int action, int cfReason, int serviceClass,
+                String number, int timeSeconds, Message response);
 
     /**
      * cfReason is one of CF_REASON_*
      *
      * ((AsyncResult)response.obj).result will be an array of
      * CallForwardInfo's
-     * 
+     *
      * An array of length 0 means "disabled for all codes"
      */
     void queryCallForwardStatus(int cfReason, int serviceClass,
@@ -859,7 +938,7 @@ public interface CommandsInterface {
      * @param serviceClass is a sum of SERVICE_CLASS_*
      * @param response is callback message
      */
-    
+
     void queryFacilityLock (String facility, String password, int serviceClass,
         Message response);
 
@@ -872,7 +951,7 @@ public interface CommandsInterface {
      */
     void setFacilityLock (String facility, boolean lockState, String password,
         int serviceClass, Message response);
-    
+
 
     void sendUSSD (String ussdString, Message response);
 
@@ -894,7 +973,7 @@ public interface CommandsInterface {
 
     /**
      * Query the list of band mode supported by RF.
-     * 
+     *
      * @param response is callback message
      *        ((AsyncResult)response.obj).result  is an int[] with every
      *        element representing one avialable BM_*_BAND
@@ -969,15 +1048,15 @@ public interface CommandsInterface {
     public void handleCallSetupRequestFromSim(boolean accept, Message response);
 
     //***** new Methods for CDMA support
-    
+
     /**
      * Request the device ESN / MEID / IMEI / IMEISV.
      * "response" is const char **
      *   [0] is IMEI if GSM subscription is available
      *   [1] is IMEISV if GSM subscription is available
      *   [2] is ESN if CDMA subscription is available
-     *   [3] is MEID if CDMA subscription is available 
-     */   
+     *   [3] is MEID if CDMA subscription is available
+     */
     public void getDeviceIdentity(Message response);
 
     /**
@@ -988,16 +1067,15 @@ public interface CommandsInterface {
      *   [2] is AH_SID (Analog Home SID) if CDMA subscription
      *   [3] is H_SID (Home SID) if CDMA subscription is available
      *   [4] is H_NID (Home SID) if CDMA subscription is available
-     */   
-    public void getCDMASubscription(Message response);
-    
-    /** 
-     * Fires on any transition into RUIM_READY
-     * Fires immediately if if currently in that state
-     * In general, actions should be idempotent. State may change
-     * before event is received.
      */
-    //void registerForRUIMReady(Handler h, int what, Object obj); //TODO check moved above
+    public void getCDMASubscription(Message response);
+
+    /**
+     * Send Flash Code.
+     * "response" is is NULL
+     *   [0] is a FLASH string
+     */
+    public void sendCDMAFeatureCode(String FeatureCode, Message response);
 
     /** Set the Phone type created */
     void setPhoneType(int phoneType);
@@ -1007,21 +1085,21 @@ public interface CommandsInterface {
      * @param response is callback message to report one of  CDMA_RM_*
      */
     void queryCdmaRoamingPreference(Message response);
-    
+
     /**
      *  Requests to set the CDMA roaming preference
      * @param cdmaRoamingType one of  CDMA_RM_*
      * @param response is callback message
      */
     void setCdmaRoamingPreference(int cdmaRoamingType, Message response);
-    
+
     /**
      *  Requests to set the CDMA subscription mode
      * @param cdmaSubscriptionType one of  CDMA_SUBSCRIPTION_*
      * @param response is callback message
      */
     void setCdmaSubscription(int cdmaSubscriptionType, Message response);
-    
+
     /**
      *  Set the TTY mode for the CDMA phone
      *
@@ -1029,14 +1107,75 @@ public interface CommandsInterface {
      * @param response is callback message
      */
     void setTTYModeEnabled(boolean enable, Message response);
-    
+
     /**
      *  Query the TTY mode for the CDMA phone
      * (AsyncResult)response.obj).result is an int[] with element [0] set to
-     * 0 for disabled, 1 for enabled. 
-     *  
+     * 0 for disabled, 1 for enabled.
+     *
      * @param response is callback message
      */
     void queryTTYModeEnabled(Message response);
 
+    /**
+     * Setup a packet data connection On successful completion, the result
+     * message will return the following: [0] indicating PDP CID, which is
+     * generated by RIL. This Connection ID is used in both GSM/UMTS and CDMA
+     * modes [1] indicating the network interface name for GSM/UMTS or CDMA [2]
+     * indicating the IP address for this interface for GSM/UMTS and NULL in the
+     * case of CDMA
+     *
+     * @param radioTechnology
+     *            indicates whether to setup connection on radio technology CDMA
+     *            (0) or GSM/UMTS (1)
+     * @param profile
+     *            Profile Number or NULL to indicate default profile
+     * @param apn
+     *            the APN to connect to if radio technology is GSM/UMTS.
+     *            Otherwise null for CDMA.
+     * @param user
+     *            the username for APN, or NULL
+     * @param password
+     *            the password for APN, or NULL
+     * @param result
+     *            Callback message
+     */
+    public void setupDataCall(String radioTechnology, String profile, String apn,
+            String user, String password, Message result);
+
+    /**
+     * Deactivate packet data connection
+     *
+     * @param cid
+     *            The connection ID
+     * @param result
+     *            Callback message is empty on completion
+     */
+    public void deactivateDataCall(int cid, Message result);
+
+    /**
+     * Activate or deactivate cell broadcast SMS.
+     *
+     * @param activate
+     *            0 = activate, 1 = deactivate
+     * @param result
+     *            Callback message is empty on completion
+     */
+    public void activateCdmaBroadcastSms(int activate, Message result);
+
+    /**
+     * Configure cdma cell broadcast SMS.
+     *
+     * @param result
+     *            Callback message is empty on completion
+     */
+    public void setCdmaBroadcastConfig(int[] configValuesArray, Message result);
+
+    /**
+     * Query the current configuration of cdma cell broadcast SMS.
+     *
+     * @param result
+     *            Callback message contains the configuration from the modem on completion
+     */
+    public void getCdmaBroadcastConfig(Message result);
 }

@@ -127,10 +127,12 @@ public final class Checkin {
             PHONE_GPRS_ATTEMPTED,
             PHONE_GPRS_CONNECTED,
             PHONE_RADIO_RESETS,
-            PHONE_CDMA_REGISTERED,
             TEST,
             NETWORK_RX_MOBILE,
             NETWORK_TX_MOBILE,
+            PHONE_CDMA_REGISTERED,
+            PHONE_CDMA_DATA_ATTEMPTED,
+            PHONE_CDMA_DATA_CONNECTED,
         }
     }
 

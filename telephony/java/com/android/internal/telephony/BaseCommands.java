@@ -22,7 +22,6 @@ import android.os.RegistrantList;
 import android.os.Registrant;
 import android.os.Handler;
 import android.os.AsyncResult;
-import android.os.SystemProperties;
 import android.provider.Checkin;
 import android.util.Config;
 import android.util.Log;
@@ -50,8 +49,11 @@ public abstract class BaseCommands implements CommandsInterface {
     protected RegistrantList mNVReadyRegistrants = new RegistrantList();
     protected RegistrantList mCallStateRegistrants = new RegistrantList();
     protected RegistrantList mNetworkStateRegistrants = new RegistrantList();
-    protected RegistrantList mPDPRegistrants = new RegistrantList();
-    protected RegistrantList mRadioTechnologyChangedRegistrants= new RegistrantList();
+    protected RegistrantList mDataConnectionRegistrants = new RegistrantList();
+    protected RegistrantList mRadioTechnologyChangedRegistrants = new RegistrantList();
+    protected RegistrantList mIccStatusChangedRegistrants = new RegistrantList();
+    protected RegistrantList mVoicePrivacyOnRegistrants = new RegistrantList();
+    protected RegistrantList mVoicePrivacyOffRegistrants = new RegistrantList();
     protected Registrant mSMSRegistrant;
     protected Registrant mNITZTimeRegistrant;
     protected Registrant mSignalStrengthRegistrant;
@@ -65,8 +67,8 @@ public abstract class BaseCommands implements CommandsInterface {
     protected Registrant mStkProCmdRegistrant;
     protected Registrant mStkEventRegistrant;
     protected Registrant mStkCallSetUpRegistrant;
-    /** Registrant for handling SIM SMS storage full messages */
-    protected Registrant mSimSmsFullRegistrant;
+    /** Registrant for handling SIM/RUIM SMS storage full messages */
+    protected Registrant mIccSmsFullRegistrant;
     /** Registrant for handling Icc Refresh notifications */
     protected Registrant mIccRefreshRegistrant;
     /** Registrant for handling RING notifications */
@@ -76,25 +78,22 @@ public abstract class BaseCommands implements CommandsInterface {
     protected int mNetworkMode;
     //CDMA subscription received from PhoneFactory
     protected int mCdmaSubscription;
-    //Type of Phone, GSM or CDMA. Set by CDMAPhone or GSMPhone. 
-    //TODO check if at init has to be set from mNetworkMode
-    protected int mPhoneType; 
+    //Type of Phone, GSM or CDMA. Set by CDMAPhone or GSMPhone.
+    protected int mPhoneType;
 
-    
+
     public BaseCommands(Context context) {
         mContext = context;  // May be null (if so we won't log statistics)
     }
 
     //***** CommandsInterface implementation
 
-    public RadioState 
-    getRadioState() {
+    public RadioState getRadioState() {
         return mState;
     }
 
 
-    public void 
-    registerForRadioStateChanged(Handler h, int what, Object obj) {
+    public void registerForRadioStateChanged(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -103,8 +102,13 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
-    public void 
-    registerForOn(Handler h, int what, Object obj) {
+    public void unregisterForRadioStateChanged(Handler h) {
+        synchronized (mStateMonitor) {
+            mRadioStateChangedRegistrants.remove(h);
+        }
+    }
+
+    public void registerForOn(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -115,10 +119,14 @@ public abstract class BaseCommands implements CommandsInterface {
             }
         }
     }
-    
+    public void unregisterForOn(Handler h) {
+        synchronized (mStateMonitor) {
+            mOnRegistrants.remove(h);
+        }
+    }
 
-    public void 
-    registerForAvailable(Handler h, int what, Object obj) {
+
+    public void registerForAvailable(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -130,8 +138,13 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
-    public void 
-    registerForNotAvailable(Handler h, int what, Object obj) {
+    public void unregisterForAvailable(Handler h) {
+        synchronized(mStateMonitor) {
+            mAvailRegistrants.remove(h);
+        }
+    }
+
+    public void registerForNotAvailable(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -143,8 +156,13 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
-    public void 
-    registerForOffOrNotAvailable(Handler h, int what, Object obj) {
+    public void unregisterForNotAvailable(Handler h) {
+        synchronized (mStateMonitor) {
+            mNotAvailRegistrants.remove(h);
+        }
+    }
+
+    public void registerForOffOrNotAvailable(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -155,11 +173,15 @@ public abstract class BaseCommands implements CommandsInterface {
             }
         }
     }
+    public void unregisterForOffOrNotAvailable(Handler h) {
+        synchronized(mStateMonitor) {
+            mOffOrNotAvailRegistrants.remove(h);
+        }
+    }
 
 
     /** Any transition into SIM_READY */
-    public void 
-    registerForSIMReady(Handler h, int what, Object obj) {
+    public void registerForSIMReady(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -171,9 +193,14 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
+    public void unregisterForSIMReady(Handler h) {
+        synchronized (mStateMonitor) {
+            mSIMReadyRegistrants.remove(h);
+        }
+    }
+
     /** Any transition into RUIM_READY */
-    public void 
-    registerForRUIMReady(Handler h, int what, Object obj) {
+    public void registerForRUIMReady(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -184,10 +211,15 @@ public abstract class BaseCommands implements CommandsInterface {
             }
         }
     }
-    
+
+    public void unregisterForRUIMReady(Handler h) {
+        synchronized(mStateMonitor) {
+            mRUIMReadyRegistrants.remove(h);
+        }
+    }
+
     /** Any transition into NV_READY */
-    public void 
-    registerForNVReady(Handler h, int what, Object obj) {
+    public void registerForNVReady(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -199,8 +231,13 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
-    public void 
-    registerForSIMLockedOrAbsent(Handler h, int what, Object obj) {
+    public void unregisterForNVReady(Handler h) {
+        synchronized (mStateMonitor) {
+            mNVReadyRegistrants.remove(h);
+        }
+    }
+
+    public void registerForSIMLockedOrAbsent(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -212,8 +249,13 @@ public abstract class BaseCommands implements CommandsInterface {
         }
     }
 
-    public void 
-    registerForRUIMLockedOrAbsent(Handler h, int what, Object obj) {
+    public void unregisterForSIMLockedOrAbsent(Handler h) {
+        synchronized (mStateMonitor) {
+            mSIMLockedRegistrants.remove(h);
+        }
+    }
+
+    public void registerForRUIMLockedOrAbsent(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         synchronized (mStateMonitor) {
@@ -224,101 +266,192 @@ public abstract class BaseCommands implements CommandsInterface {
             }
         }
     }
-    
-    public void 
-    registerForCallStateChanged(Handler h, int what, Object obj) {
+
+    public void unregisterForRUIMLockedOrAbsent(Handler h) {
+        synchronized (mStateMonitor) {
+            mRUIMLockedRegistrants.remove(h);
+        }
+    }
+
+    public void registerForCallStateChanged(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         mCallStateRegistrants.add(r);
     }
 
-    public void 
-    registerForNetworkStateChanged(Handler h, int what, Object obj) {
+    public void unregisterForCallStateChanged(Handler h) {
+        mCallStateRegistrants.remove(h);
+    }
+
+    public void registerForNetworkStateChanged(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
         mNetworkStateRegistrants.add(r);
     }
 
-    public void
-    registerForPDPStateChanged(Handler h, int what, Object obj) {
-        Registrant r = new Registrant (h, what, obj);
-
-        mPDPRegistrants.add(r);
+    public void unregisterForNetworkStateChanged(Handler h) {
+        mNetworkStateRegistrants.remove(h);
     }
 
-    public void 
-    registerForRadioTechnologyChanged(Handler h, int what, Object obj) {
+    public void registerForDataStateChanged(Handler h, int what, Object obj) {
+        Registrant r = new Registrant (h, what, obj);
+
+        mDataConnectionRegistrants.add(r);
+    }
+
+    public void unregisterForDataStateChanged(Handler h) {
+        mDataConnectionRegistrants.remove(h);
+    }
+
+    public void registerForRadioTechnologyChanged(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
         mRadioTechnologyChangedRegistrants.add(r);
     }
-    
-    public void 
-    setOnNewSMS(Handler h, int what, Object obj) {
+
+    public void unregisterForRadioTechnologyChanged(Handler h) {
+        mRadioTechnologyChangedRegistrants.remove(h);
+    }
+
+    public void registerForIccStatusChanged(Handler h, int what, Object obj) {
+        Registrant r = new Registrant (h, what, obj);
+        mIccStatusChangedRegistrants.add(r);
+    }
+
+    public void unregisterForIccStatusChanged(Handler h) {
+        mIccStatusChangedRegistrants.remove(h);
+    }
+
+    public void setOnNewSMS(Handler h, int what, Object obj) {
         mSMSRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnSmsOnSim(Handler h, int what, Object obj) {
+    public void unSetOnNewSMS(Handler h) {
+        mSMSRegistrant.clear();
+    }
+
+    public void setOnSmsOnSim(Handler h, int what, Object obj) {
         mSmsOnSimRegistrant = new Registrant (h, what, obj);
     }
-    
+
+    public void unSetOnSmsOnSim(Handler h) {
+        mSmsOnSimRegistrant.clear();
+    }
+
     public void setOnSmsStatus(Handler h, int what, Object obj) {
         mSmsStatusRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnSignalStrengthUpdate(Handler h, int what, Object obj) {
+    public void unSetOnSmsStatus(Handler h) {
+        mSmsStatusRegistrant.clear();
+    }
+
+    public void setOnSignalStrengthUpdate(Handler h, int what, Object obj) {
         mSignalStrengthRegistrant = new Registrant (h, what, obj);
     }
 
-    public void 
-    setOnNITZTime(Handler h, int what, Object obj) {
+    public void unSetOnSignalStrengthUpdate(Handler h) {
+        mSignalStrengthRegistrant.clear();
+    }
+
+    public void setOnNITZTime(Handler h, int what, Object obj) {
         mNITZTimeRegistrant = new Registrant (h, what, obj);
     }
-  
-    public void 
-    setOnUSSD(Handler h, int what, Object obj) {
+
+    public void unSetOnNITZTime(Handler h) {
+        mNITZTimeRegistrant.clear();
+    }
+
+    public void setOnUSSD(Handler h, int what, Object obj) {
         mUSSDRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnSuppServiceNotification(Handler h, int what, Object obj) {
+    public void unSetOnUSSD(Handler h) {
+        mUSSDRegistrant.clear();
+    }
+
+    public void setOnSuppServiceNotification(Handler h, int what, Object obj) {
         mSsnRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnStkSessionEnd(Handler h, int what, Object obj) {
+    public void unSetOnSuppServiceNotification(Handler h) {
+        mSsnRegistrant.clear();
+    }
+
+    public void setOnStkSessionEnd(Handler h, int what, Object obj) {
         mStkSessionEndRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnStkProactiveCmd(Handler h, int what, Object obj) {
+    public void unSetOnStkSessionEnd(Handler h) {
+        mStkSessionEndRegistrant.clear();
+    }
+
+    public void setOnStkProactiveCmd(Handler h, int what, Object obj) {
         mStkProCmdRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnStkEvent(Handler h, int what, Object obj) {
+    public void unSetOnStkProactiveCmd(Handler h) {
+        mStkProCmdRegistrant.clear();
+    }
+
+    public void setOnStkEvent(Handler h, int what, Object obj) {
         mStkEventRegistrant = new Registrant (h, what, obj);
     }
 
-    public void
-    setOnStkCallSetUp(Handler h, int what, Object obj) {
+    public void unSetOnStkEvent(Handler h) {
+        mStkEventRegistrant.clear();
+    }
+
+    public void setOnStkCallSetUp(Handler h, int what, Object obj) {
         mStkCallSetUpRegistrant = new Registrant (h, what, obj);
     }
 
-    public void setOnSimSmsFull(Handler h, int what, Object obj) {
-        mSimSmsFullRegistrant = new Registrant (h, what, obj);
+    public void unSetOnStkCallSetUp(Handler h) {
+        mStkCallSetUpRegistrant.clear();
+    }
+
+    public void setOnIccSmsFull(Handler h, int what, Object obj) {
+        mIccSmsFullRegistrant = new Registrant (h, what, obj);
+    }
+
+    public void unSetOnIccSmsFull(Handler h) {
+        mIccSmsFullRegistrant.clear();
     }
 
     public void setOnIccRefresh(Handler h, int what, Object obj) {
         mIccRefreshRegistrant = new Registrant (h, what, obj);
     }
-    
+
+    public void unSetOnIccRefresh(Handler h) {
+        mIccRefreshRegistrant.clear();
+    }
+
     public void setOnCallRing(Handler h, int what, Object obj) {
         mRingRegistrant = new Registrant (h, what, obj);
     }
-    
-    
+
+    public void unSetOnCallRing(Handler h) {
+        mRingRegistrant.clear();
+    }
+
+    public void registerForInCallVoicePrivacyOn(Handler h, int what, Object obj){
+        Registrant r = new Registrant (h, what, obj);
+        mVoicePrivacyOnRegistrants.add(r);
+    }
+
+    public void unregisterForInCallVoicePrivacyOn(Handler h){
+        mVoicePrivacyOnRegistrants.remove(h);
+    }
+
+    public void registerForInCallVoicePrivacyOff(Handler h, int what, Object obj){
+        Registrant r = new Registrant (h, what, obj);
+        mVoicePrivacyOffRegistrants.add(r);
+    }
+
+    public void unregisterForInCallVoicePrivacyOff(Handler h){
+        mVoicePrivacyOffRegistrants.remove(h);
+    }
+
+
     //***** Protected Methods
     /**
      * Store new RadioState and send notification based on the changes
@@ -333,24 +466,24 @@ public abstract class BaseCommands implements CommandsInterface {
      */
     protected void setRadioState(RadioState newState) {
         RadioState oldState;
-        
+
         synchronized (mStateMonitor) {
             if (Config.LOGV) {
                 Log.v(LOG_TAG, "setRadioState old: " + mState
                     + " new " + newState);
             }
-        
+
             oldState = mState;
             mState = newState;
-            
+
             if (oldState == mState) {
                 // no state transition
                 return;
             }
 
             if (mContext != null &&
-                newState == RadioState.RADIO_UNAVAILABLE &&
-                oldState != RadioState.RADIO_OFF) {
+                    newState == RadioState.RADIO_UNAVAILABLE &&
+                    oldState != RadioState.RADIO_OFF) {
                 Checkin.updateStats(mContext.getContentResolver(),
                         Checkin.Stats.Tag.PHONE_RADIO_RESETS, 1, 0.0);
             }
@@ -376,7 +509,7 @@ public abstract class BaseCommands implements CommandsInterface {
             if (mState == RadioState.SIM_LOCKED_OR_ABSENT) {
                 Log.d(LOG_TAG,"Notifying: SIM locked or absent");
                 mSIMLockedRegistrants.notifyRegistrants();
-            } 
+            }
 
             if (mState.isRUIMReady() && !oldState.isRUIMReady()) {
                 Log.d(LOG_TAG,"Notifying: RUIM ready");
@@ -386,7 +519,7 @@ public abstract class BaseCommands implements CommandsInterface {
             if (mState == RadioState.RUIM_LOCKED_OR_ABSENT) {
                 Log.d(LOG_TAG,"Notifying: RUIM locked or absent");
                 mRUIMLockedRegistrants.notifyRegistrants();
-            } 
+            }
             if (mState.isNVReady() && !oldState.isNVReady()) {
                 Log.d(LOG_TAG,"Notifying: NV ready");
                 mNVReadyRegistrants.notifyRegistrants();
@@ -395,34 +528,44 @@ public abstract class BaseCommands implements CommandsInterface {
             if (mState.isOn() && !oldState.isOn()) {
                 Log.d(LOG_TAG,"Notifying: Radio On");
                 mOnRegistrants.notifyRegistrants();
-            } 
+            }
 
-            if ((!mState.isOn() || !mState.isAvailable()) 
+            if ((!mState.isOn() || !mState.isAvailable())
                 && !((!oldState.isOn() || !oldState.isAvailable()))
             ) {
                 Log.d(LOG_TAG,"Notifying: radio off or not available");
                 mOffOrNotAvailRegistrants.notifyRegistrants();
             }
 
-            if ((mState.isGsm() && !oldState.isGsm())
-                || (mState.isCdma() && !oldState.isCdma())) {
-                Log.d(LOG_TAG,"Notifying: radio technology change");
+            /* Radio Technology Change events
+             * NOTE: isGsm and isCdma have no common states in RADIO_OFF or RADIO_UNAVAILABLE; the
+             *   current phone is determined by mPhoneType
+             * NOTE: at startup no phone have been created and the RIL determines the mPhoneType
+             *   looking based on the networkMode set by the PhoneFactory in the constructor
+             */
+
+            if (mState.isGsm() && oldState.isCdma()) {
+                Log.d(LOG_TAG,"Notifying: radio technology change CDMA to GSM");
                 mRadioTechnologyChangedRegistrants.notifyRegistrants();
             }
 
-            if (    (mState.isGsm() && !mState.isCdma() &&!oldState.isOn() 
-                     && (mPhoneType == RILConstants.CDMA_PHONE))
-                ||  (mState.isCdma() && !mState.isCdma() &&!oldState.isOn() 
-                     && (mPhoneType == RILConstants.GSM_PHONE)) ){
-                //NOTE isGsm and isCdma shares 2 common states
-                //NOTE second || should never happen
-                Log.d(LOG_TAG,"Notifying: radio technology change at startup");
+            if (mState.isGsm() && !oldState.isOn() && (mPhoneType == RILConstants.CDMA_PHONE)) {
+                Log.d(LOG_TAG,"Notifying: radio technology change CDMA OFF to GSM");
+                mRadioTechnologyChangedRegistrants.notifyRegistrants();
+            }
+
+            if (mState.isCdma() && oldState.isGsm()) {
+                Log.d(LOG_TAG,"Notifying: radio technology change GSM to CDMA");
+                mRadioTechnologyChangedRegistrants.notifyRegistrants();
+            }
+
+            if (mState.isCdma() && !oldState.isOn() && (mPhoneType == RILConstants.GSM_PHONE)) {
+                Log.d(LOG_TAG,"Notifying: radio technology change GSM OFF to CDMA");
                 mRadioTechnologyChangedRegistrants.notifyRegistrants();
             }
         }
     }
 
-    protected void
-    onRadioAvailable() {
+    protected void onRadioAvailable() {
     }
 }

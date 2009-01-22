@@ -20,9 +20,9 @@ import java.util.List;
 
 /**
  * Class for representing BER-TLV objects.
- * 
+ *
  * @see "ETSI TS 102 223 Annex C" for more information.
- * 
+ *
  * {@hide}
  */
 class BerTlv {
@@ -41,16 +41,16 @@ class BerTlv {
 
     /**
      * Gets a list of ComprehensionTlv objects contained in this BER-TLV object.
-     * 
+     *
      * @return A list of COMPREHENSION-TLV object
      */
     public List<ComprehensionTlv> getComprehensionTlvs() {
         return mCompTlvs;
     }
-    
+
     /**
      * Gets a tag id of the BER-TLV object.
-     * 
+     *
      * @return A tag integer.
      */
     public int getTag() {
@@ -59,7 +59,7 @@ class BerTlv {
 
     /**
      * Decodes a BER-TLV object from a byte array.
-     * 
+     *
      * @param data A byte array to decode from
      * @return A BER-TLV object decoded
      * @throws ResultException
@@ -74,7 +74,7 @@ class BerTlv {
             tag = data[curIndex++] & 0xff;
             if (tag != BER_PROACTIVE_COMMAND_TAG) {
                 // If the buffer doesn't contain proactive command tag, but
-                // start with a command details tlv object ==> skip the length 
+                // start with a command details tlv object ==> skip the length
                 // parsing and look for tlv objects.
                 ComprehensionTlv ctlv = ComprehensionTlv.decode(data,
                         curIndex--);

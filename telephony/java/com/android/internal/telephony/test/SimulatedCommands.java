@@ -23,13 +23,13 @@ import android.util.Log;
 
 import com.android.internal.os.HandlerThread;
 import com.android.internal.telephony.BaseCommands;
+import com.android.internal.telephony.CommandException;
 import com.android.internal.telephony.CommandsInterface;
-import com.android.internal.telephony.Phone;
-import com.android.internal.telephony.gsm.CallFailCause;
-import com.android.internal.telephony.gsm.CommandException;
 import com.android.internal.telephony.DriverCall;
+import com.android.internal.telephony.gsm.CallFailCause;
 import com.android.internal.telephony.gsm.PDPContextState;
 import com.android.internal.telephony.gsm.SuppServiceNotification;
+import com.android.internal.telephony.Phone;
 
 import java.util.ArrayList;
 
@@ -489,13 +489,20 @@ public final class SimulatedCommands extends BaseCommands
     }
 
     /** 
+     *  @deprecated
+     */
+    public void getPDPContextList(Message result) {
+        getDataCallList(result);
+    }
+
+    /**
      *  returned message
      *  retMsg.obj = AsyncResult ar
      *  ar.exception carries exception on failure
      *  ar.userObject contains the orignal value of result.obj
      *  ar.result contains a List of PDPContextState
      */
-    public void getPDPContextList(Message result) {
+    public void getDataCallList(Message result) {
         resultSuccess(result, new ArrayList<PDPContextState>(0));
     }
 
@@ -745,8 +752,15 @@ public final class SimulatedCommands extends BaseCommands
         resultSuccess(result, ret);
     }
 
-    public void
-    getLastPdpFailCause (Message result) {
+    /**
+     * @deprecated
+     */
+    public void getLastPdpFailCause (Message result) {
+        unimplemented(result);
+    }
+
+    public void getLastDataCallFailCause(Message result) {
+        //
         unimplemented(result);
     }
 
@@ -925,16 +939,35 @@ public final class SimulatedCommands extends BaseCommands
         unimplemented(response);
     }
 
+    public void deleteSmsOnRuim(int index, Message response) {
+        Log.d(LOG_TAG, "Delete RUIM message at index " + index);
+        unimplemented(response);
+    }
+
     public void writeSmsToSim(int status, String smsc, String pdu, Message response) {
         Log.d(LOG_TAG, "Write SMS to SIM with status " + status);
         unimplemented(response);
     }
 
+    public void writeSmsToRuim(int status, String pdu, Message response) {
+        Log.d(LOG_TAG, "Write SMS to RUIM with status " + status);
+        unimplemented(response);
+    }
 
     public void setupDefaultPDP(String apn, String user, String password, Message result) {
         unimplemented(result);
     }
 
+    public void setupDataCall(String radioTechnology, String profile, String apn, String user,
+            String password, Message result) {
+        unimplemented(result);
+    }
+
+    public void deactivateDataCall(int cid, Message result) {unimplemented(result);}
+
+    /**
+     * @deprecated
+     */
     public void deactivateDefaultPDP(int cid, Message result) {unimplemented(result);}
 
     public void setPreferredNetworkType(int networkType , Message result) {
@@ -969,7 +1002,7 @@ public final class SimulatedCommands extends BaseCommands
         }
         return false;
     }
-    
+
     public void setRadioPower(boolean on, Message result) {
         if(on) {
             if (isSimLocked()) {
@@ -987,6 +1020,10 @@ public final class SimulatedCommands extends BaseCommands
 
 
     public void acknowledgeLastIncomingSMS(boolean success, Message result) {
+        unimplemented(result);
+    }
+
+    public void acknowledgeLastIncomingCdmaSms(boolean success, Message result) {
         unimplemented(result);
     }
 
@@ -1064,7 +1101,7 @@ public final class SimulatedCommands extends BaseCommands
      * @param serviceClass is a sum of SERVICE_CLASSS_* 
      */
     public void setCallForward(int action, int cfReason, int serviceClass, 
-                String number, int timeSeconds, Message result) {unimplemented(result);}
+            String number, int timeSeconds, Message result) {unimplemented(result);}
 
     /**
      * cfReason is one of CF_REASON_*
@@ -1075,11 +1112,12 @@ public final class SimulatedCommands extends BaseCommands
      * An array of length 0 means "disabled for all codes"
      */
     public void queryCallForwardStatus(int cfReason, int serviceClass,
-                String number, Message result) {unimplemented(result);}
+            String number, Message result) {unimplemented(result);}
 
     public void setNetworkSelectionModeAutomatic(Message result) {unimplemented(result);}
 
-    public void setNetworkSelectionModeManual(String operatorNumeric, Message result) {unimplemented(result);}
+    public void setNetworkSelectionModeManual(
+            String operatorNumeric, Message result) {unimplemented(result);}
 
     /**
      * Queries whether the current network selection mode is automatic
@@ -1308,43 +1346,47 @@ public final class SimulatedCommands extends BaseCommands
     // ***** Methods for CDMA support
     public void
     getDeviceIdentity(Message response) {
-     //TODO: to be implemented
-
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
-    
+
     public void 
     getCDMASubscription(Message response) {
-        //TODO: to be implemented
-
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
 
     public void 
     setCdmaSubscription(int cdmaSubscriptionType, Message response) {
-        //TODO: to be implemented
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
-    
+
     public void queryCdmaRoamingPreference(Message response) {
-        //TODO: to be implemented
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
-    
+
     public void setCdmaRoamingPreference(int cdmaRoamingType, Message response) {
-        //TODO: to be implemented
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
 
     public void
     setPhoneType(int phoneType) {
-        //TODO: to be implemented
-
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
     }
-    
+
     public void getPreferredVoicePrivacy(Message result) {
-       Log.w(LOG_TAG, "Warning, this function is not completely implemented in the class SimulatedCommands.java.");
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(result);
     }
 
     public void setPreferredVoicePrivacy(boolean enable, Message result) {
-       Log.w(LOG_TAG, "Warning, this function is not completely implemented in the class SimulatedCommands.java.");
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(result);
     }
-    
+
     /**
      *  Set the TTY mode for the CDMA phone
      *
@@ -1353,9 +1395,10 @@ public final class SimulatedCommands extends BaseCommands
      * @param response is callback message
      */
     public void setTTYModeEnabled(boolean enable, Message response) {
-        //TODO T: to be implemented
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
-    
+
     /**
      *  Query the TTY mode for the CDMA phone
      * (AsyncResult)response.obj).result is an int[] with element [0] set to
@@ -1365,7 +1408,38 @@ public final class SimulatedCommands extends BaseCommands
      * @param response is callback message
      */
     public void queryTTYModeEnabled(Message response) {
-        //TODO T: to be implemented
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    public void sendCDMAFeatureCode(String FeatureCode, Message response) {
+        Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+        unimplemented(response);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void sendCdmaSms(byte[] pdu, Message response){
+       Log.w(LOG_TAG, "CDMA not implemented in SimulatedCommands");
+    }
+
+    public void activateCdmaBroadcastSms(int activate, Message result) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void getCdmaBroadcastConfig(Message result) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setCdmaBroadcastConfig(int[] configValuesArray, Message result) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -16,40 +16,34 @@
 
 package com.android.internal.telephony;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.android.internal.telephony.gsm.CommandException;
-//import com.android.internal.telephony.gsm.DriverCall;
-//import com.android.internal.telephony.gsm.GsmConnection;
-
 import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.android.internal.telephony.CommandException;
+
+
 /**
  * {@hide}
  */
 public abstract class CallTracker extends Handler {
-    static final String LOG_TAG = "CallTracker";
-    
+
     private static final boolean DBG_POLL = false;
-    
+
     //***** Constants
 
     static final int POLL_DELAY_MSEC = 250;
-    
+
     protected int pendingOperations;
     protected boolean needsPoll;
     protected Message lastRelevantPoll;
-    
+
     public CommandsInterface cm;
-    
-    
-    
+
+
     //***** Events
-    
+
     protected static final int EVENT_POLL_CALLS_RESULT    = 1;
     protected static final int EVENT_CALL_STATE_CHANGE    = 2;
     protected static final int EVENT_REPOLL_AFTER_DELAY   = 3;
@@ -62,20 +56,17 @@ public abstract class CallTracker extends Handler {
     protected static final int EVENT_CONFERENCE_RESULT    = 11;
     protected static final int EVENT_SEPARATE_RESULT      = 12;
     protected static final int EVENT_ECT_RESULT           = 13;
-    
-    // Events for CDMA support
 
 
-    
     protected void pollCallsWhenSafe() {
         needsPoll = true;
 
         if (checkNoOperationsPending()) {
             lastRelevantPoll = obtainMessage(EVENT_POLL_CALLS_RESULT);
-            cm.getCurrentCalls(lastRelevantPoll);            
+            cm.getCurrentCalls(lastRelevantPoll);
         }
     }
-    
+
     protected void
     pollCallsAfterDelay() {
         Message msg = obtainMessage();
@@ -84,27 +75,24 @@ public abstract class CallTracker extends Handler {
         sendMessageDelayed(msg, POLL_DELAY_MSEC);
     }
 
-
-    
     protected boolean
     isCommandExceptionRadioNotAvailable(Throwable e) {
         return e != null && e instanceof CommandException
                 && ((CommandException)e).getCommandError()
                         == CommandException.Error.RADIO_NOT_AVAILABLE;
     }
- 
+
     protected abstract void handlePollCalls(AsyncResult ar);
 
-    
     protected void handleRadioAvailable() {
         pollCallsWhenSafe();
     }
-    
+
     /**
      * Obtain a complete message that indicates that this operation
      * does not require polling of getCurrentCalls(). However, if other
-     * operations that do need getCurrentCalls() are pending or are 
-     * scheduled while this operation is pending, the invocatoin
+     * operations that do need getCurrentCalls() are pending or are
+     * scheduled while this operation is pending, the invocation
      * of getCurrentCalls() will be postponed until this
      * operation is also complete.
      */
@@ -114,7 +102,7 @@ public abstract class CallTracker extends Handler {
         lastRelevantPoll = null;
         return obtainMessage(what);
     }
-    
+
     /**
      * @return true if we're idle or there's a call to getCurrentCalls() pending
      * but nothing else
@@ -125,15 +113,11 @@ public abstract class CallTracker extends Handler {
                 pendingOperations);
         return pendingOperations == 0;
     }
- 
-    
-    
-    
-    //***** Overridden from Handler    
+
+
+    //***** Overridden from Handler
     public abstract void handleMessage (Message msg);
 
-    private void log(String msg) {
-        Log.d(LOG_TAG, "[CallTracker] " + msg);
-    }
-    
+    protected abstract void log(String msg);
+
 }

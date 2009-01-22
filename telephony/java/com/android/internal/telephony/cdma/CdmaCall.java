@@ -22,9 +22,8 @@ import java.util.List;
 import com.android.internal.telephony.Call;
 import com.android.internal.telephony.CallStateException;
 import com.android.internal.telephony.Connection;
-import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.DriverCall;
-
+import com.android.internal.telephony.Phone;
 
 /**
  * {@hide}
@@ -35,7 +34,7 @@ public final class CdmaCall extends Call {
     /*package*/ ArrayList<Connection> connections = new ArrayList<Connection>();
     /*package*/ State state = State.IDLE;
     /*package*/ CdmaCallTracker owner;
-    
+
     /***************************** Class Methods *****************************/
 
     static State
@@ -50,34 +49,35 @@ public final class CdmaCall extends Call {
             default:            throw new RuntimeException ("illegal call state:" + dcState);
         }
     }
-    
+
 
     /****************************** Constructors *****************************/
     /*package*/
     CdmaCall (CdmaCallTracker owner) {
         this.owner = owner;
     }
-    
+
+    public void dispose() {
+    }
+
     /************************** Overridden from Call *************************/
-   // TODO is currently a copy of GSM to build
-    // has to be implemented 
     public List<Connection>
     getConnections() {
         // FIXME should return Collections.unmodifiableList();
         return connections;
     }
-    
-    public State 
+
+    public State
     getState() {
         return state;
     }
-    
-    public Phone 
+
+    public Phone
     getPhone() {
-        //TODO
+        //TODO, see GsmCall
         return null;
     }
-    
+
     public boolean isMultiparty() {
         return connections.size() > 1;
     }
@@ -86,11 +86,11 @@ public final class CdmaCall extends Call {
      *  background call exists, the background call will be resumed
      *  because an AT+CHLD=1 will be sent
      */
-    public void 
+    public void
     hangup() throws CallStateException {
         owner.hangup(this);
-    }  
-    
+    }
+
     public String
     toString() {
         return state.toString();
@@ -121,20 +121,20 @@ public final class CdmaCall extends Call {
             /* If only disconnected connections remain, we are disconnected*/
 
             boolean hasOnlyDisconnectedConnections = true;
-    
+
             for (int i = 0, s = connections.size()  ; i < s; i ++) {
-                if (connections.get(i).getState() 
+                if (connections.get(i).getState()
                     != State.DISCONNECTED
                 ) {
                     hasOnlyDisconnectedConnections = false;
                     break;
-                }            
+                }
             }
 
             if (hasOnlyDisconnectedConnections) {
-                state = State.DISCONNECTED;            
+                state = State.DISCONNECTED;
             }
-        }    
+        }
     }
 
 
@@ -151,9 +151,9 @@ public final class CdmaCall extends Call {
     update (CdmaConnection conn, DriverCall dc) {
         State newState;
         boolean changed = false;
-        
+
         newState = stateFromDCState(dc.state);
-        
+
         if (newState != state) {
             state = newState;
             changed = true;
@@ -174,7 +174,7 @@ public final class CdmaCall extends Call {
     //***** Called from CdmaCallTracker
 
 
-    /** 
+    /**
      * Called when this Call is being hung up locally (eg, user pressed "end")
      * Note that at this point, the hangup request has been dispatched to the radio
      * but no response has yet been received so update() has not yet been called
@@ -189,18 +189,18 @@ public final class CdmaCall extends Call {
             cn.onHangupLocal();
         }
     }
-    
+
     /**
      * Called when it's time to clean up disconnected Connection objects
      */
    void clearDisconnected() {
         for (int i = connections.size() - 1 ; i >= 0 ; i--) {
         CdmaConnection cn = (CdmaConnection)connections.get(i);
-            
+
             if (cn.getState() == State.DISCONNECTED) {
                 connections.remove(i);
             }
-        }    
+        }
 
         if (connections.size() == 0) {
             state = State.IDLE;

@@ -46,8 +46,8 @@ public final class AndroidRadioDataProvider extends PhoneStateListener {
   private static final int RADIO_TYPE_UNKNOWN = 0;
   private static final int RADIO_TYPE_GSM = 1;
   private static final int RADIO_TYPE_WCDMA = 2;
-  private static final int RADIO_TYPE_CDMA = 3;  
-  private static final int RADIO_TYPE_EVDO = 4;  
+  private static final int RADIO_TYPE_CDMA = 3;
+  private static final int RADIO_TYPE_EVDO = 4;
   private static final int RADIO_TYPE_1xRTT = 5;
 
   /** Simple container for radio data */

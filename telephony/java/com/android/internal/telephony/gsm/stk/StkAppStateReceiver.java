@@ -23,8 +23,8 @@ import com.android.internal.telephony.gsm.stk.Service;
 import android.util.Log;
 
 /**
- * This class implements a Broadcast receiver. It waits for an intent sent by 
- * the STK service and install/uninstall the STK application. If no intent is 
+ * This class implements a Broadcast receiver. It waits for an intent sent by
+ * the STK service and install/uninstall the STK application. If no intent is
  * received when the device finished booting, the application is then unistalled.
  */
 public class StkAppStateReceiver extends BroadcastReceiver {

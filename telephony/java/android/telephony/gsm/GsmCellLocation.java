@@ -80,7 +80,7 @@ public class GsmCellLocation extends CellLocation {
     @Override
     public boolean equals(Object o) {
         GsmCellLocation s;
-        
+
         try {
             s = (GsmCellLocation)o;
         } catch (ClassCastException ex) {
@@ -98,7 +98,7 @@ public class GsmCellLocation extends CellLocation {
     public String toString() {
         return "["+ mLac + "," + mCid + "]";
     }
-    
+
     /**
      * Test whether two objects hold the same data values or both are null
      *

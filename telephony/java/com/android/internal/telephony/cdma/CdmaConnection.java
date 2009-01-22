@@ -18,17 +18,17 @@ package com.android.internal.telephony.cdma;
 
 import com.android.internal.telephony.*;
 
+import android.os.AsyncResult;
 import android.os.Handler;
-import android.os.Registrant;
 import android.os.Looper;
 import android.os.Message;
-import android.os.AsyncResult;
+import android.os.Registrant;
 import android.os.SystemClock;
-import android.util.Log;
 import android.util.Config;
+import android.util.Log;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.ServiceState;
- 
+
 
 /**
  * {@hide}
@@ -41,13 +41,13 @@ public class CdmaConnection extends Connection {
     CdmaCallTracker owner;
     CdmaCall parent;
 
-    
-    String address;             // MAY BE NULL!!!  
+
+    String address;             // MAY BE NULL!!!
     String dialString;          // outgoing calls only
-    String postDialString;      // outgoing calls only    
+    String postDialString;      // outgoing calls only
     boolean isIncoming;
-    boolean disconnected; 
-    
+    boolean disconnected;
+
     int index;          // index in CdmaCallTracker.connections[], -1 if unassigned
 
     /*
@@ -65,14 +65,14 @@ public class CdmaConnection extends Connection {
      */
     long connectTimeReal;
     long duration;
-    long holdingStartTime;  // The time when the Connection last transitioned 
+    long holdingStartTime;  // The time when the Connection last transitioned
                             // into HOLDING
 
     int nextPostDialChar;       // index into postDialString
-    
+
     DisconnectCause cause = DisconnectCause.NOT_DISCONNECTED;
     PostDialState postDialState = PostDialState.NOT_STARTED;
-    
+
     Handler h;
 
     //***** Event Constants
@@ -93,6 +93,7 @@ public class CdmaConnection extends Connection {
 
         public void
         handleMessage(Message msg) {
+
             switch (msg.what) {
                 case EVENT_NEXT_POST_DIAL:
                 case EVENT_DTMF_DONE:
@@ -143,6 +144,9 @@ public class CdmaConnection extends Connection {
         parent.attachFake(this, CdmaCall.State.DIALING);
     }
 
+    public void dispose() {
+    }
+
     static boolean
     equalsHandlesNulls (Object a, Object b) {
         return (a == null) ? (b == null) : a.equals (b);
@@ -161,18 +165,17 @@ public class CdmaConnection extends Connection {
         // no control over when they begin, so we might as well
 
         String cAddress = PhoneNumberUtils.stringFromStringAndTOA(c.number, c.TOA);
-        return isIncoming == c.isMT && equalsHandlesNulls(address, cAddress); 
-    }   
-    
+        return isIncoming == c.isMT && equalsHandlesNulls(address, cAddress);
+    }
+
     public String
     toString() {
         return (isIncoming ? "incoming" : "outgoing");
     }
 
     public String getAddress() {
-        return address; 
+        return address;
     }
-
 
     public CdmaCall getCall() {
         return parent;
@@ -220,13 +223,13 @@ public class CdmaConnection extends Connection {
     public CdmaCall.State getState() {
         if (disconnected) {
             return CdmaCall.State.DISCONNECTED;
-        } else {   
+        } else {
             return super.getState();
         }
     }
 
     public void hangup() throws CallStateException {
-        if (!disconnected) {        
+        if (!disconnected) {
             owner.hangup(this);
         } else {
             throw new CallStateException ("disconnected");
@@ -234,7 +237,7 @@ public class CdmaConnection extends Connection {
     }
 
     public void separate() throws CallStateException {
-        if (!disconnected) {        
+        if (!disconnected) {
             owner.separate(this);
         } else {
             throw new CallStateException ("disconnected");
@@ -247,7 +250,7 @@ public class CdmaConnection extends Connection {
 
     public void proceedAfterWaitChar() {
         if (postDialState != PostDialState.WAIT) {
-            Log.w(LOG_TAG, "CdmaConnection.proceedAfterWaitChar(): Expected " 
+            Log.w(LOG_TAG, "CdmaConnection.proceedAfterWaitChar(): Expected "
                 + "getPostDialState() to be WAIT but was " + postDialState);
             return;
         }
@@ -256,10 +259,10 @@ public class CdmaConnection extends Connection {
 
         processNextPostDialChar();
     }
-    
+
     public void proceedAfterWildChar(String str) {
         if (postDialState != PostDialState.WILD) {
-            Log.w(LOG_TAG, "CdmaConnection.proceedAfterWaitChar(): Expected " 
+            Log.w(LOG_TAG, "CdmaConnection.proceedAfterWaitChar(): Expected "
                 + "getPostDialState() to be WILD but was " + postDialState);
             return;
         }
@@ -296,22 +299,22 @@ public class CdmaConnection extends Connection {
             postDialString = buf.toString();
             nextPostDialChar = 0;
             if (Phone.DEBUG_PHONE) {
-                log("proceedAfterWildChar: new postDialString is " + 
+                log("proceedAfterWildChar: new postDialString is " +
                         postDialString);
             }
 
             processNextPostDialChar();
         }
     }
-    
+
     public void cancelPostDial() {
         postDialState = PostDialState.CANCELLED;
     }
 
-    /** 
+    /**
      * Called when this Connection is being hung up locally (eg, user pressed "end")
      * Note that at this point, the hangup request has been dispatched to the radio
-     * but no response has yet been received so update() has not yet been called 
+     * but no response has yet been received so update() has not yet been called
      */
     void
     onHangupLocal() {
@@ -324,31 +327,12 @@ public class CdmaConnection extends Connection {
          * See 22.001 Annex F.4 for mapping of cause codes
          * to local tones
          */
-    
+
         switch (causeCode) {
             case CallFailCause.USER_BUSY:
                 return DisconnectCause.BUSY;
-
-                // TODO: check if cases are needed for CDMA
-//            case CallFailCause.NO_CIRCUIT_AVAIL:
-//            case CallFailCause.TEMPORARY_FAILURE:
-//            case CallFailCause.SWITCHING_CONGESTION:
-//            case CallFailCause.CHANNEL_NOT_AVAIL:
-//            case CallFailCause.QOS_NOT_AVAIL:
-//            case CallFailCause.BEARER_NOT_AVAIL:
-//                return DisconnectCause.CONGESTION;
-//
-//            case CallFailCause.ACM_LIMIT_EXCEEDED:
-//                return DisconnectCause.LIMIT_EXCEEDED;
-//
-//            case CallFailCause.CALL_BARRED:
-//                return DisconnectCause.CALL_BARRED;
-//
-//            case CallFailCause.FDN_BLOCKED:
-//                return DisconnectCause.FDN_BLOCKED;
-
             case CallFailCause.ERROR_UNSPECIFIED:
-            case CallFailCause.NORMAL_CLEARING: 
+            case CallFailCause.NORMAL_CLEARING:
             default:
                 CDMAPhone phone = owner.phone;
                 int serviceState = phone.getServiceState().getState();
@@ -357,8 +341,9 @@ public class CdmaConnection extends Connection {
                 } else if (serviceState == ServiceState.STATE_OUT_OF_SERVICE
                         || serviceState == ServiceState.STATE_EMERGENCY_ONLY ) {
                     return DisconnectCause.OUT_OF_SERVICE;
-                } else if (phone.getIccCard().getState() != RuimCard.State.READY) {
-                    return DisconnectCause.SIM_ERROR;
+                } else if (phone.mCM.getRadioState() != CommandsInterface.RadioState.NV_READY
+                        && phone.getIccCard().getState() != RuimCard.State.READY) {
+                    return DisconnectCause.ICC_ERROR;
                 } else {
                     return DisconnectCause.NORMAL;
                 }
@@ -374,10 +359,10 @@ public class CdmaConnection extends Connection {
     /*package*/ void
     onDisconnect(DisconnectCause cause) {
         this.cause = cause;
-        
-        if (!disconnected) {        
+
+        if (!disconnected) {
             index = -1;
-            
+
             disconnectTime = System.currentTimeMillis();
             duration = SystemClock.elapsedRealtime() - connectTimeReal;
             disconnected = true;
@@ -388,7 +373,7 @@ public class CdmaConnection extends Connection {
             owner.phone.notifyDisconnect(this);
 
             if (parent != null) {
-                parent.connectionDisconnected(this);            
+                parent.connectionDisconnected(this);
             }
         }
     }
@@ -463,13 +448,12 @@ public class CdmaConnection extends Connection {
         onStartedHolding();
     }
 
-    // TODO: find another name for this function
     /*package*/ int
-    getGSMIndex() throws CallStateException {
+    getCDMAIndex() throws CallStateException {
         if (index >= 0) {
             return index + 1;
         } else {
-            throw new CallStateException ("GSM index not yet assigned");
+            throw new CallStateException ("CDMA connection index not assigned");
         }
     }
 
@@ -510,21 +494,21 @@ public class CdmaConnection extends Connection {
         } else if (c == PhoneNumberUtils.PAUSE) {
             // From TS 22.101:
 
-            // "The first occurrence of the "DTMF Control Digits Separator" 
-            //  shall be used by the ME to distinguish between the addressing 
+            // "The first occurrence of the "DTMF Control Digits Separator"
+            //  shall be used by the ME to distinguish between the addressing
             //  digits (i.e. the phone number) and the DTMF digits...."
 
             if (nextPostDialChar == 1) {
                 // The first occurrence.
                 // We don't need to pause here, but wait for just a bit anyway
-                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE), 
+                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE),
                                             PAUSE_DELAY_FIRST_MILLIS);
             } else {
                 // It continues...
-                // "Upon subsequent occurrences of the separator, the UE shall 
-                //  pause again for 3 seconds (\u00B1 20 %) before sending any 
+                // "Upon subsequent occurrences of the separator, the UE shall
+                //  pause again for 3 seconds (\u00B1 20 %) before sending any
                 //  further DTMF digits."
-                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE), 
+                h.sendMessageDelayed(h.obtainMessage(EVENT_PAUSE_DONE),
                                             PAUSE_DELAY_MILLIS);
             }
         } else if (c == PhoneNumberUtils.WAIT) {
@@ -540,7 +524,7 @@ public class CdmaConnection extends Connection {
 
     public String
     getRemainingPostDialString() {
-        if (postDialState == PostDialState.CANCELLED 
+        if (postDialState == PostDialState.CANCELLED
             || postDialState == PostDialState.COMPLETE
             || postDialString == null
             || postDialString.length() <= nextPostDialChar
@@ -550,7 +534,7 @@ public class CdmaConnection extends Connection {
 
         return postDialString.substring(nextPostDialChar);
     }
-    
+
     private void
     processNextPostDialChar() {
         char c = 0;
@@ -569,7 +553,7 @@ public class CdmaConnection extends Connection {
             c = 0;
         } else {
             boolean isValid;
-            
+
             postDialState = PostDialState.STARTED;
 
             c = postDialString.charAt(nextPostDialChar++);
@@ -589,7 +573,8 @@ public class CdmaConnection extends Connection {
 
         Message notifyMessage;
 
-        if (postDialHandler != null && (notifyMessage = postDialHandler.messageForRegistrant()) != null) {
+        if (postDialHandler != null &&
+                (notifyMessage = postDialHandler.messageForRegistrant()) != null) {
             // The AsyncResult.result is the Connection object
             PostDialState state = postDialState;
             AsyncResult ar = AsyncResult.forMessage(notifyMessage);
@@ -599,17 +584,8 @@ public class CdmaConnection extends Connection {
             // arg1 is the character that was/is being processed
             notifyMessage.arg1 = c;
 
-            //Log.v("CDMA", "##### processNextPostDialChar: send msg to postDialHandler, arg1=" + c);
             notifyMessage.sendToTarget();
         }
-/* Reviewer Comment: moved due to Line length more than 100
-  else {
-  if (postDialHandler == null)
-  Log.v("CDMA", "##### processNextPostDialChar: postDialHandler is NULL!");
-  else
-  Log.v("CDMA", "##### processNextPostDialChar: postDialHandler.messageForRegistrant() returned NULL!");
-  }
-*/
     }
 
 
@@ -618,11 +594,11 @@ public class CdmaConnection extends Connection {
      */
     private boolean
     isConnectingInOrOut() {
-        return parent == null || parent == owner.ringingCall 
-            || parent.state == CdmaCall.State.DIALING 
+        return parent == null || parent == owner.ringingCall
+            || parent.state == CdmaCall.State.DIALING
             || parent.state == CdmaCall.State.ALERTING;
     }
-    
+
     private CdmaCall
     parentFromDCState (DriverCall.State state) {
         switch (state) {

@@ -813,8 +813,8 @@ public final class Settings {
         public static final String WAIT_FOR_DEBUGGER = "wait_for_debugger";
 
         /**
-         * represents current acitve phone class
-         * 0 = GSM-Phone, 1 = CDMA-Phone
+         * represents current active phone class
+         * 1 = GSM-Phone, 0 = CDMA-Phone
          */
         public static final String CURRENT_ACTIVE_PHONE = "current_active_phone";
 
@@ -1104,6 +1104,14 @@ public final class Settings {
          */
         public static final String PREFERRED_NETWORK_MODE = 
                 "preferred_network_mode";
+
+        /**
+         * CDMA Cell Broadcast SMS
+         *                            0 = CDMA Cell Broadcast SMS disabled
+         *                            1 = CDMA Cell Broadcast SMS enabled
+         */
+        public static final String CDMA_CELL_BROADCAST_SMS =
+                "cdma_cell_broadcast_sms";
 
         /**
          * The cdma subscription 0 = Subscription from RUIM, when available
@@ -2072,9 +2080,10 @@ public final class Settings {
     /**
      * Returns the GTalk JID resource associated with this device.
      *
-     * @return  String  the JID resource of the device. It uses the device IMEI in the computation
-     * of the JID resource. If IMEI is not ready (i.e. telephony module not ready), we'll return
-     * an empty string.
+     * @return  String  the JID resource of the device. It uses the Device ID (IMEI for GSM and MEID
+     * for CDMA) in the computation.
+     * of the JID resource. If Device ID is not ready (i.e. telephony module not ready), we'll
+     * return an empty string.
      * @hide
      */
     // TODO: we shouldn't not have a permenant Jid resource, as that's an easy target for
@@ -2093,13 +2102,13 @@ public final class Settings {
             throw new RuntimeException("this should never happen");
         }
 
-        String imei = TelephonyManager.getDefault().getDeviceId();
-        if (TextUtils.isEmpty(imei)) {
+        String deviceId = TelephonyManager.getDefault().getDeviceId();
+        if (TextUtils.isEmpty(deviceId)) {
             return "";
         }
 
-        byte[] hashedImei = digest.digest(imei.getBytes());
-        String id = new String(Base64.encodeBase64(hashedImei), 0, 12);
+        byte[] hashedDeviceId = digest.digest(deviceId.getBytes());
+        String id = new String(Base64.encodeBase64(hashedDeviceId), 0, 12);
         id = id.replaceAll("/", "_");
         sJidResource = JID_RESOURCE_PREFIX + id;
         return sJidResource;

@@ -26,29 +26,49 @@ public interface RILConstants {
 
     // from RIL_Errno
     int SUCCESS = 0;
-    int RADIO_NOT_AVAILABLE = 1;     /* If radio did not start or is resetting */
+    int RADIO_NOT_AVAILABLE = 1;              /* If radio did not start or is resetting */
     int GENERIC_FAILURE = 2;
-    int PASSWORD_INCORRECT = 3;      /* for PIN/PIN2 methods only! */
-    int SIM_PIN2 = 4;                /* Operation requires SIM PIN2 to be entered */
-    int SIM_PUK2 = 5;                /* Operation requires SIM PIN2 to be entered */
+    int PASSWORD_INCORRECT = 3;               /* for PIN/PIN2 methods only! */
+    int SIM_PIN2 = 4;                         /* Operation requires SIM PIN2 to be entered */
+    int SIM_PUK2 = 5;                         /* Operation requires SIM PIN2 to be entered */
     int REQUEST_NOT_SUPPORTED = 6;
     int REQUEST_CANCELLED = 7;
-    int OP_NOT_ALLOWED_DURING_VOICE_CALL = 8; /* data operation is not allowed during voice call in class C */
-    int OP_NOT_ALLOWED_BEFORE_REG_NW = 9;     /* request is not allowed before device registers to network */
-    int SMS_SEND_FAIL_RETRY = 10;         /* send sms fail and need retry */
+    int OP_NOT_ALLOWED_DURING_VOICE_CALL = 8; /* data operation is not allowed during voice call in
+                                                 class C */
+    int OP_NOT_ALLOWED_BEFORE_REG_NW = 9;     /* request is not allowed before device registers to
+                                                 network */
+    int SMS_SEND_FAIL_RETRY = 10;             /* send sms fail and need retry */
 
-    int NETWORK_MODE_GSM_UMTS = 3;
-    int NETWORK_MODE_CDMA = 4;
-    int NETWORK_MODE_GLOBAL = 7;
+    /* NETWORK_MODE_* See ril.h RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE */
+    int NETWORK_MODE_WCDMA_PREF     = 0; /* GSM/WCDMA (WCDMA preferred) */
+    int NETWORK_MODE_GSM_ONLY       = 1; /* GSM only */
+    int NETWORK_MODE_WCDMA_ONLY     = 2; /* WCDMA only */
+    int NETWORK_MODE_GSM_UMTS       = 3; /* GSM/WCDMA (auto mode, according to PRL)
+                                            AVAILABLE Application Settings menu*/
+    int NETWORK_MODE_CDMA           = 4; /* CDMA and EvDo (auto mode, according to PRL)
+                                            AVAILABLE Application Settings menu*/
+    int NETWORK_MODE_CDMA_NO_EVDO   = 5; /* CDMA only */
+    int NETWORK_MODE_EVDO_NO_CDMA   = 6; /* EvDo only */
+    int NETWORK_MODE_GLOBAL         = 7; /* GSM/WCDMA, CDMA, and EvDo (auto mode, according to PRL)
+                                            AVAILABLE Application Settings menu*/
+    int PREFERRED_NETWORK_MODE      = NETWORK_MODE_GLOBAL;
 
-    int SUBSCRIPTION_FROM_RUIM = 0;
-    int SUBSCRIPTION_FROM_NV = 1;
+    /* CDMA subscription source. See ril.h RIL_REQUEST_CDMA_SET_SUBSCRIPTION */
+    int SUBSCRIPTION_FROM_RUIM      = 0; /* CDMA subscription from RUIM when available */
+    int SUBSCRIPTION_FROM_NV        = 1; /* CDMA subscription from NV */
+    int PREFERRED_CDMA_SUBSCRIPTION = SUBSCRIPTION_FROM_NV;
+
+    int CDMA_CELL_BROADCAST_SMS_DISABLED = 1;
+    int CDMA_CELL_BROADCAST_SMS_ENABLED  = 0;
 
     int CDMA_PHONE = 0;
     int GSM_PHONE = 1;
 
     int CDM_TTY_MODE_DISABLED = 0;
     int CDM_TTY_MODE_ENABLED = 1;
+
+    byte CDMA_VOICE_PRIVACY = 0x70;           /* "p" value used in Ril_Call.isVoice if Privacy
+                                                 is active  */
 
 /*
 cat include/telephony/ril.h | \
@@ -64,9 +84,6 @@ cat include/telephony/ril.h | \
     int RIL_SIM_PIN = 3;
     int RIL_SIM_PUK = 4;
     int RIL_SIM_NETWORK_PERSONALIZATION = 5;
-    //TODO T: start
-    //        These RIL requests will not be renamed to ICC, 
-    //        but these requests are also valid for SIM and RUIM
     int RIL_REQUEST_GET_SIM_STATUS = 1;
     int RIL_REQUEST_ENTER_SIM_PIN = 2;
     int RIL_REQUEST_ENTER_SIM_PUK = 3;
@@ -74,7 +91,6 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_ENTER_SIM_PUK2 = 5;
     int RIL_REQUEST_CHANGE_SIM_PIN = 6;
     int RIL_REQUEST_CHANGE_SIM_PIN2 = 7;
-    //TODO T: end
     int RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION = 8;
     int RIL_REQUEST_GET_CURRENT_CALLS = 9;
     int RIL_REQUEST_DIAL = 10;
@@ -94,9 +110,7 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_DTMF = 24;
     int RIL_REQUEST_SEND_SMS = 25;
     int RIL_REQUEST_SEND_SMS_EXPECT_MORE = 26;
-    int RIL_REQUEST_SETUP_DEFAULT_PDP = 27;
-    //TODO T: This RIL request will not be renamed to ICC, 
-    //        but this request is also valid for SIM and RUIM
+    int RIL_REQUEST_SETUP_DATA_CALL = 27;
     int RIL_REQUEST_SIM_IO = 28;
     int RIL_REQUEST_SEND_USSD = 29;
     int RIL_REQUEST_CANCEL_USSD = 30;
@@ -110,7 +124,7 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_GET_IMEI = 38;
     int RIL_REQUEST_GET_IMEISV = 39;
     int RIL_REQUEST_ANSWER = 40;
-    int RIL_REQUEST_DEACTIVATE_DEFAULT_PDP = 41;
+    int RIL_REQUEST_DEACTIVATE_DATA_CALL = 41;
     int RIL_REQUEST_QUERY_FACILITY_LOCK = 42;
     int RIL_REQUEST_SET_FACILITY_LOCK = 43;
     int RIL_REQUEST_CHANGE_BARRING_PASSWORD = 44;
@@ -125,8 +139,8 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_SET_MUTE = 53;
     int RIL_REQUEST_GET_MUTE = 54;
     int RIL_REQUEST_QUERY_CLIP = 55;
-    int RIL_REQUEST_LAST_PDP_FAIL_CAUSE = 56;
-    int RIL_REQUEST_PDP_CONTEXT_LIST = 57;
+    int RIL_REQUEST_LAST_DATA_CALL_FAIL_CAUSE = 56;
+    int RIL_REQUEST_DATA_CALL_LIST = 57;
     int RIL_REQUEST_RESET_RADIO = 58;
     int RIL_REQUEST_OEM_HOOK_RAW = 59;
     int RIL_REQUEST_OEM_HOOK_STRINGS = 60;
@@ -164,14 +178,10 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_CDMA_GET_BROADCAST_CONFIG = 92;
     int RIL_REQUEST_CDMA_SET_BROADCAST_CONFIG = 93;
     int RIL_REQUEST_CDMA_BROADCAST_ACTIVATION = 94;
-    int RIL_REQUEST_SETUP_DATA_CALL = 95;
-    int RIL_REQUEST_DEACTIVATE_DATA_CALL = 96;
-    int RIL_REQUEST_CDMA_ENCODE_SMS = 97;
-    int RIL_REQUEST_CDMA_DECODE_SMS = 98;
     int RIL_REQUEST_CDMA_SUBSCRIPTION = 99;
     int RIL_REQUEST_CDMA_WRITE_SMS_TO_RUIM = 100;
     int RIL_REQUEST_CDMA_DELETE_SMS_ON_RUIM = 101;
-    int RIL_REQUEST_DEVICE_IDENTITY = 102;    
+    int RIL_REQUEST_DEVICE_IDENTITY = 102;
     int RIL_UNSOL_RESPONSE_BASE = 1000;
     int RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED = 1000;
     int RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED = 1001;
@@ -183,7 +193,7 @@ cat include/telephony/ril.h | \
     int RIL_UNSOL_ON_USSD_REQUEST = 1007;
     int RIL_UNSOL_NITZ_TIME_RECEIVED = 1008;
     int RIL_UNSOL_SIGNAL_STRENGTH = 1009;
-    int RIL_UNSOL_PDP_CONTEXT_LIST_CHANGED = 1010;
+    int RIL_UNSOL_DATA_CALL_LIST_CHANGED = 1010;
     int RIL_UNSOL_SUPP_SVC_NOTIFICATION = 1011;
     int RIL_UNSOL_STK_SESSION_END = 1012;
     int RIL_UNSOL_STK_PROACTIVE_COMMAND = 1013;

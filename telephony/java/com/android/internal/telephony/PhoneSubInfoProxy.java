@@ -16,16 +16,21 @@
 
 package com.android.internal.telephony;
 
-import android.content.Context;
 import android.os.ServiceManager;
-import com.android.internal.telephony.*;
+
 
 public class PhoneSubInfoProxy extends IPhoneSubInfo.Stub {
     private PhoneSubInfo mPhoneSubInfo;
 
     public PhoneSubInfoProxy(PhoneSubInfo phoneSubInfo) {
         mPhoneSubInfo = phoneSubInfo;
-        ServiceManager.addService("iphonesubinfo", this);
+        if(ServiceManager.getService("iphonesubinfo") == null) {
+            ServiceManager.addService("iphonesubinfo", this);
+        }
+    }
+
+    public void setmPhoneSubInfo(PhoneSubInfo phoneSubInfo) {
+        this.mPhoneSubInfo = phoneSubInfo;
     }
 
     public String getDeviceId() {

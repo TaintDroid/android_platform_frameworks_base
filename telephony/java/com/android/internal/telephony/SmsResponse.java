@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 /**
- * {@hide}
+ * Object returned by the RIL upon successful completion of sendSMS.
+ * Contains message reference and ackPdu.
+ *
  */
-public class EncodeException extends Exception
-{
-    public EncodeException()
-    {
-        super();
-    }
-  
-    public EncodeException(String s)
-    {
-        super(s);
-    }
+public class SmsResponse {
+    /** Message reference of the just-sent SMS. */
+    int messageRef;
+    /** ackPdu for the just-sent SMS. */
+    String ackPdu;
 
-    public EncodeException(char c)
-    {
-        super("Unencodable char: '" + c + "'");
+    public SmsResponse(int messageRef, String ackPdu) {
+        this.messageRef = messageRef;
+        this.ackPdu = ackPdu;
     }
 }
-

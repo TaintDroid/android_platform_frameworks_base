@@ -15,10 +15,10 @@
 */
 
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
-import android.os.Parcelable;
 import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  *  A parcelable holder class of byte[] for ISms aidl implementation
@@ -50,7 +50,7 @@ public class SmsRawData implements Parcelable {
     public byte[] getBytes() {
         return data;
     }
-    
+
     public int describeContents() {
         return 0;
     }

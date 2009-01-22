@@ -34,7 +34,7 @@ public final class AdnRecordCache extends Handler implements IccConstants {
     PhoneBase phone;
 
     // Indexed by EF ID
-    SparseArray<ArrayList<AdnRecord>> adnLikeFiles 
+    SparseArray<ArrayList<AdnRecord>> adnLikeFiles
         = new SparseArray<ArrayList<AdnRecord>>();
 
     // People waiting for ADN-like files to be loaded
@@ -52,7 +52,7 @@ public final class AdnRecordCache extends Handler implements IccConstants {
     //***** Constructor
 
 
-    
+
     public AdnRecordCache(PhoneBase phone) {
         this.phone = phone;
     }
@@ -67,7 +67,7 @@ public final class AdnRecordCache extends Handler implements IccConstants {
 
         clearWaiters();
         clearUserWriters();
-        
+
     }
 
     private void clearWaiters() {
@@ -98,7 +98,7 @@ public final class AdnRecordCache extends Handler implements IccConstants {
     }
 
     /**
-     * Returns extension ef associated with ADN-like EF or -1 if 
+     * Returns extension ef associated with ADN-like EF or -1 if
      * we don't know.
      *
      * See 3GPP TS 51.011 for this mapping
@@ -110,9 +110,9 @@ public final class AdnRecordCache extends Handler implements IccConstants {
             case EF_ADN: return EF_EXT1;
             case EF_SDN: return EF_EXT3;
             case EF_FDN: return EF_EXT2;
-            case EF_MSISDN: return EF_EXT1;          
+            case EF_MSISDN: return EF_EXT1;
             default: return -1;
-        } 
+        }
     }
 
     private void sendErrorResponse(Message response, String errString) {
@@ -250,25 +250,25 @@ public final class AdnRecordCache extends Handler implements IccConstants {
             waiters.add(response);
             return;
         }
-        
+
         // Start loading efid
-        
+
         waiters = new ArrayList<Message>();
         waiters.add(response);
 
         adnLikeWaiters.put(efid, waiters);
 
         int extensionEF = extensionEfForEf(efid);
-    
+
         if (extensionEF < 0) {
             // respond with error if not known ADN-like record
 
             if (response != null) {
-                AsyncResult.forMessage(response).exception 
+                AsyncResult.forMessage(response).exception
                     = new RuntimeException("EF is not known ADN-like EF:" + efid);
                 response.sendToTarget();
             }
-            
+
             return;
         }
 

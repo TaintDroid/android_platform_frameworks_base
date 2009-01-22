@@ -17,13 +17,13 @@
 package com.android.internal.telephony.gsm;
 
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_DATA_NETWORK_TYPE;
+import static com.android.internal.telephony.TelephonyProperties.PROPERTY_ICC_OPERATOR_ALPHA;
+import static com.android.internal.telephony.TelephonyProperties.PROPERTY_ICC_OPERATOR_NUMERIC;
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_OPERATOR_ALPHA;
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_OPERATOR_ISMANUAL;
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_OPERATOR_ISO_COUNTRY;
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_OPERATOR_ISROAMING;
 import static com.android.internal.telephony.TelephonyProperties.PROPERTY_OPERATOR_NUMERIC;
-import static com.android.internal.telephony.TelephonyProperties.PROPERTY_SIM_OPERATOR_ALPHA;
-import static com.android.internal.telephony.TelephonyProperties.PROPERTY_SIM_OPERATOR_NUMERIC;
 import com.android.internal.telephony.Phone;
 import android.app.AlarmManager;
 import android.content.ContentResolver;
@@ -47,6 +47,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TimeUtils;
 
+import com.android.internal.telephony.CommandException;
+import com.android.internal.telephony.PhoneProxy;
+import com.android.internal.telephony.RILConstants;
 import com.android.internal.telephony.ServiceStateTracker;
 import com.android.internal.telephony.TelephonyIntents;
 
@@ -90,7 +93,8 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
     private boolean mZoneDst;
     private long mZoneTime;
     private boolean mGotCountryCode = false;
-    
+    private ContentResolver cr;
+
     String mSavedTimeZone;
     long mSavedTime;
     long mSavedAtTime;
@@ -107,9 +111,9 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
     //***** Constants
 
     static final boolean DBG = true;
-    static final String LOG_TAG = "GsmServiceStateTracker";
+    static final String LOG_TAG = "GSM";
 
-        
+
     private ContentObserver mAutoTimeObserver = new ContentObserver(new Handler()) {
         @Override
         public void onChange(boolean selfChange) {
@@ -131,7 +135,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         cellLoc = new GsmCellLocation();
         newCellLoc = new GsmCellLocation();
 
-        cm.registerForAvailable(this, EVENT_RADIO_AVAILABLE, null);        
+        cm.registerForAvailable(this, EVENT_RADIO_AVAILABLE, null);
         cm.registerForRadioStateChanged(this, EVENT_RADIO_STATE_CHANGED, null);
 
         cm.registerForNetworkStateChanged(this, EVENT_NETWORK_STATE_CHANGED, null);
@@ -139,19 +143,35 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         cm.setOnSignalStrengthUpdate(this, EVENT_SIGNAL_STRENGTH_UPDATE, null);
 
         cm.registerForSIMReady(this, EVENT_SIM_READY, null);
-        
+
         // system setting property AIRPLANE_MODE_ON is set in Settings.
         int airplaneMode = Settings.System.getInt(
                 phone.getContext().getContentResolver(),
                 Settings.System.AIRPLANE_MODE_ON, 0);
-        mDesiredPowerState = ! (airplaneMode > 0);        
+        mDesiredPowerState = ! (airplaneMode > 0);
 
-        ContentResolver cr = phone.getContext().getContentResolver();
+        cr = phone.getContext().getContentResolver();
         cr.registerContentObserver(
-                Settings.System.getUriFor(Settings.System.AUTO_TIME), true, 
+                Settings.System.getUriFor(Settings.System.AUTO_TIME), true,
                 mAutoTimeObserver);
         setRssiDefaultValues();
         mNeedToRegForSimLoaded = true;
+    }
+
+    public void dispose() {
+        //Unregister for all events
+        cm.unregisterForAvailable(this);
+        cm.unregisterForRadioStateChanged(this);
+        cm.unregisterForNetworkStateChanged(this);
+        cm.unregisterForSIMReady(this);
+        phone.mSIMRecords.unregisterForRecordsLoaded(this);
+        cm.unSetOnSignalStrengthUpdate(this);
+        cm.unSetOnNITZTime(this);
+        cr.unregisterContentObserver(this.mAutoTimeObserver);
+    }
+
+    protected void finalize() {
+        if(DBG) Log.d(LOG_TAG, "GsmServiceStateTracker finalized");
     }
 
     /**
@@ -170,13 +190,20 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         }
     }
 
+    /*protected*/ void unregisterForGprsAttached(Handler h) {
+        gprsAttachedRegistrants.remove(h);
+    }
+
     void registerForNetworkAttach(Handler h, int what, Object obj) {
         Registrant r = new Registrant(h, what, obj);
         networkAttachedRegistrants.add(r);
-        
+
         if (ss.getState() == ServiceState.STATE_IN_SERVICE) {
             r.notifyRegistrant();
         }
+    }
+    void unregisterForNetworkAttach(Handler h) {
+        networkAttachedRegistrants.remove(h);
     }
     /**
      * Registration point for transition into GPRS detached.
@@ -193,7 +220,11 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
             r.notifyRegistrant();
         }
     }
-    
+
+    /*protected*/  void unregisterForGprsDetached(Handler h) {
+        gprsDetachedRegistrants.remove(h);
+    }
+
     //***** Called from GSMPhone
     public void
     getLacAndCid(Message onComplete) {
@@ -243,18 +274,18 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 pollState();
                 break;
 
-            case EVENT_GET_SIGNAL_STRENGTH: 
+            case EVENT_GET_SIGNAL_STRENGTH:
                 // This callback is called when signal strength is polled
                 // all by itself
 
-                if (!(cm.getRadioState().isOn())) {
-                    // Polling will continue when radio turns back on
+                if (!(cm.getRadioState().isOn()) || (cm.getRadioState().isCdma())) {
+                    // Polling will continue when radio turns back on and not CDMA
                     return;
                 }
                 ar = (AsyncResult) msg.obj;
                 onSignalStrengthResult(ar);
                 queueNextSignalStrengthPoll();
-                
+
                 break;
 
             case EVENT_GET_LOC_DONE:
@@ -339,7 +370,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                     getLacAndCid(null);
                 }
                 break;
-            
+
             case EVENT_SET_PREFERRED_NETWORK_TYPE:
                 ar = (AsyncResult) msg.obj;
                 // Don't care the result, only use for dereg network (COPS=2)
@@ -349,7 +380,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
 
             case EVENT_RESET_PREFERRED_NETWORK_TYPE:
                 ar = (AsyncResult) msg.obj;
-                if (ar.userObj != null) { //TODO check in Data Connectivity
+                if (ar.userObj != null) {
                     AsyncResult.forMessage(((Message) ar.userObj)).exception
                             = ar.exception;
                     ((Message) ar.userObj).sendToTarget();
@@ -362,13 +393,11 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 if (ar.exception == null) {
                     mPreferredNetworkType = ((int[])ar.result)[0];
                 } else {
-                    mPreferredNetworkType = Phone.NT_GLOBAL_AUTO_TYPE;
+                    mPreferredNetworkType = RILConstants.NETWORK_MODE_GLOBAL;
                 }
 
                 message = obtainMessage(EVENT_SET_PREFERRED_NETWORK_TYPE, ar.userObj);
-                int toggledNetworkType = Phone.NT_GLOBAL_AUTO_TYPE;
-                        /*(mPreferredNetworkType == Phone.NT_AUTO_TYPE) ?
-                        Phone.NT_GSM_TYPE : Phone.NT_AUTO_TYPE;*/ //TODO check in Data Connectivity
+                int toggledNetworkType = RILConstants.NETWORK_MODE_GLOBAL;
 
                 cm.setPreferredNetworkType(toggledNetworkType, message);
                 break;
@@ -382,7 +411,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
 
     protected void updateSpnDisplay() {
         int rule = phone.mSIMRecords.getDisplayRule(ss.getOperatorNumeric());
-        String spn = phone.mSIMRecords.getServiceProvideName();
+        String spn = phone.mSIMRecords.getServiceProviderName();
         String plmn = ss.getOperatorAlphaLong();
 
         if (rule != curSpnRule
@@ -479,7 +508,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                     if (states.length > 0) {
                         try {
                             regState = Integer.parseInt(states[0]);
-                            
+
                             // states[3] (if present) is the current radio technology
                             if (states.length >= 4 && states[3] != null) {
                                 type = Integer.parseInt(states[3]);
@@ -550,7 +579,6 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 pollStateDone();
             break;
 
-
             case RADIO_OFF:
                 newSS.setStateOff();
                 newCellLoc.setStateInvalid();
@@ -559,6 +587,20 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
 
                 pollStateDone();
             break;
+
+            case RUIM_NOT_READY:
+            case RUIM_READY:
+            case RUIM_LOCKED_OR_ABSENT:
+            case NV_NOT_READY:
+            case NV_READY:
+                log("Radio Technology Change ongoing, setting SS to off");
+                newSS.setStateOff();
+                newCellLoc.setStateInvalid();
+                setRssiDefaultValues();
+                mGotCountryCode = false;
+
+                pollStateDone();
+                break;
 
             default:
                 // Issue all poll-related commands at once
@@ -588,7 +630,8 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         }
     }
 
-    private static String networkTypeToString(int type) { //Network Type from GPRS_REGISTRATION_STATE
+    private static String networkTypeToString(int type) {
+        //Network Type from GPRS_REGISTRATION_STATE
         String ret = "unknown";
 
         switch (type) {
@@ -603,7 +646,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 break;
             default:
                 Log.e(LOG_TAG, "Wrong network type: " + Integer.toString(type));
-                break;                
+                break;
         }
 
         return ret;
@@ -727,7 +770,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                     if (zone != null) {
                         Context context = phone.getContext();
                         if (getAutoTime()) {
-                            AlarmManager alarm = 
+                            AlarmManager alarm =
                             (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                             alarm.setTimeZone(zone.getID());
                         }
@@ -769,7 +812,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
             phone.notifyLocationChanged();
         }
     }
- 
+
     /**
      * Returns a TimeZone object based only on parameters from the NITZ string.
      */
@@ -802,13 +845,13 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 break;
             }
         }
-        
+
         return guess;
     }
 
     private void
     queueNextSignalStrengthPoll() {
-        if (dontPollSignalStrength) {
+        if (dontPollSignalStrength || (cm.getRadioState().isCdma())) {
             // The radio is telling us about signal strength changes
             // we don't have to ask it
             return;
@@ -850,7 +893,13 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         }
 
         if (rssi != oldRSSI) {
-            phone.notifySignalStrength();
+            try { // This takes care of delayed EVENT_POLL_SIGNAL_STRENGTH (scheduled after
+                  // POLL_PERIOD_MILLIS) during Radio Technology Change)
+                phone.notifySignalStrength();
+           } catch (NullPointerException ex) {
+                log("onSignalStrengthResult() Phone already destroyed: " + ex 
+                        + "Signal Stranth not notified");
+           }
         }
     }
 
@@ -897,7 +946,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
      */
     private
     boolean isRoamingBetweenOperators(boolean gsmRoaming, ServiceState s) {
-        String spn = SystemProperties.get(PROPERTY_SIM_OPERATOR_ALPHA, "empty");
+        String spn = SystemProperties.get(PROPERTY_ICC_OPERATOR_ALPHA, "empty");
 
         String onsl = s.getOperatorAlphaLong();
         String onss = s.getOperatorAlphaShort();
@@ -905,9 +954,9 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
         boolean equalsOnsl = onsl != null && spn.equals(onsl);
         boolean equalsOnss = onss != null && spn.equals(onss);
 
-        String simNumeric = SystemProperties.get(PROPERTY_SIM_OPERATOR_NUMERIC, "");
+        String simNumeric = SystemProperties.get(PROPERTY_ICC_OPERATOR_NUMERIC, "");
         String  operatorNumeric = s.getOperatorNumeric();
-        
+
         boolean equalsMcc = true;
         try {
             equalsMcc = simNumeric.substring(0, 3).
@@ -1083,7 +1132,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
             if (zone != null) {
                 Context context = phone.getContext();
                 if (getAutoTime()) {
-                    AlarmManager alarm = 
+                    AlarmManager alarm =
                             (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                     alarm.setTimeZone(zone.getID());
                 }
@@ -1144,26 +1193,26 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
             return true;
         }
     }
-    
+
     private void saveNitzTimeZone(String zoneId) {
         mSavedTimeZone = zoneId;
-        // Send out a sticky broadcast so the system can determine if 
+        // Send out a sticky broadcast so the system can determine if
         // the timezone was set by the carrier...
         Intent intent = new Intent(TelephonyIntents.ACTION_NETWORK_SET_TIMEZONE);
         intent.putExtra("time-zone", zoneId);
         phone.getContext().sendStickyBroadcast(intent);
     }
-    
+
     private void saveNitzTime(long time) {
         mSavedTime = time;
         mSavedAtTime = SystemClock.elapsedRealtime();
-        // Send out a sticky broadcast so the system can determine if 
+        // Send out a sticky broadcast so the system can determine if
         // the time was set by the carrier...
         Intent intent = new Intent(TelephonyIntents.ACTION_NETWORK_SET_TIME);
         intent.putExtra("time", time);
         phone.getContext().sendStickyBroadcast(intent);
     }
-    
+
     private void revertToNitz() {
         if (Settings.System.getInt(phone.getContext().getContentResolver(),
                 Settings.System.AUTO_TIME, 0) == 0) {
@@ -1173,11 +1222,15 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                 + "' mSavedTime=" + mSavedTime
                 + " mSavedAtTime=" + mSavedAtTime);
         if (mSavedTimeZone != null && mSavedTime != 0 && mSavedAtTime != 0) {
-            AlarmManager alarm = 
+            AlarmManager alarm =
                 (AlarmManager) phone.getContext().getSystemService(Context.ALARM_SERVICE);
             alarm.setTimeZone(mSavedTimeZone);
-            SystemClock.setCurrentTimeMillis(mSavedTime 
+            SystemClock.setCurrentTimeMillis(mSavedTime
                     + (SystemClock.elapsedRealtime() - mSavedAtTime));
         }
+    }
+
+    protected void log(String s) {
+        Log.d(LOG_TAG, "[GsmServiceStateTracker] " + s);
     }
 }

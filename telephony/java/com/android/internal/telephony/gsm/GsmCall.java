@@ -16,7 +16,12 @@
 
 package com.android.internal.telephony.gsm;
 
-import com.android.internal.telephony.*;
+import com.android.internal.telephony.Call;
+import com.android.internal.telephony.CallStateException;
+import com.android.internal.telephony.Connection;
+import com.android.internal.telephony.DriverCall;
+import com.android.internal.telephony.Phone;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +34,7 @@ class GsmCall extends Call {
     /*package*/ ArrayList<Connection> connections = new ArrayList<Connection>();
     /*package*/ GsmCallTracker owner;
 
-    
+
     /***************************** Class Methods *****************************/
 
     static State
@@ -44,12 +49,15 @@ class GsmCall extends Call {
             default:            throw new RuntimeException ("illegal call state:" + dcState);
         }
     }
-    
+
 
     /****************************** Constructors *****************************/
     /*package*/
     GsmCall (GsmCallTracker owner) {
         this.owner = owner;
+    }
+
+    public void dispose() {
     }
 
     /************************** Overridden from Call *************************/
@@ -60,7 +68,7 @@ class GsmCall extends Call {
         return connections;
     }
 
-    public Phone 
+    public Phone
     getPhone() {
         //TODO
         return null;
@@ -75,7 +83,7 @@ class GsmCall extends Call {
      *  background call exists, the background call will be resumed
      *  because an AT+CHLD=1 will be sent
      */
-    public void 
+    public void
     hangup() throws CallStateException {
         owner.hangup(this);
     }
@@ -110,20 +118,20 @@ class GsmCall extends Call {
             /* If only disconnected connections remain, we are disconnected*/
 
             boolean hasOnlyDisconnectedConnections = true;
-            
+
             for (int i = 0, s = connections.size()  ; i < s; i ++) {
-                if (connections.get(i).getState() 
+                if (connections.get(i).getState()
                     != State.DISCONNECTED
                 ) {
                     hasOnlyDisconnectedConnections = false;
                     break;
-                }            
+                }
             }
 
             if (hasOnlyDisconnectedConnections) {
-                state = State.DISCONNECTED;            
+                state = State.DISCONNECTED;
             }
-        }    
+        }
     }
 
 
@@ -140,9 +148,9 @@ class GsmCall extends Call {
     update (GsmConnection conn, DriverCall dc) {
         State newState;
         boolean changed = false;
-        
+
         newState = stateFromDCState(dc.state);
-        
+
         if (newState != state) {
             state = newState;
             changed = true;
@@ -163,7 +171,7 @@ class GsmCall extends Call {
     //***** Called from GsmCallTracker
 
 
-    /** 
+    /**
      * Called when this Call is being hung up locally (eg, user pressed "end")
      * Note that at this point, the hangup request has been dispatched to the radio
      * but no response has yet been received so update() has not yet been called
@@ -178,7 +186,7 @@ class GsmCall extends Call {
             cn.onHangupLocal();
         }
     }
-    
+
     /**
      * Called when it's time to clean up disconnected Connection objects
      */
@@ -186,11 +194,11 @@ class GsmCall extends Call {
     clearDisconnected() {
         for (int i = connections.size() - 1 ; i >= 0 ; i--) {
             GsmConnection cn = (GsmConnection)connections.get(i);
-            
+
             if (cn.getState() == State.DISCONNECTED) {
                 connections.remove(i);
             }
-        }    
+        }
 
         if (connections.size() == 0) {
             state = State.IDLE;

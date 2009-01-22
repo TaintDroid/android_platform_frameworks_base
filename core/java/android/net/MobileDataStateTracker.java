@@ -115,28 +115,28 @@ public class MobileDataStateTracker extends NetworkStateTracker {
                     mMobileDataState = state;
 
                     switch (state) {
-                        case DISCONNECTED:
-                            setDetailedState(DetailedState.DISCONNECTED, reason, apnName);
-                            if (mInterfaceName != null) {
-                                NetworkUtils.resetConnections(mInterfaceName);
-                            }
-                            mInterfaceName = null;
-                            mDefaultGatewayAddr = 0;
-                            break;
-                        case CONNECTING:
-                            setDetailedState(DetailedState.CONNECTING, reason, apnName);
-                            break;
-                        case SUSPENDED:
-                            setDetailedState(DetailedState.SUSPENDED, reason, apnName);
-                            break;
-                        case CONNECTED:
-                            mInterfaceName = intent.getStringExtra(Phone.DATA_IFACE_NAME_KEY);
-                            if (mInterfaceName == null) {
-                                Log.d(TAG, "CONNECTED event did not supply interface name.");
-                            }
-                            setupDnsProperties();
-                            setDetailedState(DetailedState.CONNECTED, reason, apnName);
-                            break;
+                    case DISCONNECTED:
+                        setDetailedState(DetailedState.DISCONNECTED, reason, apnName);
+                        if (mInterfaceName != null) {
+                            NetworkUtils.resetConnections(mInterfaceName);
+                        }
+                        mInterfaceName = null;
+                        mDefaultGatewayAddr = 0;
+                        break;
+                    case CONNECTING:
+                        setDetailedState(DetailedState.CONNECTING, reason, apnName);
+                        break;
+                    case SUSPENDED:
+                        setDetailedState(DetailedState.SUSPENDED, reason, apnName);
+                        break;
+                    case CONNECTED:
+                        mInterfaceName = intent.getStringExtra(Phone.DATA_IFACE_NAME_KEY);
+                        if (mInterfaceName == null) {
+                            Log.d(TAG, "CONNECTED event did not supply interface name.");
+                        }
+                        setupDnsProperties();
+                        setDetailedState(DetailedState.CONNECTED, reason, apnName);
+                        break;
                     }
                 }
             } else if (intent.getAction().equals(TelephonyIntents.ACTION_DATA_CONNECTION_FAILED)) {
@@ -227,26 +227,26 @@ public class MobileDataStateTracker extends NetworkStateTracker {
      * for this network.
      */
     public String getTcpBufferSizesPropName() {
-      String networkTypeStr = "unknown";
+        String networkTypeStr = "unknown";
         TelephonyManager tm = new TelephonyManager(mContext);
         //TODO We have to edit the parameter for getNetworkType regarding CDMA
         switch(tm.getNetworkType()) {
-          case TelephonyManager.NETWORK_TYPE_GPRS:
+        case TelephonyManager.NETWORK_TYPE_GPRS:
             networkTypeStr = "gprs";
             break;
-          case TelephonyManager.NETWORK_TYPE_EDGE:
+        case TelephonyManager.NETWORK_TYPE_EDGE:
             networkTypeStr = "edge";
             break;
-          case TelephonyManager.NETWORK_TYPE_UMTS:
+        case TelephonyManager.NETWORK_TYPE_UMTS:
             networkTypeStr = "umts";
             break;
-          case TelephonyManager.NETWORK_TYPE_CDMA:
+        case TelephonyManager.NETWORK_TYPE_CDMA:
             networkTypeStr = "cdma";
             break;
-          case TelephonyManager.NETWORK_TYPE_EVDO_0:
+        case TelephonyManager.NETWORK_TYPE_EVDO_0:
             networkTypeStr = "evdo";
             break;
-          case TelephonyManager.NETWORK_TYPE_EVDO_A:
+        case TelephonyManager.NETWORK_TYPE_EVDO_A:
             networkTypeStr = "evdo";
             break;
         }

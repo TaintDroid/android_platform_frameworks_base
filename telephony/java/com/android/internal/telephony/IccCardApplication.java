@@ -29,7 +29,7 @@ public class IccCardApplication {
         APPTYPE_USIM,
         APPTYPE_RUIM,
         APPTYPE_CSIM
-    };    
+    };
 
     public enum AppState{
         APPSTATE_UNKNOWN,
@@ -38,15 +38,15 @@ public class IccCardApplication {
         APPSTATE_PUK,
         APPSTATE_SUBSCRIPTION_PERSO,
         APPSTATE_READY;
-        
+
         boolean isPinRequired() {
             return this == APPSTATE_PIN;
         }
-        
+
         boolean isPukRequired() {
             return this == APPSTATE_PUK;
         }
-        
+
         boolean isSubscriptionPersoEnabled() {
             return this == APPSTATE_SUBSCRIPTION_PERSO;
         }
@@ -54,14 +54,14 @@ public class IccCardApplication {
         boolean isAppReady() {
             return this == APPSTATE_READY;
         }
-        
+
         boolean isAppNotReady() {
             return this == APPSTATE_UNKNOWN  ||
-                   this == APPSTATE_DETECTED;            
+                   this == APPSTATE_DETECTED;
         }
     };
 
-    public enum PersoSubState{                                 
+    public enum PersoSubState{
         PERSOSUBSTATE_UNKNOWN,
         PERSOSUBSTATE_IN_PROGRESS,
         PERSOSUBSTATE_READY,
@@ -87,25 +87,25 @@ public class IccCardApplication {
         PERSOSUBSTATE_RUIM_CORPORATE_PUK,
         PERSOSUBSTATE_RUIM_SERVICE_PROVIDER_PUK,
         PERSOSUBSTATE_RUIM_RUIM_PUK;
-        
+
         boolean isPersoSubStateUnknown() {
             return this == PERSOSUBSTATE_UNKNOWN;
-        }        
+        }
     };
-    
-    public AppType        app_type;    
-    public AppState       app_state;     
+
+    public AppType        app_type;
+    public AppState       app_state;
     // applicable only if app_state == RIL_APPSTATE_SUBSCRIPTION_PERSO
     public PersoSubState  perso_substate;
-    // null terminated string, e.g., from 0xA0, 0x00 -> 0x41, 0x30, 0x30, 0x30 */    
+    // null terminated string, e.g., from 0xA0, 0x00 -> 0x41, 0x30, 0x30, 0x30 */
     public String         aid;
     // null terminated string
     public String         app_label;
     // applicable to USIM and CSIM
     public int            pin1_replaced;
-    public int            pin1;           
-    public int            pin2;     
-    
+    public int            pin1;
+    public int            pin2;
+
     AppType AppTypeFromRILInt(int type) {
         AppType newType;
         /* RIL_AppType ril.h */
@@ -115,13 +115,13 @@ public class IccCardApplication {
             case 2: newType = AppType.APPTYPE_USIM;    break;
             case 3: newType = AppType.APPTYPE_RUIM;    break;
             case 4: newType = AppType.APPTYPE_CSIM;    break;
-            default: 
+            default:
                 throw new RuntimeException(
                             "Unrecognized RIL_AppType: " +type);
-        }        
+        }
         return newType;
     }
-    
+
     AppState AppStateFromRILInt(int state) {
         AppState newState;
         /* RIL_AppState ril.h */
@@ -132,10 +132,10 @@ public class IccCardApplication {
             case 3: newState = AppState.APPSTATE_PUK; break;
             case 4: newState = AppState.APPSTATE_SUBSCRIPTION_PERSO; break;
             case 5: newState = AppState.APPSTATE_READY; break;
-            default: 
+            default:
                 throw new RuntimeException(
                             "Unrecognized RIL_AppState: " +state);
-        }        
+        }
         return newState;
     }
 
@@ -160,7 +160,7 @@ public class IccCardApplication {
             case 14: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_NETWORK2; break;
             case 15: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_HRPD; break;
             case 16: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_CORPORATE; break;
-            case 17: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_SERVICE_PROVIDER; break;  
+            case 17: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_SERVICE_PROVIDER; break;
             case 18: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_RUIM; break;
             case 19: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_NETWORK1_PUK; break;
             case 20: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_NETWORK2_PUK; break;
@@ -168,11 +168,11 @@ public class IccCardApplication {
             case 22: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_CORPORATE_PUK; break;
             case 23: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_SERVICE_PROVIDER_PUK; break;
             case 24: newSubState = PersoSubState.PERSOSUBSTATE_RUIM_RUIM_PUK; break;
-            default: 
+            default:
                 throw new RuntimeException(
                             "Unrecognized RIL_PersoSubstate: " +substate);
-        }        
+        }
         return newSubState;
     }
-    
+
 }

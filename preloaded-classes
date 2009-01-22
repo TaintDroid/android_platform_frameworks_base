@@ -270,8 +270,8 @@ android.speech.recognition.impl.MicrophoneImpl
 android.speech.recognition.impl.System
 android.telephony.PhoneNumberUtils
 android.telephony.ServiceState
-android.telephony.gsm.SmsManager
-android.telephony.gsm.SmsMessage
+android.telephony.SmsManager
+android.telephony.SmsMessage
 android.text.AutoText
 android.text.BoringLayout
 android.text.BoringLayout$Metrics
@@ -490,6 +490,8 @@ com.android.internal.policy.impl.PhoneWindow$PanelFeatureState
 com.android.internal.policy.impl.PhoneWindow$PanelFeatureState$SavedState
 com.android.internal.telephony.BaseCommands
 com.android.internal.telephony.CommandsInterface
+com.android.internal.telephony.GsmAlphabet
+com.android.internal.telephony.ISms$Stub
 com.android.internal.telephony.Phone
 com.android.internal.telephony.Phone$DataActivityState
 com.android.internal.telephony.Phone$DataState
@@ -498,9 +500,6 @@ com.android.internal.telephony.PhoneBase
 com.android.internal.telephony.PhoneStateIntentReceiver
 com.android.internal.telephony.RIL
 com.android.internal.telephony.gsm.GSMPhone
-com.android.internal.telephony.gsm.GsmAlphabet
-com.android.internal.telephony.gsm.ISms$Stub
-com.android.internal.telephony.gsm.PdpConnection$PdpFailCause
 com.android.internal.telephony.gsm.GsmServiceStateTracker
 com.android.internal.telephony.gsm.SimCard
 com.android.internal.view.menu.MenuDialogHelper

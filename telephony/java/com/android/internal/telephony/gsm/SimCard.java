@@ -16,6 +16,9 @@
 
 package com.android.internal.telephony.gsm;
 
+import android.app.ActivityManagerNative;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.AsyncResult;
 import android.os.RemoteException;
 import android.os.Handler;
@@ -26,28 +29,28 @@ import android.util.Log;
 
 import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.telephony.IccCard;
-import com.android.internal.telephony.TelephonyProperties;
 import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.PhoneProxy;
 import com.android.internal.telephony.TelephonyIntents;
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.app.ActivityManagerNative;
+import com.android.internal.telephony.TelephonyProperties;
 
 import static android.Manifest.permission.READ_PHONE_STATE;
 
 /**
+ * Note: this class shares common code with RuimCard, consider a base class to minimize code
+ * duplication.
  * {@hide}
  */
 public final class SimCard extends Handler implements IccCard {
     static final String LOG_TAG="GSM";
-    
+
     //***** Instance Variables
     private static final boolean DBG = true;
 
     private GSMPhone phone;
     private CommandsInterface.IccStatus status = null;
     private boolean mDesiredPinLocked;
-    private boolean mDesiredFdnEnabled; 
+    private boolean mDesiredFdnEnabled;
     private boolean mSimPinLocked = true; // Default to locked
     private boolean mSimFdnEnabled = false; // Default to disabled.
                                             // Will be updated when SIM_READY.
@@ -88,7 +91,18 @@ public final class SimCard extends Handler implements IccCard {
 
         updateStateProperty();
     }
-    
+
+    public void dispose() {
+        //Unregister for all events
+        phone.mCM.unregisterForSIMLockedOrAbsent(this);
+        phone.mCM.unregisterForOffOrNotAvailable(this);
+        phone.mCM.unregisterForSIMReady(this);
+    }
+
+    protected void finalize() {
+        if(DBG) Log.d(LOG_TAG, "SimCard finalized");
+    }
+
     //***** SimCard implementation
 
     public State
@@ -138,7 +152,7 @@ public final class SimCard extends Handler implements IccCard {
             r.notifyRegistrant();
         }
     }
-    
+
     public void unregisterForAbsent(Handler h) {
         absentRegistrants.remove(h);
     }
@@ -156,7 +170,7 @@ public final class SimCard extends Handler implements IccCard {
     public void unregisterForNetworkLocked(Handler h) {
         networkLockedRegistrants.remove(h);
     }
-    
+
     public void registerForLocked(Handler h, int what, Object obj) {
         Registrant r = new Registrant (h, what, obj);
 
@@ -173,7 +187,7 @@ public final class SimCard extends Handler implements IccCard {
 
 
     public void supplyPin (String pin, Message onComplete) {
-        phone.mCM.supplyIccPin(pin, 
+        phone.mCM.supplyIccPin(pin,
                             obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
 
@@ -182,7 +196,7 @@ public final class SimCard extends Handler implements IccCard {
                         obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
     public void supplyPin2 (String pin2, Message onComplete) {
-        phone.mCM.supplyIccPin2(pin2, 
+        phone.mCM.supplyIccPin2(pin2,
                         obtainMessage(EVENT_PINPUK_DONE, onComplete));
     }
     public void supplyPuk2 (String puk2, String newPin2, Message onComplete) {
@@ -250,7 +264,7 @@ public final class SimCard extends Handler implements IccCard {
     }
 
     public String getServiceProviderName () {
-        return phone.mSIMRecords.getServiceProvideName();
+        return phone.mSIMRecords.getServiceProviderName();
     }
 
     //***** Handler implementation
@@ -413,7 +427,7 @@ public final class SimCard extends Handler implements IccCard {
             return;
         }
 
-        CommandsInterface.IccStatus newStatus 
+        CommandsInterface.IccStatus newStatus
             = (CommandsInterface.IccStatus)  ar.result;
 
         handleSimStatus(newStatus);
@@ -424,7 +438,7 @@ public final class SimCard extends Handler implements IccCard {
         boolean transitionedIntoPinLocked;
         boolean transitionedIntoAbsent;
         boolean transitionedIntoNetworkLocked;
-        
+
         SimCard.State oldState, newState;
 
         oldState = getState();
@@ -443,7 +457,7 @@ public final class SimCard extends Handler implements IccCard {
         if (transitionedIntoPinLocked) {
             if(DBG) log("Notify SIM pin or puk locked.");
             pinLockedRegistrants.notifyRegistrants();
-            broadcastSimStateChangedIntent(SimCard.INTENT_VALUE_ICC_LOCKED, 
+            broadcastSimStateChangedIntent(SimCard.INTENT_VALUE_ICC_LOCKED,
                     (newState == State.PIN_REQUIRED) ?
                        INTENT_VALUE_LOCKED_ON_PIN : INTENT_VALUE_LOCKED_ON_PUK);
         } else if (transitionedIntoAbsent) {

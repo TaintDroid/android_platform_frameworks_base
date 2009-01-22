@@ -16,7 +16,7 @@ public class TelephonyIntents {
      *   <li><em>phoneName</em> - A string version of the phone name.</li>
      *   <li><em>state</em> - A string version of the new phone state.</li>
      * </ul>
-     * 
+     *
      * <p class="note">
      * You can <em>not</em> receive this through components declared
      * in manifests, only by exlicitly registering for it with
@@ -28,6 +28,24 @@ public class TelephonyIntents {
      */
     public static final String ACTION_PHONE_STATE_CHANGED = "android.intent.action.PHONE_STATE";
 
+    /**
+     * <p>Broadcast Action: The radio technology has changed. The intent will have the following
+     * extra values:</p>
+     * <ul>
+     *   <li><em>phoneName</em> - A string version of the new phone name.</li>
+     * </ul>
+     *
+     * <p class="note">
+     * You can <em>not</em> receive this through components declared
+     * in manifests, only by explicitly registering for it with
+     * {@link android.content.Context#registerReceiver(android.content.BroadcastReceiver,
+     * android.content.IntentFilter) Context.registerReceiver()}.
+     *
+     * <p class="note">
+     * Requires no permission.
+     */
+    public static final String ACTION_RADIO_TECHNOLOGY_CHANGED 
+            = "android.intent.action.RADIO_TECHNOLOGY";
 
     /**
      * Broadcast Action: The phone service state has changed. The intent will have the following
@@ -67,7 +85,7 @@ public class TelephonyIntents {
      *          <ul><li>0 means "-113 dBm or less".</li><li>31 means "-51 dBm or greater".</li></ul>
      *   </li>
      * </ul>
-     * 
+     *
      * <p class="note">
      * You can <em>not</em> receive this through components declared
      * in manifests, only by exlicitly registering for it with

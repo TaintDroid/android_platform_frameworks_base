@@ -35,7 +35,8 @@ public class ImageDescriptor {
     static final int CODING_SCHEME_BASIC = 0x11;
     static final int CODING_SCHEME_COLOUR = 0x21;
 
-    public static final int ID_LENGTH = 9;
+    // public static final int ID_LENGTH = 9;
+    // ID_LENGTH substituted by IccFileHandlerBase.GET_RESPONSE_EF_IMG_SIZE_BYTES
 
     private static final String TAG = "ImageDescriptor";
 
@@ -51,7 +52,7 @@ public class ImageDescriptor {
 
     /**
      * Extract descriptor information about image instance.
-     * 
+     *
      * @param rawData
      * @param valueIndex
      * @return ImageDescriptor

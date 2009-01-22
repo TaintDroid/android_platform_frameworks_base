@@ -21,7 +21,7 @@ import android.graphics.Bitmap;
 import java.util.List;
 
 /**
- * Container class for proactive command parameters. 
+ * Container class for proactive command parameters.
  *
  */
 class CommandParams {

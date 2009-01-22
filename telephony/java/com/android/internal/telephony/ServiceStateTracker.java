@@ -71,10 +71,7 @@ public abstract class ServiceStateTracker extends Handler {
     // signal strength poll rate
     protected static final int POLL_PERIOD_MILLIS = 20 * 1000;
 
-
     //*****GSM events
-    //TODO Have to be extended with CDMA events
-
     protected static final int EVENT_RADIO_STATE_CHANGED               = 1;
     protected static final int EVENT_NETWORK_STATE_CHANGED             = 2;
     protected static final int EVENT_GET_SIGNAL_STRENGTH               = 3;
@@ -94,20 +91,18 @@ public abstract class ServiceStateTracker extends Handler {
     protected static final int EVENT_SET_PREFERRED_NETWORK_TYPE        = 20;
     protected static final int EVENT_RESET_PREFERRED_NETWORK_TYPE      = 21;
 
-
     //*****CDMA events:
-    protected static final int EVENT_POLL_STATE_REGISTRATION_CDMA = 22;
-    protected static final int EVENT_POLL_STATE_OPERATOR_CDMA     = 23;
-    protected static final int EVENT_RUIM_READY                   = 24;
-    protected static final int EVENT_RUIM_RECORDS_LOADED          = 25;
+    protected static final int EVENT_POLL_STATE_REGISTRATION_CDMA      = 22;
+    protected static final int EVENT_POLL_STATE_OPERATOR_CDMA          = 23;
+    protected static final int EVENT_RUIM_READY                        = 24;
+    protected static final int EVENT_RUIM_RECORDS_LOADED               = 25;
     protected static final int EVENT_POLL_STATE_NETWORK_SELECTION_MODE_CDMA = 26;
-    protected static final int EVENT_POLL_SIGNAL_STRENGTH_CDMA    = 27;   
-    protected static final int EVENT_GET_SIGNAL_STRENGTH_CDMA     = 28;  
-    protected static final int EVENT_NETWORK_STATE_CHANGED_CDMA   = 29;
-    protected static final int EVENT_GET_LOC_DONE_CDMA            = 30;
-    protected static final int EVENT_SIGNAL_STRENGTH_UPDATE_CDMA  = 31;
-    
-    protected static final int EVENT_NV_LOADED                    = 32;      
+    protected static final int EVENT_POLL_SIGNAL_STRENGTH_CDMA         = 27;
+    protected static final int EVENT_GET_SIGNAL_STRENGTH_CDMA          = 28;
+    protected static final int EVENT_NETWORK_STATE_CHANGED_CDMA        = 29;
+    protected static final int EVENT_GET_LOC_DONE_CDMA                 = 30;
+    protected static final int EVENT_SIGNAL_STRENGTH_UPDATE_CDMA       = 31;
+    protected static final int EVENT_NV_LOADED                         = 32;
 
     //***** Time Zones
     protected static final String TIMEZONE_PROPERTY = "persist.sys.timezone";
@@ -143,7 +138,6 @@ public abstract class ServiceStateTracker extends Handler {
     //***** Constructors
     public ServiceStateTracker() {
 
-
     }
 
 
@@ -164,6 +158,10 @@ public abstract class ServiceStateTracker extends Handler {
         }
     }
 
+    public  void unregisterForRoamingOn(Handler h) {
+        roamingOnRegistrants.remove(h);
+    }
+
     /**
      * Registration point for combined roaming off
      * combined roaming is true when roaming is true and ONS differs SPN
@@ -180,7 +178,11 @@ public abstract class ServiceStateTracker extends Handler {
             r.notifyRegistrant();
         }
     }
-    
+
+    public  void unregisterForRoamingOff(Handler h) {
+        roamingOffRegistrants.remove(h);
+    }
+
     /**
      * Reregister network through toggle perferred network type
      * This is a work aorund to deregister and register network since there is
@@ -219,7 +221,7 @@ public abstract class ServiceStateTracker extends Handler {
     //***** Protected abstract Methods
     protected abstract void handlePollStateResult(int what, AsyncResult ar);
     protected abstract void updateSpnDisplay();
-    
+
     // ***** Private Instance Methods
     protected void
     setPowerStateToDesired() {

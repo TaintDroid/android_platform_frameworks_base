@@ -30,7 +30,7 @@ public class IccCardStatus {
         CARDSTATE_ABSENT,
         CARDSTATE_PRESENT,
         CARDSTATE_ERROR;
-        
+
         boolean isCardPresent() {
             return this == CARDSTATE_PRESENT;
         }
@@ -44,13 +44,13 @@ public class IccCardStatus {
         PINSTATE_ENABLED_BLOCKED,
         PINSTATE_ENABLED_PERM_BLOCKED
     };
-   
-    public CardState  card_state;    
-    public PinState   universal_pin_state;     
-    public int        gsm_umts_subscription_app_index; 
-    public int        cdma_subscription_app_index;        
+
+    public CardState  card_state;
+    public PinState   universal_pin_state;
+    public int        gsm_umts_subscription_app_index;
+    public int        cdma_subscription_app_index;
     public int        num_applications;
-    
+
     ArrayList<IccCardApplication> application = new ArrayList<IccCardApplication>(CARD_MAX_APPS);
 
     CardState CardStateFromRILInt(int state) {
@@ -60,10 +60,10 @@ public class IccCardStatus {
             case 0: newState = CardState.CARDSTATE_ABSENT; break;
             case 1: newState = CardState.CARDSTATE_PRESENT; break;
             case 2: newState = CardState.CARDSTATE_ERROR; break;
-            default: 
+            default:
                 throw new RuntimeException(
                             "Unrecognized RIL_CardState: " +state);
-        }        
+        }
         return newState;
     }
 
@@ -77,10 +77,10 @@ public class IccCardStatus {
             case 3: newState = PinState.PINSTATE_DISABLED; break;
             case 4: newState = PinState.PINSTATE_ENABLED_BLOCKED; break;
             case 5: newState = PinState.PINSTATE_ENABLED_PERM_BLOCKED; break;
-            default: 
+            default:
                 throw new RuntimeException(
                             "Unrecognized RIL_PinState: " +state);
-        }        
+        }
         return newState;
     }
 }

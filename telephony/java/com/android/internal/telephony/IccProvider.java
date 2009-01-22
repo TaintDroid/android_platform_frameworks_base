@@ -42,7 +42,7 @@ import com.android.internal.telephony.IIccPhoneBook;
 public class IccProvider extends ContentProvider {
     private static final String TAG = "IccProvider";
     private static final boolean DBG = false;
-    
+
 
     private static final String[] ADDRESS_BOOK_COLUMN_NAMES = new String[] {
         "name",
@@ -60,7 +60,6 @@ public class IccProvider extends ContentProvider {
     private static final UriMatcher URL_MATCHER =
                             new UriMatcher(UriMatcher.NO_MATCH);
 
-    // TODO T: consider change from "sim" to "icc", also at other locations
     static {
         URL_MATCHER.addURI("icc", "adn", ADN);
         URL_MATCHER.addURI("icc", "fdn", FDN);
@@ -87,21 +86,21 @@ public class IccProvider extends ContentProvider {
     public Cursor query(Uri url, String[] projection, String selection,
             String[] selectionArgs, String sort) {
         ArrayList<ArrayList> results;
-        
+
         if (!mSimulator) {
             switch (URL_MATCHER.match(url)) {
                 case ADN:
                     results = loadFromEf(IccConstants.EF_ADN);
                     break;
-    
+
                 case FDN:
                     results = loadFromEf(IccConstants.EF_FDN);
                     break;
-    
+
                 case SDN:
                     results = loadFromEf(IccConstants.EF_SDN);
                     break;
-    
+
                 default:
                     throw new IllegalArgumentException("Unknown URL " + url);
             }
@@ -140,8 +139,6 @@ public class IccProvider extends ContentProvider {
             case ADN:
             case FDN:
             case SDN:
-                // TODO T: Do we have to change this "link" 
-                //         as well to "icc-contact"?
                 return "vnd.android.cursor.dir/sim-contact";
 
             default:
@@ -191,7 +188,7 @@ public class IccProvider extends ContentProvider {
                 buf.append("fdn/");
                 break;
         }
-        
+
         // TODO: we need to find out the rowId for the newly added record
         buf.append(0);
 
@@ -331,9 +328,6 @@ public class IccProvider extends ContentProvider {
 
         try {
             IIccPhoneBook iccIpb = IIccPhoneBook.Stub.asInterface(
-                    // TODO T: Do we have to change the service 
-                    //         as well to "iccphonebook"?
-                    //         defined in: device/commands/binder/Service_info.c
                     ServiceManager.getService("simphonebook"));
             if (iccIpb != null) {
                 adnRecords = iccIpb.getAdnRecordsInEf(efType);
@@ -374,9 +368,6 @@ public class IccProvider extends ContentProvider {
 
         try {
             IIccPhoneBook iccIpb = IIccPhoneBook.Stub.asInterface(
-                    // TODO T: Do we have to change the service 
-                    //         as well to "iccphonebook"?
-                    //         defined in: device/commands/binder/Service_info.c                
                     ServiceManager.getService("simphonebook"));
             if (iccIpb != null) {
                 success = iccIpb.updateAdnRecordsInEfBySearch(efType, "", "",
@@ -401,9 +392,6 @@ public class IccProvider extends ContentProvider {
 
         try {
             IIccPhoneBook iccIpb = IIccPhoneBook.Stub.asInterface(
-                    // TODO T: Do we have to change the service 
-                    //         as well to "iccphonebook"?
-                    //         defined in: device/commands/binder/Service_info.c                    
                     ServiceManager.getService("simphonebook"));
             if (iccIpb != null) {
                 success = iccIpb.updateAdnRecordsInEfBySearch(efType,
@@ -419,9 +407,7 @@ public class IccProvider extends ContentProvider {
     }
 
 
-    private boolean deleteIccRecordFromEf(int efType,
-                                     String name, String number,
-                                     String pin2) {
+    private boolean deleteIccRecordFromEf(int efType, String name, String number, String pin2) {
         if (DBG) log("deleteIccRecordFromEf: efType=" + efType +
                 ", name=" + name + ", number=" + number + ", pin2=" + pin2);
 
@@ -429,13 +415,10 @@ public class IccProvider extends ContentProvider {
 
         try {
             IIccPhoneBook iccIpb = IIccPhoneBook.Stub.asInterface(
-                    // TODO T: Do we have to change the service 
-                    //         as well to "iccphonebook"?
-                    //         defined in: device/commands/binder/Service_info.c                    
                     ServiceManager.getService("simphonebook"));
             if (iccIpb != null) {
                 success = iccIpb.updateAdnRecordsInEfBySearch(efType,
-                    name, number, "", "", pin2);
+                        name, number, "", "", pin2);
             }
         } catch (RemoteException ex) {
             // ignore it

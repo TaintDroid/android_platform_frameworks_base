@@ -23,7 +23,6 @@ import android.os.Handler;
  * {@hide}
  */
 public interface IccCard {
-    // TODO: check intent filters in apps
     /* The extra data for broacasting intent INTENT_ICC_STATE_CHANGE */
     static public final String INTENT_KEY_ICC_STATE = "ss";
     /* NOT_READY means the ICC interface is not ready (eg, radio is off or powering on) */
@@ -73,7 +72,7 @@ public interface IccCard {
      * Notifies handler of any transition into State.ABSENT
      */
     void registerForAbsent(Handler h, int what, Object obj);
-    void unregisterForAbsent(Handler h);    
+    void unregisterForAbsent(Handler h);
 
     /**
      * Notifies handler of any transition into State.isPinLocked()
@@ -100,11 +99,11 @@ public interface IccCard {
      *
      * If the supplied PIN is incorrect:
      * ((AsyncResult)onComplete.obj).exception != null
-     * && ((AsyncResult)onComplete.obj).exception 
+     * && ((AsyncResult)onComplete.obj).exception
      *       instanceof com.android.internal.telephony.gsm.CommandException)
      * && ((CommandException)(((AsyncResult)onComplete.obj).exception))
      *          .getCommandError() == CommandException.Error.PASSWORD_INCORRECT
-     * 
+     *
      *
      */
 

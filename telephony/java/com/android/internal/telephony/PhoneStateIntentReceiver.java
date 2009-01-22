@@ -32,7 +32,7 @@ import android.telephony.ServiceState;
  *
  *      Use android.telephony.TelephonyManager and PhoneStateListener instead.
  *
- * 
+ *
  */
 @Deprecated
 public final class PhoneStateIntentReceiver extends BroadcastReceiver {
@@ -184,7 +184,7 @@ public final class PhoneStateIntentReceiver extends BroadcastReceiver {
             if (TelephonyIntents.ACTION_SIGNAL_STRENGTH_CHANGED.equals(action)) {
                 mAsu = intent.getIntExtra(INTENT_KEY_ASU, mAsu);
                 if (DBG) Log.d(LOG_TAG, "onReceiveIntent: set asu=" + mAsu);
-                
+
                 if (mTarget != null && getNotifySignalStrength()) {
                     Message message = Message.obtain(mTarget, mAsuEventWhat);
                     mTarget.sendMessage(message);

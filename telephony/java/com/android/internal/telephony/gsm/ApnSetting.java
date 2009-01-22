@@ -16,7 +16,8 @@
 
 package com.android.internal.telephony.gsm;
 
-import com.android.internal.telephony.*;
+import com.android.internal.telephony.Phone;
+
 /**
  * This class represents a apn setting for create PDP link
  */

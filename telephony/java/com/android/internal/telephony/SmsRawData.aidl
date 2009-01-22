@@ -14,6 +14,6 @@
 ** limitations under the License.
 */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 parcelable SmsRawData;

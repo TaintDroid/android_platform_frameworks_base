@@ -25,7 +25,7 @@ import android.util.Log;
 
 
 public class AdnRecordLoader extends Handler {
-    static final String LOG_TAG = "AdnRecordLoader";
+    static String LOG_TAG;
 
     //***** Instance Variables
 
@@ -59,9 +59,10 @@ public class AdnRecordLoader extends Handler {
     public AdnRecordLoader(PhoneBase phone) {
         // The telephony unit-test cases may create AdnRecords
         // in secondary threads
-        super(phone.h.getLooper());
+        super(phone.getHandler().getLooper());
 
         this.phone = phone;
+        LOG_TAG = phone.getPhoneName();
     }
 
     /**
@@ -69,16 +70,16 @@ public class AdnRecordLoader extends Handler {
      * or response.obj.exception is set
      */
     public void
-    loadFromEF(int ef, int extensionEF, int recordNumber, 
+    loadFromEF(int ef, int extensionEF, int recordNumber,
                 Message response) {
         this.ef = ef;
         this.extensionEF = extensionEF;
         this.recordNumber = recordNumber;
         this.userResponse = response;
-        
+
         phone.mIccFileHandler.loadEFLinearFixed(
-                    ef, recordNumber, 
-                    obtainMessage(EVENT_ADN_LOAD_DONE)); 
+                    ef, recordNumber,
+                    obtainMessage(EVENT_ADN_LOAD_DONE));
 
     }
 
@@ -88,15 +89,15 @@ public class AdnRecordLoader extends Handler {
      * or response.obj.exception is set
      */
     public void
-    loadAllFromEF(int ef, int extensionEF, 
+    loadAllFromEF(int ef, int extensionEF,
                 Message response) {
         this.ef = ef;
         this.extensionEF = extensionEF;
         this.userResponse = response;
-        
+
         phone.mIccFileHandler.loadEFLinearFixedAll(
-                    ef, 
-                    obtainMessage(EVENT_ADN_LOAD_ALL_DONE)); 
+                    ef,
+                    obtainMessage(EVENT_ADN_LOAD_ALL_DONE));
 
     }
 
@@ -127,7 +128,7 @@ public class AdnRecordLoader extends Handler {
 
     //***** Overridden from Handler
 
-    public void 
+    public void
     handleMessage(Message msg) {
         AsyncResult ar;
         byte data[];
@@ -180,18 +181,18 @@ public class AdnRecordLoader extends Handler {
                 case EVENT_ADN_LOAD_DONE:
                     ar = (AsyncResult)(msg.obj);
                     data = (byte[])(ar.result);
-     
+
                     if (ar.exception != null) {
                         throw new RuntimeException("load failed", ar.exception);
                     }
 
                     if (false) {
-                        Log.d(LOG_TAG,"ADN EF: 0x" 
+                        Log.d(LOG_TAG,"ADN EF: 0x"
                             + Integer.toHexString(ef)
                             + ":" + recordNumber
                             + "\n" + IccUtils.bytesToHexString(data));
                     }
-                    
+
                     adn = new AdnRecord(ef, recordNumber, data);
                     result = adn;
 
@@ -201,10 +202,10 @@ public class AdnRecordLoader extends Handler {
                         // ext record and append it
 
                         pendingExtLoads = 1;
-                        
+
                         phone.mIccFileHandler.loadEFLinearFixed(
-                            extensionEF, adn.extRecord, 
-                            obtainMessage(EVENT_EXT_RECORD_LOAD_DONE, adn)); 
+                            extensionEF, adn.extRecord,
+                            obtainMessage(EVENT_EXT_RECORD_LOAD_DONE, adn));
                     }
                 break;
 
@@ -212,12 +213,12 @@ public class AdnRecordLoader extends Handler {
                     ar = (AsyncResult)(msg.obj);
                     data = (byte[])(ar.result);
                     adn = (AdnRecord)(ar.userObj);
-     
+
                     if (ar.exception != null) {
                         throw new RuntimeException("load failed", ar.exception);
                     }
 
-                    Log.d(LOG_TAG,"ADN extention EF: 0x" 
+                    Log.d(LOG_TAG,"ADN extention EF: 0x"
                         + Integer.toHexString(extensionEF)
                         + ":" + adn.extRecord
                         + "\n" + IccUtils.bytesToHexString(data));
@@ -225,14 +226,14 @@ public class AdnRecordLoader extends Handler {
                     adn.appendExtRecord(data);
 
                     pendingExtLoads--;
-                    // result should have been set in 
+                    // result should have been set in
                     // EVENT_ADN_LOAD_DONE or EVENT_ADN_LOAD_ALL_DONE
-                break;            
+                break;
 
                 case EVENT_ADN_LOAD_ALL_DONE:
                     ar = (AsyncResult)(msg.obj);
                     ArrayList<byte[]> datas = (ArrayList<byte[]>)(ar.result);
-     
+
                     if (ar.exception != null) {
                         throw new RuntimeException("load failed", ar.exception);
                     }
@@ -251,17 +252,17 @@ public class AdnRecordLoader extends Handler {
                             // ext record and append it
 
                             pendingExtLoads++;
-                            
+
                             phone.mIccFileHandler.loadEFLinearFixed(
-                                extensionEF, adn.extRecord, 
-                                obtainMessage(EVENT_EXT_RECORD_LOAD_DONE, adn)); 
+                                extensionEF, adn.extRecord,
+                                obtainMessage(EVENT_EXT_RECORD_LOAD_DONE, adn));
                         }
                     }
                 break;
             }
-        } catch (RuntimeException exc) {            
+        } catch (RuntimeException exc) {
             if (userResponse != null) {
-                AsyncResult.forMessage(userResponse) 
+                AsyncResult.forMessage(userResponse)
                                 .exception = exc;
                 userResponse.sendToTarget();
                 // Loading is all or nothing--either every load succeeds
@@ -272,13 +273,13 @@ public class AdnRecordLoader extends Handler {
         }
 
         if (userResponse != null && pendingExtLoads == 0) {
-            AsyncResult.forMessage(userResponse).result 
+            AsyncResult.forMessage(userResponse).result
                 = result;
 
             userResponse.sendToTarget();
             userResponse = null;
         }
     }
-    
+
 
 }

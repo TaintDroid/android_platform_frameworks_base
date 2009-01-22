@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.internal.telephony.gsm;
+package com.android.internal.telephony;
 
 import com.android.internal.telephony.RILConstants;
 
@@ -48,19 +48,19 @@ public class CommandException extends RuntimeException {
     fromRilErrno(int ril_errno) {
         switch(ril_errno) {
             case RILConstants.SUCCESS:                       return null;
-            case RILConstants.RIL_ERRNO_INVALID_RESPONSE:    
+            case RILConstants.RIL_ERRNO_INVALID_RESPONSE:
                 return new CommandException(Error.INVALID_RESPONSE);
-            case RILConstants.RADIO_NOT_AVAILABLE:           
+            case RILConstants.RADIO_NOT_AVAILABLE:
                 return new CommandException(Error.RADIO_NOT_AVAILABLE);
-            case RILConstants.GENERIC_FAILURE:               
+            case RILConstants.GENERIC_FAILURE:
                 return new CommandException(Error.GENERIC_FAILURE);
-            case RILConstants.PASSWORD_INCORRECT:            
+            case RILConstants.PASSWORD_INCORRECT:
                 return new CommandException(Error.PASSWORD_INCORRECT);
-            case RILConstants.SIM_PIN2:                      
+            case RILConstants.SIM_PIN2:
                 return new CommandException(Error.SIM_PIN2);
-            case RILConstants.SIM_PUK2:                      
+            case RILConstants.SIM_PUK2:
                 return new CommandException(Error.SIM_PUK2);
-            case RILConstants.REQUEST_NOT_SUPPORTED:         
+            case RILConstants.REQUEST_NOT_SUPPORTED:
                 return new CommandException(Error.REQUEST_NOT_SUPPORTED);
             case RILConstants.OP_NOT_ALLOWED_DURING_VOICE_CALL:
                 return new CommandException(Error.OP_NOT_ALLOWED_DURING_VOICE_CALL);

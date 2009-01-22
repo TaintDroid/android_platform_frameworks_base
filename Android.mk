@@ -106,8 +106,8 @@ LOCAL_SRC_FILES += \
 	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
 	telephony/java/com/android/internal/telephony/ITelephony.aidl \
 	telephony/java/com/android/internal/telephony/ITelephonyRegistry.aidl \
-telephony/java/com/android/internal/telephony/IIccPhoneBook.aidl \
-	telephony/java/com/android/internal/telephony/gsm/ISms.aidl \
+	telephony/java/com/android/internal/telephony/IIccPhoneBook.aidl \
+	telephony/java/com/android/internal/telephony/ISms.aidl \
 	wifi/java/android/net/wifi/IWifiManager.aidl
 
 LOCAL_AIDL_INCLUDES += $(FRAMEWORKS_BASE_JAVA_SRC_DIRS)

@@ -27,7 +27,7 @@ import android.util.Log;
  *
  */
 public class StkAppInstaller {
-    // Application state actions: install, uninstall used by StkAppStateReceiver.    
+    // Application state actions: install, uninstall used by StkAppStateReceiver.
     static final String STK_APP_INSTALL_ACTION = "com.android.stk.action.INSTALL";
     static final String STK_APP_UNINSTALL_ACTION = "com.android.stk.action.UNINSTALL";
 
