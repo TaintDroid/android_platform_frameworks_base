@@ -118,7 +118,7 @@
     <string name="permgrouplab_messages">"Dine beskeder"</string>
     <string name="permgroupdesc_messages">"Læs og skriv dine SMS-, e-mail- og andre beskeder."</string>
     <string name="permgrouplab_personalInfo">"Dine personlige oplysninger"</string>
-    <string name="permgroupdesc_personalInfo">"Få direkte adgang til dine kontaktpersoner og din kalender, der er gemt på telefonen."</string>
+    <string name="permgroupdesc_personalInfo">"Få direkte adgang til dine kontakter og din kalender, der er gemt på telefonen."</string>
     <string name="permgrouplab_location">"Din placering"</string>
     <string name="permgroupdesc_location">"Overvåg din fysiske placering"</string>
     <string name="permgrouplab_network">"Netværkskommunikation"</string>
@@ -235,10 +235,10 @@
     <string name="permdesc_receiveBootCompleted">"Tillader et program at starte selv, når systemet er færdig med at starte. Dette kan gøre start af telefonen langsommere og generelt gøre telefonen langsommere ved altid at lade programmet køre."</string>
     <string name="permlab_broadcastSticky">"send klæbende udsendelse"</string>
     <string name="permdesc_broadcastSticky">"Tillader et program at sende klæbende udsendelser, der bliver tilbage, efter udsendelsen er slut. Ondsindede programmer kan gøre telefonen langsom eller ustabil ved at få den til at bruge for meget hukommelse."</string>
-    <string name="permlab_readContacts">"læs kontaktpersondata"</string>
-    <string name="permdesc_readContacts">"Tillader et program at læse alle kontaktpersondata (adresse), der er gemt på din telefon. Ondsindede programmer kan bruge dette til at sende dine data til andre mennesker."</string>
-    <string name="permlab_writeContacts">"skriv kontaktpersondata"</string>
-    <string name="permdesc_writeContacts">"Tillader et program at ændre telefonens kontaktpersondata (adresse), der er gemt på din telefon. Ondsindede programmer kan bruge dette til at slette eller ændre kontaktpersondata."</string>
+    <string name="permlab_readContacts">"læs kontaktdata"</string>
+    <string name="permdesc_readContacts">"Tillader et program at læse alle kontaktdata (adresse), der er gemt på din telefon. Ondsindede programmer kan bruge dette til at sende dine data til andre mennesker."</string>
+    <string name="permlab_writeContacts">"skriv kontaktdata"</string>
+    <string name="permdesc_writeContacts">"Tillader et program at ændre telefonens kontaktdata (adresse), der er gemt på din telefon. Ondsindede programmer kan bruge dette til at slette eller ændre kontaktdata."</string>
     <string name="permlab_writeOwnerData">"skriv ejerdata"</string>
     <string name="permdesc_writeOwnerData">"Tillader et program at ændre telefonens ejerdata, der er gemt på din telefon. Ondsindede programmer kan bruge dette til at slette eller ændre ejerdata."</string>
     <string name="permlab_readOwnerData">"læs ejerdata"</string>
@@ -330,9 +330,9 @@
     <string name="permlab_disableKeyguard">"deaktiver tastaturlås"</string>
     <string name="permdesc_disableKeyguard">"Tillader et program at deaktivere tastaturlåsen og al associeret adgangskodesikkerhed. Et legitimt eksempel på dette er, at telefonen deaktiverer tastaturlåsen, når der modtages et indgående telefonopkald, og genaktiverer tastaturlåsen, når opkaldet er afsluttet."</string>
     <string name="permlab_readSyncSettings">"læs synkroniseringsindstillinger"</string>
-    <string name="permdesc_readSyncSettings">"Tillader et program at læse synkroniseringsindstillingerne, som f.eks. om synkronisering er aktiveret for kontaktpersoner."</string>
+    <string name="permdesc_readSyncSettings">"Tillader et program at læse synkroniseringsindstillingerne, som f.eks. om synkronisering er aktiveret for kontakter."</string>
     <string name="permlab_writeSyncSettings">"skriv synkroniseringsindstillinger"</string>
-    <string name="permdesc_writeSyncSettings">"Tillader et program at ændre synkroniseringsindstillingerne, som f.eks. om synkronisering er aktiveret for kontaktpersoner."</string>
+    <string name="permdesc_writeSyncSettings">"Tillader et program at ændre synkroniseringsindstillingerne, som f.eks. om synkronisering er aktiveret for kontakter."</string>
     <string name="permlab_readSyncStats">"læs synkroniseringsstatistikker"</string>
     <string name="permdesc_readSyncStats">"Tillader et program at læse synkroniseringsstatistikkerne, som f.eks. oversigt over forekomne synkroniseringer."</string>
     <string name="permlab_subscribedFeedsRead">"læs abonnerede feeds"</string>
@@ -662,5 +662,5 @@
     <string name="ime_action_done">"Færdig"</string>
     <string name="ime_action_default">"Udfør"</string>
     <string name="dial_number_using">"Ring til nummer"\n"ved hjælp af <xliff:g id="NUMBER">%s</xliff:g>"</string>
-    <string name="create_contact_using">"Opret kontaktperson"\n"ved hjælp af <xliff:g id="NUMBER">%s</xliff:g>"</string>
+    <string name="create_contact_using">"Opret kontakt"\n"ved hjælp af <xliff:g id="NUMBER">%s</xliff:g>"</string>
 </resources>

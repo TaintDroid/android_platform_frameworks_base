@@ -649,7 +649,7 @@
     <string name="ext_media_safe_unmount_notification_title">"Säkert att ta bort SD-kort"</string>
     <string name="ext_media_safe_unmount_notification_message">"SD-kortet kan nu tas bort."</string>
     <string name="ext_media_nomedia_notification_title">"Borttaget SD-kort"</string>
-    <string name="ext_media_nomedia_notification_message">"SD tar tagits bort. Sätt i ett nytt SD-kort för att öka enhetens lagringsutrymme."</string>
+    <string name="ext_media_nomedia_notification_message">"SD har tagits bort. Sätt i ett nytt SD-kort för att öka enhetens lagringsutrymme."</string>
     <string name="activity_list_empty">"Inga matchande aktiviteter hittades"</string>
     <string name="permlab_pkgUsageStats">"uppdatera statistik över användning av komponenter"</string>
     <string name="permdesc_pkgUsageStats">"Tillåter att samlad komponentstatistik ändras. Används inte av vanliga program."</string>

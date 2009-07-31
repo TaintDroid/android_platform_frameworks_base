@@ -41,7 +41,7 @@
     <string name="invalidPin">"输入一个 4 至 8 位数的 PIN。"</string>
     <string name="needPuk">"您的 SIM 卡被 PUK 锁定。请输入 PUK 码进行解锁。"</string>
     <string name="needPuk2">"输入 PUK2 以解锁 SIM 卡。"</string>
-    <string name="ClipMmi">"收到来电显示"</string>
+    <string name="ClipMmi">"来电显示"</string>
     <string name="ClirMmi">"外拨电话显示"</string>
     <string name="CfMmi">"呼叫转接"</string>
     <string name="CwMmi">"呼叫等待"</string>
@@ -95,8 +95,8 @@
     <string name="me">"我"</string>
     <string name="power_dialog">"手机选项"</string>
     <string name="silent_mode">"静音模式"</string>
-    <string name="turn_on_radio">"打开收音机"</string>
-    <string name="turn_off_radio">"关闭收音机"</string>
+    <string name="turn_on_radio">"打开无线电"</string>
+    <string name="turn_off_radio">"关闭无线电"</string>
     <string name="screen_lock">"屏幕锁定"</string>
     <string name="power_off">"关机"</string>
     <string name="shutdown_progress">"正在关机..."</string>
@@ -157,7 +157,7 @@
     <string name="permdesc_reorderTasks">"允许应用程序将任务移至前台和后台。恶意应用程序可借此强行进到前台，而不受您的控制。"</string>
     <string name="permlab_setDebugApp">"启用应用程序调试"</string>
     <string name="permdesc_setDebugApp">"允许应用程序启动对其他应用程序的调试。恶意应用程序可借此终止其他应用程序。"</string>
-    <string name="permlab_changeConfiguration">"更改您的用户界面设置"</string>
+    <string name="permlab_changeConfiguration">"更改用户界面设置"</string>
     <string name="permdesc_changeConfiguration">"允许应用程序更改当前配置，例如语言区域或整体字号。"</string>
     <string name="permlab_restartPackages">"重新启动其他应用程序"</string>
     <string name="permdesc_restartPackages">"允许应用程序强行重新启动其他应用程序。"</string>
@@ -249,11 +249,11 @@
     <string name="permdesc_writeCalendar">"允许应用程序修改您手机上存储的日历活动。恶意应用程序可借此清除或修改您的日历数据。"</string>
     <string name="permlab_accessMockLocation">"用于测试的模拟位置源"</string>
     <string name="permdesc_accessMockLocation">"创建用于测试的模拟位置源。恶意应用程序可借此替代真正的位置源（如 GPS 或网络提供商）返回的位置和/或状态。"</string>
-    <string name="permlab_accessLocationExtraCommands">"允许访问额外的位置提供命令"</string>
+    <string name="permlab_accessLocationExtraCommands">"接收额外的位置提供者命令"</string>
     <string name="permdesc_accessLocationExtraCommands">"访问额外的位置提供程序命令。恶意应用程序可借此干扰 GPS 或其他位置源的运作。"</string>
     <string name="permlab_accessFineLocation">"精准位置 (GPS)"</string>
     <string name="permdesc_accessFineLocation">"访问精准的位置源，例如手机上的全球定位系统（如果适用）。恶意应用程序可能借此确定您所处的位置，并消耗额外的电池电量。"</string>
-    <string name="permlab_accessCoarseLocation">"粗略位置（所在网络）"</string>
+    <string name="permlab_accessCoarseLocation">"粗略位置（以网络为基础）"</string>
     <string name="permdesc_accessCoarseLocation">"访问粗略的位置源（例如蜂窝网络数据库）以确定手机的大体位置（如果适用）。恶意应用程序可借此确定您所处的大体位置。"</string>
     <string name="permlab_accessSurfaceFlinger">"访问 SurfaceFlinger"</string>
     <string name="permdesc_accessSurfaceFlinger">"允许应用程序使用 SurfaceFlinger 低级别功能。"</string>
@@ -311,7 +311,7 @@
     <string name="permdesc_getAccounts">"允许应用程序获取手机已知的帐户列表。"</string>
     <string name="permlab_accessNetworkState">"查看网络状态"</string>
     <string name="permdesc_accessNetworkState">"允许应用程序查看所有网络的状态。"</string>
-    <string name="permlab_createNetworkSockets">"不受限制的互联网访问权限"</string>
+    <string name="permlab_createNetworkSockets">"互联网完全访问"</string>
     <string name="permdesc_createNetworkSockets">"允许应用程序创建网络套接字。"</string>
     <string name="permlab_writeApnSettings">"写入接入点名称设置"</string>
     <string name="permdesc_writeApnSettings">"允许应用程序修改 APN 设置，例如任何 APN 的代理和端口。"</string>
@@ -354,7 +354,7 @@
     <item>"自定义电话"</item>
   </string-array>
   <string-array name="emailAddressTypes">
-    <item>"住宅邮箱"</item>
+    <item>"主要邮箱"</item>
     <item>"单位邮箱"</item>
     <item>"其他邮箱"</item>
     <item>"自定义邮箱"</item>
@@ -573,13 +573,13 @@
     <string name="chooseActivity">"选择一项操作"</string>
     <string name="noApplications">"没有应用程序可执行此操作。"</string>
     <string name="aerr_title">"很抱歉！"</string>
-    <string name="aerr_application">"应用程序<xliff:g id="APPLICATION">%1$s</xliff:g>（进程 <xliff:g id="PROCESS">%2$s</xliff:g>）意外停止，请重试。"</string>
-    <string name="aerr_process">"进程 <xliff:g id="PROCESS">%1$s</xliff:g> 已意外停止，请重试。"</string>
+    <string name="aerr_application">"<xliff:g id="APPLICATION">%1$s</xliff:g>应用程序（<xliff:g id="PROCESS">%2$s</xliff:g> 进程）意外停止，请重试。"</string>
+    <string name="aerr_process">"<xliff:g id="PROCESS">%1$s</xliff:g> 进程意外停止，请重试。"</string>
     <string name="anr_title">"很抱歉！"</string>
-    <string name="anr_activity_application">"<xliff:g id="ACTIVITY">%1$s</xliff:g>活动（在 <xliff:g id="APPLICATION">%2$s</xliff:g>应用程序中）无响应。"</string>
-    <string name="anr_activity_process">"<xliff:g id="ACTIVITY">%1$s</xliff:g>活动（在<xliff:g id="PROCESS">%2$s</xliff:g>进程中）无响应。"</string>
-    <string name="anr_application_process">"<xliff:g id="APPLICATION">%1$s</xliff:g>应用程序（在<xliff:g id="PROCESS">%2$s</xliff:g>进程中）无响应。"</string>
-    <string name="anr_process">"<xliff:g id="PROCESS">%1$s</xliff:g>进程无响应。"</string>
+    <string name="anr_activity_application">"<xliff:g id="ACTIVITY">%1$s</xliff:g>活动（在<xliff:g id="APPLICATION">%2$s</xliff:g>应用程序中）无响应。"</string>
+    <string name="anr_activity_process">"<xliff:g id="ACTIVITY">%1$s</xliff:g>活动（在 <xliff:g id="PROCESS">%2$s</xliff:g> 进程中）无响应。"</string>
+    <string name="anr_application_process">"<xliff:g id="APPLICATION">%1$s</xliff:g>应用程序（在 <xliff:g id="PROCESS">%2$s</xliff:g> 进程中）无响应。"</string>
+    <string name="anr_process">"<xliff:g id="PROCESS">%1$s</xliff:g> 进程无响应。"</string>
     <string name="force_close">"强行关闭"</string>
     <string name="wait">"等待"</string>
     <string name="debug">"调试"</string>

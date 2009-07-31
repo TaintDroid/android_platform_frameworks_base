@@ -94,7 +94,7 @@
     <string name="low_memory">"Память телефона заполнена! Удалите файлы, чтобы освободить место."</string>
     <string name="me">"Я"</string>
     <string name="power_dialog">"Параметры телефона"</string>
-    <string name="silent_mode">"Беззвучный режим"</string>
+    <string name="silent_mode">"Тихий режим"</string>
     <string name="turn_on_radio">"Включить беспроводную связь"</string>
     <string name="turn_off_radio">"Отключить беспроводное соединение"</string>
     <string name="screen_lock">"Блокировка экрана"</string>
@@ -105,7 +105,7 @@
     <string name="global_actions">"Параметры телефона"</string>
     <string name="global_action_lock">"Блокировка экрана"</string>
     <string name="global_action_power_off">"Отключить питание"</string>
-    <string name="global_action_toggle_silent_mode">"Беззвучный режим"</string>
+    <string name="global_action_toggle_silent_mode">"Тихий режим"</string>
     <string name="global_action_silent_mode_on_status">"Звук ВЫКЛ"</string>
     <string name="global_action_silent_mode_off_status">"Звук ВКЛЮЧЕН"</string>
     <string name="global_actions_toggle_airplane_mode">"Режим полета"</string>
@@ -133,7 +133,7 @@
     <string name="permgroupdesc_systemTools">"Доступ нижнего уровня и управление системой."</string>
     <string name="permgrouplab_developmentTools">"Инструменты разработки"</string>
     <string name="permgroupdesc_developmentTools">"Функции, необходимые только разработчикам приложений."</string>
-    <string name="permlab_statusBar">"отключить или изменить строку состояния"</string>
+    <string name="permlab_statusBar">"отключать или изменять строку состояния"</string>
     <string name="permdesc_statusBar">"Позволяет приложению отключать строку состояния или добавлять/удалять системные значки."</string>
     <string name="permlab_expandStatusBar">"разворачивать/сворачивать строку состояния"</string>
     <string name="permdesc_expandStatusBar">"Позволяет приложению разворачивать или сворачивать строку состояния."</string>
@@ -147,7 +147,7 @@
     <string name="permdesc_sendSms">"Позволяет приложению отправлять SMS-сообщения. Вредоносные приложения могут отправлять сообщения без уведомления, что приведет к непредвиденным расходам."</string>
     <string name="permlab_readSms">"считывать SMS или MMS"</string>
     <string name="permdesc_readSms">"Позволяет приложению считывать SMS-сообщения, сохраненные на телефоне или SIM-карте. Вредоносные приложения могут считывать конфиденциальные сообщения."</string>
-    <string name="permlab_writeSms">"изменить SMS или MMS"</string>
+    <string name="permlab_writeSms">"изменять SMS или MMS"</string>
     <string name="permdesc_writeSms">"Позволяет приложению перезаписывать SMS-сообщения, сохраненные на телефоне или SIM-карте. Вредоносные приложения могут удалить сообщения."</string>
     <string name="permlab_receiveWapPush">"получать WAP"</string>
     <string name="permdesc_receiveWapPush">"Позволяет приложению получать и обрабатывать WAP-сообщения. Вредоносные приложения могут отслеживать ваши сообщения или удалять их, не показывая вам."</string>
@@ -225,11 +225,11 @@
     <string name="permdesc_changeComponentState">"Позволяет приложению отключать или включать компоненты другого приложения. Вредоносные приложения могут использовать это разрешение для отключения важных возможностей телефона. Это разрешение следует использовать с осторожностью, так как это может привести к несовместимости, нестабильности и неработоспособности компонентов приложения."</string>
     <string name="permlab_setPreferredApplications">"выбирать предпочтительные приложения"</string>
     <string name="permdesc_setPreferredApplications">"Позволяет приложению изменять предпочтительные приложения. Вредоносные приложения могут использовать эту возможность для незаметного изменения запущенных приложений и для сбора конфиденциальной информации с помощью имитации подключения существующих приложений."</string>
-    <string name="permlab_writeSettings">"изменить общие настройки системы"</string>
+    <string name="permlab_writeSettings">"изменять общие настройки системы"</string>
     <string name="permdesc_writeSettings">"Позволяет приложению изменять данные настроек системы. Вредоносные приложения могут повредить конфигурацию системы."</string>
     <string name="permlab_writeSecureSettings">"изменять настройки системы безопасности"</string>
     <string name="permdesc_writeSecureSettings">"Позволяет приложению изменять данные настроек безопасности системы. Не предназначено для использования обычными приложениями."</string>
-    <string name="permlab_writeGservices">"изменить карту служб Google"</string>
+    <string name="permlab_writeGservices">"изменять карту служб Google"</string>
     <string name="permdesc_writeGservices">"Позволяет приложению изменять карту служб Google. Не предназначено для использования обычными приложениями."</string>
     <string name="permlab_receiveBootCompleted">"автоматически запускать при загрузке"</string>
     <string name="permdesc_receiveBootCompleted">"Позволяет приложению запускаться сразу же по завершении загрузки. Это может увеличить время запуска телефона и замедлить его работу в связи с постоянной работой приложения."</string>
@@ -317,7 +317,7 @@
     <string name="permdesc_writeApnSettings">"Позволяет приложению изменять настройки APN, такие как прокси-сервер и порт любого APN."</string>
     <string name="permlab_changeNetworkState">"изменять настройки подключения к сети"</string>
     <string name="permdesc_changeNetworkState">"Позволяет приложению изменять состояние подключаемости сети."</string>
-    <string name="permlab_changeBackgroundDataSetting">"изменить настройку использования данных в фоновом режиме"</string>
+    <string name="permlab_changeBackgroundDataSetting">"изменять настройки использования данных в фоновом режиме"</string>
     <string name="permdesc_changeBackgroundDataSetting">"Позволяет приложению изменять настройку использования данных в фоновом режиме."</string>
     <string name="permlab_accessWifiState">"просматривать состояние Wi-Fi"</string>
     <string name="permdesc_accessWifiState">"Позволяет приложению просматривать сведения о состоянии Wi-Fi."</string>
@@ -389,7 +389,7 @@
     <string name="keyguard_password_enter_pin_code">"Введите PIN-код"</string>
     <string name="keyguard_password_wrong_pin_code">"Неверный PIN-код!"</string>
     <string name="keyguard_label_text">"Для разблокировки нажмите \"Меню\", а затем 0."</string>
-    <string name="emergency_call_dialog_number_for_display">"Номер экстренной службы"</string>
+    <string name="emergency_call_dialog_number_for_display">"Экстренная служба"</string>
     <string name="lockscreen_carrier_default">"(Сеть не найдена)"</string>
     <string name="lockscreen_screen_locked">"Экран заблокирован."</string>
     <string name="lockscreen_instructions_when_pattern_enabled">"Нажмите \"Меню\", чтобы разблокировать экран или вызвать службу экстренной помощи."</string>

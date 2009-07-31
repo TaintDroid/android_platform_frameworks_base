@@ -366,7 +366,7 @@
     <item>"Personalización"</item>
   </string-array>
   <string-array name="imAddressTypes">
-    <item>"Página principal"</item>
+    <item>"Pág. ppal."</item>
     <item>"Trabajo"</item>
     <item>"Otros"</item>
     <item>"Personalización"</item>
@@ -649,7 +649,7 @@
     <string name="ext_media_safe_unmount_notification_title">"Tarjeta SD fácil de extraer"</string>
     <string name="ext_media_safe_unmount_notification_message">"La tarjeta SD ahora se puede extraer de manera segura."</string>
     <string name="ext_media_nomedia_notification_title">"Tarjeta SD extraída"</string>
-    <string name="ext_media_nomedia_notification_message">"Se ha extraído la SD. Inserta una nueva tarjeta SD para aumentar el espacio de almacenamiento de tu dispositivo."</string>
+    <string name="ext_media_nomedia_notification_message">"Se extrajo la SD. Inserta una nva. tarjeta SD para aumentar el espacio de almac. de tu disposit."</string>
     <string name="activity_list_empty">"No se encontraron actividades coincidentes"</string>
     <string name="permlab_pkgUsageStats">"actualizar la estadística de uso de los componentes"</string>
     <string name="permdesc_pkgUsageStats">"Permite la modificación de estadísticas recopiladas sobre el uso de componentes. Las aplicaciones normales no deben utilizarlo."</string>
@@ -659,7 +659,7 @@
     <string name="ime_action_search">"Buscar"</string>
     <string name="ime_action_send">"Enviar"</string>
     <string name="ime_action_next">"Siguiente"</string>
-    <string name="ime_action_done">"Finalizado"</string>
+    <string name="ime_action_done">"Hecho"</string>
     <string name="ime_action_default">"Ejecutar"</string>
     <string name="dial_number_using">"Marcar el número"\n"con <xliff:g id="NUMBER">%s</xliff:g>"</string>
     <string name="create_contact_using">"Crear contacto "\n"con <xliff:g id="NUMBER">%s</xliff:g>"</string>

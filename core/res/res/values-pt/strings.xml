@@ -158,7 +158,7 @@
     <string name="permlab_setDebugApp">"ativar depuração do aplicativo"</string>
     <string name="permdesc_setDebugApp">"Permite que um aplicativo ative a depuração de outro aplicativo. Aplicativos maliciosos podem usar isso para encerrar outros aplicativos."</string>
     <string name="permlab_changeConfiguration">"alterar as suas configurações de UI"</string>
-    <string name="permdesc_changeConfiguration">"Permite que um aplicativo altere a configuração atual, como a localidade ou tamanho geral da fonte."</string>
+    <string name="permdesc_changeConfiguration">"Permite que um aplicativo altere a configuração atual, como o local ou o tamanho geral da fonte."</string>
     <string name="permlab_restartPackages">"reiniciar outros aplicativos"</string>
     <string name="permdesc_restartPackages">"Permite que um aplicativo reinicie forçosamente outros aplicativos."</string>
     <string name="permlab_setProcessForeground">"impedir a interrupção"</string>
@@ -639,7 +639,7 @@
     <string name="fast_scroll_numeric_alphabet">" 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"</string>
     <string name="candidates_style"><u>"candidatos"</u></string>
     <string name="ext_media_checking_notification_title">"Preparando o cartão SD"</string>
-    <string name="ext_media_checking_notification_message">"Verificando a existência de erros"</string>
+    <string name="ext_media_checking_notification_message">"Procurando erros"</string>
     <string name="ext_media_nofs_notification_title">"Cartão SD em branco"</string>
     <string name="ext_media_nofs_notification_message">"O cartão SD está em branco ou está usando um sistema de arquivos não suportado."</string>
     <string name="ext_media_unmountable_notification_title">"Cartão SD danificado"</string>

@@ -44,7 +44,7 @@
     <string name="ClipMmi">"Εισερχόμενη αναγνώριση κλήσης"</string>
     <string name="ClirMmi">"Εξερχόμενη αναγνώριση κλήσης"</string>
     <string name="CfMmi">"Προώθηση κλήσεων"</string>
-    <string name="CwMmi">"Αναμονή κλήσης"</string>
+    <string name="CwMmi">"Αναμ. κλήσ."</string>
     <string name="BaMmi">"Φραγή κλήσεων"</string>
     <string name="PwdMmi">"Αλλαγή κωδικού πρόσβασης"</string>
     <string name="PinMmi">"Αλλαγή αριθμού PIN"</string>
@@ -113,7 +113,7 @@
     <string name="global_actions_airplane_mode_off_status">"Η λειτουργία πτήσης είναι απενεργοποιημένη"</string>
     <string name="safeMode">"Ασφαλής λειτουργία"</string>
     <string name="android_system_label">"Σύστημα Android"</string>
-    <string name="permgrouplab_costMoney">"Υπηρεσίες επί πληρωμή."</string>
+    <string name="permgrouplab_costMoney">"Υπηρεσίες επί πληρωμή"</string>
     <string name="permgroupdesc_costMoney">"Επιτρέπει σε εφαρμογές να πραγματοποιήσουν ενέργειες για τις οποίες ενδέχεται να χρεωθείτε."</string>
     <string name="permgrouplab_messages">"Τα μηνύματά σας"</string>
     <string name="permgroupdesc_messages">"Ανάγνωση και εγγραφή των μηνυμάτων SMS, των μηνυμάτων ηλεκτρονικού ταχυδρομείου και άλλων μηνυμάτων."</string>
@@ -269,7 +269,7 @@
     <string name="permdesc_brick">"Επιτρέπει στην εφαρμογή τη μόνιμη απενεργοποίηση όλων των λειτουργιών του τηλεφώνου, το οποίο είναι εξαιρετικά επικίνδυνο."</string>
     <string name="permlab_reboot">"αναγκαστική επανεκκίνηση τηλεφώνου"</string>
     <string name="permdesc_reboot">"Επιτρέπει στην εφαρμογή να προκαλέσει αναγκαστική επανεκκίνηση του τηλεφώνου."</string>
-    <string name="permlab_mount_unmount_filesystems">"Προσάρτηση και αποπροσάρτηση συστημάτων αρχείων"</string>
+    <string name="permlab_mount_unmount_filesystems">"σύνδεση και αποσύνδεση συστημάτων αρχείων"</string>
     <string name="permdesc_mount_unmount_filesystems">"Επιτρέπει στην εφαρμογή την προσάρτηση και αποπροσάρτηση συστημάτων αρχείων για αφαιρούμενο αποθηκευτικό χώρο."</string>
     <string name="permlab_mount_format_filesystems">"διαμόρφωση εξωτερικού αποθηκευτικού χώρου"</string>
     <string name="permdesc_mount_format_filesystems">"Επιτρέπει στην εφαρμογή τη διαμόρφωση αφαιρούμενου αποθηκευτικού χώρου."</string>
@@ -323,7 +323,7 @@
     <string name="permdesc_accessWifiState">"Επιτρέπει σε μια εφαρμογή την προβολή των πληροφοριών σχετικά με την κατάσταση του Wi-Fi."</string>
     <string name="permlab_changeWifiState">"αλλαγή κατάστασης Wi-Fi"</string>
     <string name="permdesc_changeWifiState">"Επιτρέπει σε μια εφαρμογή τη σύνδεση σε σημεία πρόσβασης Wi-Fi και την αποσύνδεση από αυτά, καθώς και την πραγματοποίηση αλλαγών σε διαμορφωμένα δίκτυα Wi-Fi."</string>
-    <string name="permlab_bluetoothAdmin">"διαχείριση bluetooth"</string>
+    <string name="permlab_bluetoothAdmin">"διαχείριση Bluetooth"</string>
     <string name="permdesc_bluetoothAdmin">"Επιτρέπει σε μια εφαρμογή τη διαμόρφωση του τοπικού τηλεφώνου Bluetooth και την ανακάλυψη και σύζευξη με απομακρυσμένες συσκευές."</string>
     <string name="permlab_bluetooth">"δημιουργία συνδέσεων Bluetooth"</string>
     <string name="permdesc_bluetooth">"Επιτρέπει σε μια εφαρμογή να προβάλει τη διαμόρφωση του τοπικού τηλεφώνου Bluetooth και επίσης να πραγματοποιεί και να αποδέχεται συνδέσεις με συζευγμένες συσκευές."</string>
@@ -339,7 +339,7 @@
     <string name="permdesc_subscribedFeedsRead">"Επιτρέπει σε μια εφαρμογή τη λήψη λεπτομερειών σχετικά με τις τρέχουσες συγχρονισμένες ροές δεδομένων."</string>
     <string name="permlab_subscribedFeedsWrite">"εγγραφή ροών δεδομένων στις οποίες έχετε εγγραφεί"</string>
     <string name="permdesc_subscribedFeedsWrite">"Επιτρέπει σε μια εφαρμογή να τροποποιήσει τις ροές δεδομένων, με τις οποίες είστε συγχρονισμένοι αυτή τη στιγμή. Αυτό θα μπορούσε να δώσει τη δυνατότητα σε μια κακόβουλη εφαρμογή να αλλάξει τις συγχρονισμένες ροές δεδομένων σας."</string>
-    <string name="permlab_readDictionary">"ανάγνωση καθορισμένου από τον χρήστη λεξικού"</string>
+    <string name="permlab_readDictionary">"ανάγνωση καθορισμένου από το χρήστη λεξικού"</string>
     <string name="permdesc_readDictionary">"Επιτρέπει σε μια εφαρμογή να αναγνώσει ιδιωτικές λέξεις και φράσεις και ιδιωτικά ονόματα, τα οποία ο χρήστης ενδέχεται να έχει αποθηκεύσει στο λεξικό χρήστη."</string>
     <string name="permlab_writeDictionary">"εγγραφή σε καθορισμένο από τον χρήστη λεξικό"</string>
     <string name="permdesc_writeDictionary">"Επιτρέπει σε μια εφαρμογή την εγγραφή νέων λέξεων στο λεξικό χρήστη."</string>
@@ -659,7 +659,7 @@
     <string name="ime_action_search">"Αναζήτηση"</string>
     <string name="ime_action_send">"Αποστολή"</string>
     <string name="ime_action_next">"Επόμενο"</string>
-    <string name="ime_action_done">"Ολοκληρώθηκε"</string>
+    <string name="ime_action_done">"Τέλος"</string>
     <string name="ime_action_default">"Εκτέλεση"</string>
     <string name="dial_number_using">"Κλήση αριθμού"\n"με τη χρήση <xliff:g id="NUMBER">%s</xliff:g>"</string>
     <string name="create_contact_using">"Δημιουργία επαφής"\n"με τη χρήση του <xliff:g id="NUMBER">%s</xliff:g>"</string>

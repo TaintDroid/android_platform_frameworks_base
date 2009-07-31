@@ -116,7 +116,7 @@
     <string name="permgrouplab_costMoney">"Size maliyet getiren hizmetler"</string>
     <string name="permgroupdesc_costMoney">"Uygulamaların size maliyet getirebilecek işlemler yapmasına izin verir."</string>
     <string name="permgrouplab_messages">"Mesajlarınız"</string>
-    <string name="permgroupdesc_messages">"SMS mesajlarınızı, e-postanızı ve diğer mesajlarınızı okuyup yazın."</string>
+    <string name="permgroupdesc_messages">"SMS mesajlarınızı, e-posta iletilerinizi ve diğer mesajlarınızı okuyup yazın."</string>
     <string name="permgrouplab_personalInfo">"Kişisel bilgileriniz"</string>
     <string name="permgroupdesc_personalInfo">"Telefonunuzda depolanan kişilere ve takvime doğrudan erişim."</string>
     <string name="permgrouplab_location">"Konumunuz"</string>
@@ -179,7 +179,7 @@
     <string name="permdesc_broadcastWapPush">"Uygulamaların, WAP PUSH mesajının alındığına dair bildirim yayınlamasına izin verir. Kötü amaçlı uygulamalar bu işlevi, sahte MMS alındıları göndermek veya bir web sayfasını sessizce kötü amaçla tasarlanmış başkaları ile değiştirmek için kullanabilir."</string>
     <string name="permlab_setProcessLimit">"çalışan işlem sayısını sınırla"</string>
     <string name="permdesc_setProcessLimit">"Uygulamaların, çalışacak maksimum işlem sayısını denetlemesine izin verir. Normal uygulamalar için hiçbir zaman gerekmez."</string>
-    <string name="permlab_setAlwaysFinish">"tüm arka plan uygulamaları kapat"</string>
+    <string name="permlab_setAlwaysFinish">"tüm arka plan uygulamalarını kapat"</string>
     <string name="permdesc_setAlwaysFinish">"Uygulamaların, etkinliklerin arka planda daima tamamlanıp tamamlanmadığını denetlemesine izin verir. Normal uygulamalar için hiçbir zaman gerekli değildir."</string>
     <string name="permlab_fotaUpdate">"sistem güncellemelerini otomatik olarak yükle"</string>
     <string name="permdesc_fotaUpdate">"Uygulamaların bekleyen sistem güncellemeleri ile ilgili bildirimler almasına ve bunları tetiklemesine izin verir. Kötü amaçlı uygulamalar bu işlevi yetkisiz güncellemeler ile bozmak veya genel olarak güncelleme işleminde araya girmek için kullanabilir."</string>
@@ -195,7 +195,7 @@
     <string name="permdesc_manageAppTokens">"Uygulamaların, kendi normal Z sıralamalarını atlayarak kendi simgelerini oluşturup yönetmelerine izin verir. Normal uygulamalar için hiçbir zaman gerekli olmamalıdır."</string>
     <string name="permlab_injectEvents">"tuşlara bas ve düğmeleri denetle"</string>
     <string name="permdesc_injectEvents">"Uygulamaların kendi giriş işlemlerini (tuşa basma vb.) başka uygulamalara göndermesine izin verir. Kötü amaçlı uygulamalar bunu telefonun denetimini ele geçirmek için kullanabilir."</string>
-    <string name="permlab_readInputState">"yazdıklarınızı ve yaptığınız işlemleri kaydedin"</string>
+    <string name="permlab_readInputState">"yazdıklarınızı ve yaptığınız işlemleri kaydet"</string>
     <string name="permdesc_readInputState">"Uygulamaların, başka bir uygulama ile etkileşim halindeyken (örneğin bir şifre girerken) bile bastığınız tuşları izlemesine izin verir. Normal uygulamalarda hiçbir zaman gerek duyulmamalıdır."</string>
     <string name="permlab_bindInputMethod">"bir giriş yöntemine bağla"</string>
     <string name="permdesc_bindInputMethod">"Tutucunun bir giriş yönteminin en üst düzey arayüzüne bağlanmasına izin verir. Normal uygulamalarda hiçbir zaman gerek duyulmamalıdır."</string>
@@ -251,9 +251,9 @@
     <string name="permdesc_accessMockLocation">"Test amacıyla sahte konum kaynakları oluşturur. Kötü amaçlı uygulamalar bu işlevi GPS veya Ağ Hizmeti sağlayıcılar gibi gerçek kaynaklardan gelen konum ve/veya durum bilgilerini geçersiz kılmak için kullanabilir."</string>
     <string name="permlab_accessLocationExtraCommands">"ek konum sağlayıcı komutlarına eriş"</string>
     <string name="permdesc_accessLocationExtraCommands">"Ek konum sağlayıcı komutlarına erişin. Kötü amaçlı uygulamalar bu işlevi GPS veya diğer konum kaynaklarının işleyişine müdahale etmek için kullanabilir."</string>
-    <string name="permlab_accessFineLocation">"iyi (GPS) konum"</string>
+    <string name="permlab_accessFineLocation">"kesinliği yüksek (GPS) konum"</string>
     <string name="permdesc_accessFineLocation">"Bulunduğu yerlerde telefondan Küresel Konumlandırma Sistemi gibi hassas konum bulma kaynaklarına erişin. Kötü amaçlı uygulamalar bu işlevi bulunduğunuz yeri belirlemek için kullanabilir ve ek pil gücü tüketebilir."</string>
-    <string name="permlab_accessCoarseLocation">"kesinliksiz (ağ tabanlı) konum"</string>
+    <string name="permlab_accessCoarseLocation">"kesinliği düşük (ağ tabanlı) konum"</string>
     <string name="permdesc_accessCoarseLocation">"Telefonun yaklaşık yerini belirlemek için bulunduğu yerlerde hücresel ağ veritabanı gibi tahmini konum kaynaklarına erişir. Kötü amaçlı uygulamalar, bu işlevi bulunduğunuz yeri yaklaşık olarak belirlemek için kullanabilir."</string>
     <string name="permlab_accessSurfaceFlinger">"SurfaceFlinger\'a eriş"</string>
     <string name="permdesc_accessSurfaceFlinger">"Uygulamanın SurfaceFlinger alt düzey özelliklerini kullanmasına izin verir."</string>
@@ -269,7 +269,7 @@
     <string name="permdesc_brick">"Uygulamaların tüm telefonu kalıcı olarak devre dışı bırakmasına izin verir. Bu çok tehlikelidir."</string>
     <string name="permlab_reboot">"telefonu yeniden başlamaya zorla"</string>
     <string name="permdesc_reboot">"Uygulamanın telefonu yeniden açılmaya zorlamasına izin verir."</string>
-    <string name="permlab_mount_unmount_filesystems">"dosya sistemlerini bağlama ve bağlantısını kesme"</string>
+    <string name="permlab_mount_unmount_filesystems">"dosya sistemlerini bağla ve bağlantısını kes"</string>
     <string name="permdesc_mount_unmount_filesystems">"Uygulamaların çıkarılabilir depolama birimleri için dosya sistemleri ile bağlantı kurmasına ve bağlantıyı kesmesine izin verir."</string>
     <string name="permlab_mount_format_filesystems">"harici depolama birimini biçimlendir"</string>
     <string name="permdesc_mount_format_filesystems">"Uygulamanın çıkarılabilir depolama birimini biçimlendirmesine izin verir."</string>
@@ -531,7 +531,7 @@
     <string name="year">"yıl"</string>
     <string name="years">"yıl"</string>
     <string name="every_weekday">"Hafta içi her gün (Pzt-Cum)"</string>
-    <string name="daily">"Günlük"</string>
+    <string name="daily">"Her gün"</string>
     <string name="weekly">"Her hafta <xliff:g id="DAY">%s</xliff:g> günü"</string>
     <string name="monthly">"Aylık"</string>
     <string name="yearly">"Yılda bir"</string>
@@ -607,7 +607,7 @@
   </plurals>
     <string name="select_character">"Karakter ekle"</string>
     <string name="sms_control_default_app_name">"Bilinmeyen uygulama"</string>
-    <string name="sms_control_title">"SMS mesajları gönderme"</string>
+    <string name="sms_control_title">"SMS mesajları gönderiliyor"</string>
     <string name="sms_control_message">"Çok sayıda SMS mesajı gönderiliyor. Devam etmek için \"Tamam\"ı, göndermeyi durdurmak için \"İptal\"i seçin."</string>
     <string name="sms_control_yes">"Tamam"</string>
     <string name="sms_control_no">"İptal"</string>
