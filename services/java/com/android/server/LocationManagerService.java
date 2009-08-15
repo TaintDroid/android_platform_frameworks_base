@@ -871,11 +871,11 @@ public class LocationManagerService extends ILocationManager.Stub
         }
 
         if (enabled && listeners > 0) {
-            mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, provider);
-            Message m = Message.obtain(mLocationHandler, MESSAGE_HEARTBEAT, provider);
+            mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, p);
+            Message m = Message.obtain(mLocationHandler, MESSAGE_HEARTBEAT, p);
             mLocationHandler.sendMessageAtTime(m, SystemClock.uptimeMillis() + 1000);
         } else {
-            mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, provider);
+            mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, p);
         }
     }
 
@@ -1045,8 +1045,8 @@ public class LocationManagerService extends ILocationManager.Stub
                 }
                 
                 // Clear heartbeats if any before starting a new one
-                mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, provider);
-                Message m = Message.obtain(mLocationHandler, MESSAGE_HEARTBEAT, provider);
+                mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, impl);
+                Message m = Message.obtain(mLocationHandler, MESSAGE_HEARTBEAT, impl);
                 mLocationHandler.sendMessageAtTime(m, SystemClock.uptimeMillis() + 1000);
             } else {
                 try {
@@ -1146,7 +1146,7 @@ public class LocationManagerService extends ILocationManager.Stub
                     if (hasOtherListener) {
                         p.setMinTime(getMinTimeLocked(provider));
                     } else {
-                        mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, provider);
+                        mLocationHandler.removeMessages(MESSAGE_HEARTBEAT, p);
                         p.enableLocationTracking(false);
                     }
                     
@@ -1720,10 +1720,11 @@ public class LocationManagerService extends ILocationManager.Stub
         public void handleMessage(Message msg) {
             try {
                 if (msg.what == MESSAGE_HEARTBEAT) {
-                    // log("LocationWorkerHandler: Heartbeat!");
+                    log("LocationWorkerHandler: Heartbeat!");
 
                     synchronized (mLocationListeners) {
-                        String provider = (String) msg.obj;
+                        LocationProviderImpl p = (LocationProviderImpl) msg.obj;
+                        String provider = p.getName();
                         if (!isAllowedBySettingsLocked(provider)) {
                             return;
                         }
@@ -1736,7 +1737,7 @@ public class LocationManagerService extends ILocationManager.Stub
                         // If it continues to have listeners
                         ArrayList<UpdateRecord> records = mRecordsByProvider.get(provider);
                         if (records != null && records.size() > 0) {
-                            Message m = Message.obtain(this, MESSAGE_HEARTBEAT, provider);
+                            Message m = Message.obtain(this, MESSAGE_HEARTBEAT, p);
                             sendMessageAtTime(m, SystemClock.uptimeMillis() + 1000);
                         }
 
