@@ -926,7 +926,9 @@ public class LocationManagerService extends ILocationManager.Stub
          */
         void disposeLocked() {
             ArrayList<UpdateRecord> records = mRecordsByProvider.get(this.mProvider);
-            records.remove(this);
+            if (records != null) {
+                records.remove(this);
+            }
         }
 
         @Override
@@ -2222,15 +2224,17 @@ public class LocationManagerService extends ILocationManager.Stub
         
         ArrayList<UpdateRecord> urs = mRecordsByProvider.get(name);
         int num = 0;
-        final int N = urs.size();
-        for (int i=0; i<N; i++) {
-            UpdateRecord ur = urs.get(i);
-            if (ur.mReceiver == mProximityListener) {
-                // We don't want the system to take the blame for this one.
-                continue;
-            }
-            if (reportGpsUidLocked(curSeq, nextSeq, ur.mUid)) {
-                num++;
+        if (urs != null) {
+            final int N = urs.size();
+            for (int i=0; i<N; i++) {
+                UpdateRecord ur = urs.get(i);
+                if (ur.mReceiver == mProximityListener) {
+                    // We don't want the system to take the blame for this one.
+                    continue;
+                }
+                if (reportGpsUidLocked(curSeq, nextSeq, ur.mUid)) {
+                    num++;
+                }
             }
         }
         
