@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <map>
 
 #ifdef HAVE_MS_C_RUNTIME

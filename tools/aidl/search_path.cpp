@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <string.h>
 #include "search_path.h"
 #include "options.h"
 

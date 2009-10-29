@@ -3,9 +3,11 @@
 #include <expat.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <algorithm>
 
 #define NS_SEPARATOR 1
 #define MORE_INDENT "  "

@@ -2,6 +2,7 @@
 #include "AST.h"
 #include "Type.h"
 #include <stdio.h>
+#include <string.h>
 
 // =================================================
 class VariableFactory

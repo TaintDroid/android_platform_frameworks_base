@@ -1,5 +1,6 @@
 
 #include "options.h"
+#include <string.h>
 
 static int
 usage()

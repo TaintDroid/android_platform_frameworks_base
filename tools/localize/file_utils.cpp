@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <host/Directories.h>
+#include <stdlib.h>
+#include <string.h>
 #include "log.h"
 
 string

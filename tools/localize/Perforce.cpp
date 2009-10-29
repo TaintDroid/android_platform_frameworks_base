@@ -3,6 +3,8 @@
 #include <sstream>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 
 using namespace std;
