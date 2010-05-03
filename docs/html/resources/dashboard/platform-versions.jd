@@ -50,8 +50,8 @@ ending on the data collection date noted below.</p>
 
 <div class="dashboard-panel">
 
-<img alt="" width="400" height="250"
-src="http://chart.apis.google.com/chart?&cht=p&chs=400x250&chd=t:0.1,38.0,31.6,0.3,2.7,27.3&chl=
+<img alt="" width="460" height="250"
+src="http://chart.apis.google.com/chart?&cht=p&chs=460x250&chd=t:0.1,37.2,29.4,0.3,0.6,32.4&chl=
 Android%201.1|Android%201.5|Android%201.6|Android%202.0|Android%202.0.1|Android%202.1&chco=c4df9b,
 6fad0c" />
 
@@ -59,13 +59,13 @@ Android%201.1|Android%201.5|Android%201.6|Android%202.0|Android%202.0.1|Android%
 <tr>
   <th>Android Platform</th>
   <th>Percent of Devices</th>
-  <tr><td>Android 1.1</td><td>0.1%</td></tr>
-  <tr><td>Android 1.5</td><td>38.0%</td></tr>
-  <tr><td>Android 1.6</td><td>31.6%</td></tr>
-  <tr><td>Android 2.0</td><td>0.3%</td></tr>
-  <tr><td>Android 2.0.1</td><td>2.7%</td></tr>
-  <tr><td>Android 2.1</td><td>27.3%</td></tr>
+<tr><td>Android 1.1</td><td>0.1%</td></tr> 
+<tr><td>Android 1.5</td><td>37.2%</td></tr> 
+<tr><td>Android 1.6</td><td>29.4%</td></tr> 
+<tr><td>Android 2.0</td><td>0.3%</td></tr> 
+<tr><td>Android 2.0.1</td><td>0.6%</td></tr> 
+<tr><td>Android 2.1</td><td>32.4%</td></tr> 
 </table>
-<p><em>Data collected during two weeks ending on April 12, 2010</em></p>
+<p><em>Data collected during two weeks ending on May 3, 2010</em></p>
 </div>
 
