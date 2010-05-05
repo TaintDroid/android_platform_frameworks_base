@@ -199,7 +199,7 @@
           </a></li>
       <li><a href="<?cs var:toroot?>guide/topics/wireless/bluetooth.html">
             <span class="en">Bluetooth</span>
-          </a> <span class="new">new!</span></li>
+          </a></li>
     </ul>
   </li>
   
