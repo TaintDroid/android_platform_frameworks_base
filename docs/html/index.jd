@@ -11,10 +11,12 @@ home=true
                             </div><!-- end homeTitle -->
                             <div id="announcement-block">
                             <!-- total max width is 520px -->
-                                  <img src="{@docRoot}assets/images/home/gdc-logo.png" alt="Android at GDC 2010" width="203px" style="padding-left:22px;padding-bottom:28px;padding-top:22px;"/>
-                                  <div id="announcement" style="width:275px">
-<p>Thanks to everyone who attended our sessions at the <a href="http://www.gdconf.com/">2010 Game Developers Conference</a> in San Francisco. We're looking forward to seeing your games running on Android!</p>
-<p><a href="http://android-developers.blogspot.com/2010/03/android-at-game-developers-conference.html">Learn more &raquo;</a></p>
+                                  <img src="{@docRoot}images/home/io-logo.png" alt="Google IO
+2010" width="200" height="41" style="padding:22px 12px;"/>
+                                  <div id="announcement" style="width:295px">
+<p>Google I/O is a two-day developer event that will take place May 19-20 at Moscone Center, San
+Francisco. The agenda includes several great sessions about Android by team members.</p>
+<p><a href="http://code.google.com/events/io/2010/sessions.html#Android">Learn more &raquo;</a></p>
                                 </div> <!-- end annoucement -->
                             </div> <!-- end annoucement-block -->
                         </div><!-- end topAnnouncement -->
@@ -179,10 +181,10 @@ href="{@docRoot}resources/dashboard/platform-versions.html">Learn more &raquo;</
     'io': {
       'layout':"imgLeft",
       'icon':"io-small.png",
-      'name':"Google I/O",
+      'name':"Google I/O '09",
       'img':"io-large.png",
-      'title':"Google I/O Developer Conference",
-      'desc': "<p>The Google I/O developer conference took place May 27-28 in San Francisco. If you missed the conference, you can experience the Android sessions by viewing YouTube videos.</p><p><a href='{@docRoot}videos/index.html'>See the sessions from Google I/O &raquo;</a></p>"
+      'title':"2009 Google I/O Developer Conference",
+      'desc': "<p>The 2009 Google I/O developer conference took place May 27-28 in San Francisco. If you missed the conference, you can experience the Android sessions by viewing YouTube videos.</p><p><a href='{@docRoot}videos/index.html'>See the sessions from Google I/O &raquo;</a></p>"
     }
 
   }
