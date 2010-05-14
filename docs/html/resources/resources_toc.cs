@@ -26,6 +26,9 @@
       <li><a href="<?cs var:toroot ?>resources/dashboard/platform-versions.html">
             <span class="en">Platform Versions</span>
           </a></li>
+      <li><a href="<?cs var:toroot ?>resources/dashboard/screens.html">
+            <span class="en">Screen Sizes &amp; Densities</span>
+          </a> <span class="new">new!</span></li>
     </ul>
   </li>
 
