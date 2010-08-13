@@ -57,6 +57,7 @@ void usage(void)
         "        [-0 extension [-0 extension ...]] [-g tolerance] [-j jarfile] \\\n"
         "        [--min-sdk-version VAL] [--target-sdk-version VAL] \\\n"
         "        [--max-sdk-version VAL] [--app-version VAL] \\\n"
+        "        [--max-res-version VAL] \\\n"
         "        [--app-version-name TEXT] \\\n"
         "        [-I base-package [-I base-package ...]] \\\n"
         "        [-A asset-source-dir] [-P public-definitions-file] \\\n"
@@ -123,6 +124,8 @@ void usage(void)
         "       inserts android:targetSdkVersion in to manifest.\n"
         "   --max-sdk-version\n"
         "       inserts android:maxSdkVersion in to manifest.\n"
+        "   --max-res-version\n"
+        "       ignores versioned resource directories above the given value.\n"
         "   --values\n"
         "       when used with \"dump resources\" also includes resource values.\n"
         "   --version-code\n"
@@ -380,6 +383,15 @@ int main(int argc, char* const argv[])
                         goto bail;
                     }
                     bundle.setMaxSdkVersion(argv[0]);
+                } else if (strcmp(cp, "-max-res-version") == 0) {
+                    argc--;
+                    argv++;
+                    if (!argc) {
+                        fprintf(stderr, "ERROR: No argument supplied for '--max-res-version' option\n");
+                        wantUsage = true;
+                        goto bail;
+                    }
+                    bundle.setMaxResVersion(argv[0]);
                 } else if (strcmp(cp, "-version-code") == 0) {
                     argc--;
                     argv++;

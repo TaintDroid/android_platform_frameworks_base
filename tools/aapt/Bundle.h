@@ -40,7 +40,7 @@ public:
           mAndroidManifestFile(NULL), mPublicOutputFile(NULL),
           mRClassDir(NULL), mResourceIntermediatesDir(NULL),
           mMinSdkVersion(NULL), mTargetSdkVersion(NULL), mMaxSdkVersion(NULL),
-          mVersionCode(NULL), mVersionName(NULL),
+          mVersionCode(NULL), mVersionName(NULL), mMaxResVersion(NULL),
           mArgc(0), mArgv(NULL)
         {}
     ~Bundle(void) {}
@@ -115,6 +115,9 @@ public:
     const char* getVersionName() const { return mVersionName; }
     void setVersionName(const char* val) { mVersionName = val; }
     
+    const char* getMaxResVersion() const { return mMaxResVersion; }
+    void setMaxResVersion(const char * val) { mMaxResVersion = val; }
+
     /*
      * Set and get the file specification.
      *
@@ -173,6 +176,7 @@ private:
     const char* mMaxSdkVersion;
     const char* mVersionCode;
     const char* mVersionName;
+    const char* mMaxResVersion;
     
     /* file specification */
     int         mArgc;
