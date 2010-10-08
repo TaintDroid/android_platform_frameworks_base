@@ -40,6 +40,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Class that lets you access the device's sensors. Get an instance of this
  * class by calling {@link android.content.Context#getSystemService(java.lang.String)
@@ -390,7 +394,21 @@ public class SensorManager
                         }
                         final Sensor sensorObject = sHandleToSensor.get(sensor);
                         if (sensorObject != null) {
-                            // report the sensor event to all listeners that
+			    // begin WITH_TAINT_TRACKING
+			    int tag = Taint.TAINT_CLEAR;
+			    if (sensorObject.getType() == Sensor.TYPE_ACCELEROMETER) {
+				tag = Taint.TAINT_ACCELEROMETER;
+			    }
+
+			    // PJG commented to only taint actual data for now
+			    if (tag != Taint.TAINT_CLEAR) {
+				Taint.addTaintFloatArray(values, tag);
+				//Taint.addTaintLongArray(timestamp, tag);
+				//accuracy = Taint.addTaintInt(accuracy, tag);
+			    }
+			    // end WITH_TAINT_TRACKING
+                            
+			    // report the sensor event to all listeners that
                             // care about it.
                             final int size = sListeners.size();
                             for (int i=0 ; i<size ; i++) {

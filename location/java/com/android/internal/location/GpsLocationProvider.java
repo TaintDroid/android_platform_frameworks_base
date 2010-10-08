@@ -61,6 +61,10 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * A GPS implementation of LocationProvider used by LocationManager.
  *
@@ -830,31 +834,34 @@ public class GpsLocationProvider extends ILocationProvider.Stub {
 
         synchronized (mLocation) {
             mLocationFlags = flags;
+	    // begin changed WITH_TAINT_TRACKING
+	    int tag = Taint.TAINT_LOCATION | Taint.TAINT_LOCATION_GPS;
             if ((flags & LOCATION_HAS_LAT_LONG) == LOCATION_HAS_LAT_LONG) {
-                mLocation.setLatitude(latitude);
-                mLocation.setLongitude(longitude);
+                mLocation.setLatitude(Taint.addTaintDouble(latitude, tag));
+                mLocation.setLongitude(Taint.addTaintDouble(longitude, tag));
                 mLocation.setTime(timestamp);
             }
             if ((flags & LOCATION_HAS_ALTITUDE) == LOCATION_HAS_ALTITUDE) {
-                mLocation.setAltitude(altitude);
+                mLocation.setAltitude(Taint.addTaintDouble(altitude, tag));
             } else {
                 mLocation.removeAltitude();
             }
             if ((flags & LOCATION_HAS_SPEED) == LOCATION_HAS_SPEED) {
-                mLocation.setSpeed(speed);
+                mLocation.setSpeed(Taint.addTaintFloat(speed, tag));
             } else {
                 mLocation.removeSpeed();
             }
             if ((flags & LOCATION_HAS_BEARING) == LOCATION_HAS_BEARING) {
-                mLocation.setBearing(bearing);
+                mLocation.setBearing(Taint.addTaintFloat(bearing, tag));
             } else {
                 mLocation.removeBearing();
             }
             if ((flags & LOCATION_HAS_ACCURACY) == LOCATION_HAS_ACCURACY) {
-                mLocation.setAccuracy(accuracy);
+                mLocation.setAccuracy(Taint.addTaintFloat(accuracy, tag));
             } else {
                 mLocation.removeAccuracy();
             }
+	    // end changed WITH_TAINT_TRACKING
 
             try {
                 mLocationManager.reportLocation(mLocation);
