@@ -410,7 +410,7 @@ public final class BridgeTypedArray extends TypedArray {
             return defValue;
         } else if (s.equals(BridgeConstants.MATCH_PARENT) ||
                 s.equals(BridgeConstants.FILL_PARENT)) {
-            return LayoutParams.MATCH_PARENT;
+            return LayoutParams.FILL_PARENT;
         } else if (s.equals(BridgeConstants.WRAP_CONTENT)) {
             return LayoutParams.WRAP_CONTENT;
         } else if (RenderResources.REFERENCE_NULL.equals(s)) {
@@ -537,7 +537,7 @@ public final class BridgeTypedArray extends TypedArray {
             throw new RuntimeException();
         } else if (s.equals(BridgeConstants.MATCH_PARENT) ||
                 s.equals(BridgeConstants.FILL_PARENT)) {
-            return LayoutParams.MATCH_PARENT;
+            return LayoutParams.FILL_PARENT;
         } else if (s.equals(BridgeConstants.WRAP_CONTENT)) {
             return LayoutParams.WRAP_CONTENT;
         } else if (RenderResources.REFERENCE_NULL.equals(s)) {

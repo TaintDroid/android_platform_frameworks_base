@@ -19,6 +19,7 @@ package com.android.layoutlib.bridge.android;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentValues;
+import android.content.EntityIterator;
 import android.content.IContentProvider;
 import android.content.OperationApplicationException;
 import android.content.res.AssetFileDescriptor;
@@ -27,7 +28,6 @@ import android.database.CursorWindow;
 import android.database.IBulkCursor;
 import android.database.IContentObserver;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -55,11 +55,6 @@ public final class BridgeContentProvider implements IContentProvider {
 
     public IBulkCursor bulkQuery(Uri arg0, String[] arg1, String arg2, String[] arg3,
             String arg4, IContentObserver arg5, CursorWindow arg6) throws RemoteException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Bundle call(String arg0, String arg1, Bundle arg2) throws RemoteException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -108,13 +103,8 @@ public final class BridgeContentProvider implements IContentProvider {
         return null;
     }
 
-    public String[] getStreamTypes(Uri arg0, String arg1) throws RemoteException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public AssetFileDescriptor openTypedAssetFile(Uri arg0, String arg1, Bundle arg2)
-            throws RemoteException, FileNotFoundException {
+    public EntityIterator queryEntities(Uri url, String selection, String[] selectionArgs,
+            String sortOrder) throws RemoteException {
         // TODO Auto-generated method stub
         return null;
     }

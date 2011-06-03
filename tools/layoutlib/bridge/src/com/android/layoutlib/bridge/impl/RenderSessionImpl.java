@@ -49,7 +49,6 @@ import com.android.layoutlib.bridge.bars.TitleBar;
 import com.android.layoutlib.bridge.impl.binding.FakeAdapter;
 import com.android.layoutlib.bridge.impl.binding.FakeExpandableAdapter;
 import com.android.resources.ResourceType;
-import com.android.resources.ScreenSize;
 import com.android.util.Pair;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -235,7 +234,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                                 params.getDensity());
                         systemBar.setLayoutParams(
                                 new LinearLayout.LayoutParams(
-                                        LayoutParams.MATCH_PARENT, mStatusBarSize));
+                                        LayoutParams.FILL_PARENT, mStatusBarSize));
                         topLayout.addView(systemBar);
                     } catch (XmlPullParserException e) {
 
@@ -246,7 +245,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                 backgroundView = backgroundLayout;
                 backgroundLayout.setOrientation(LinearLayout.VERTICAL);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                        LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                        LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
                 layoutParams.weight = 1;
                 backgroundLayout.setLayoutParams(layoutParams);
                 topLayout.addView(backgroundLayout);
@@ -259,7 +258,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                                 params.getDensity(), params.getAppLabel());
                         titleBar.setLayoutParams(
                                 new LinearLayout.LayoutParams(
-                                        LayoutParams.MATCH_PARENT, mTitleBarSize));
+                                        LayoutParams.FILL_PARENT, mTitleBarSize));
                         backgroundLayout.addView(titleBar);
                     } catch (XmlPullParserException e) {
 
@@ -269,7 +268,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                 // content frame
                 mContentRoot = new FrameLayout(context);
                 layoutParams = new LinearLayout.LayoutParams(
-                        LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                        LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
                 layoutParams.weight = 1;
                 mContentRoot.setLayoutParams(layoutParams);
                 backgroundLayout.addView(mContentRoot);

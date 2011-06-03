@@ -192,7 +192,7 @@ public final class Path_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void native_computeBounds(int nPath, RectF bounds) {
+    /*package*/ static void native_computeBounds(int nPath, RectF bounds, int exact) {
         Path_Delegate pathDelegate = sManager.getDelegate(nPath);
         if (pathDelegate == null) {
             return;

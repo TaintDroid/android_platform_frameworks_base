@@ -85,11 +85,6 @@ import java.io.InputStream;
     // ------ Native Delegates ------
 
     @LayoutlibDelegate
-    /*package*/ static void nativeSetDefaultConfig(int nativeConfig) {
-        // pass
-    }
-
-    @LayoutlibDelegate
     /*package*/ static Bitmap nativeDecodeStream(InputStream is, byte[] storage,
             Rect padding, Options opts) {
         Bitmap bm = null;

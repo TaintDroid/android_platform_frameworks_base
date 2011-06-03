@@ -16,7 +16,6 @@
 
 package com.android.layoutlib.bridge.android;
 
-import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Bundle;
@@ -50,8 +49,7 @@ public final class BridgeWindowSession implements IWindowSession {
     }
 
     public int relayout(IWindow arg0, LayoutParams arg1, int arg2, int arg3, int arg4,
-            boolean arg4_5, Rect arg5, Rect arg6, Rect arg7, Configuration arg7b, Surface arg8)
-            throws RemoteException {
+            boolean arg5, Rect arg6, Rect arg7, Rect arg8, Surface arg9) throws RemoteException {
         // pass for now.
         return 0;
     }

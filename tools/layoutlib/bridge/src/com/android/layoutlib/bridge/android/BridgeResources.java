@@ -323,7 +323,7 @@ public final class BridgeResources extends Resources {
             if (v != null) {
                 if (v.equals(BridgeConstants.MATCH_PARENT) ||
                         v.equals(BridgeConstants.FILL_PARENT)) {
-                    return LayoutParams.MATCH_PARENT;
+                    return LayoutParams.FILL_PARENT;
                 } else if (v.equals(BridgeConstants.WRAP_CONTENT)) {
                     return LayoutParams.WRAP_CONTENT;
                 }

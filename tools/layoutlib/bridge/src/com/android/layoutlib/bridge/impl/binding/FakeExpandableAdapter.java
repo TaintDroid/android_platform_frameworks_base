@@ -24,13 +24,11 @@ import com.android.ide.common.rendering.api.ResourceReference;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListAdapter;
-import android.widget.HeterogeneousExpandableList;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FakeExpandableAdapter extends BaseAdapter implements ExpandableListAdapter,
-        HeterogeneousExpandableList {
+public class FakeExpandableAdapter extends BaseAdapter implements ExpandableListAdapter {
 
     // don't use a set because the order is important.
     private final List<ResourceReference> mGroupTypes = new ArrayList<ResourceReference>();
@@ -157,23 +155,5 @@ public class FakeExpandableAdapter extends BaseAdapter implements ExpandableList
 
     public void onGroupExpanded(int groupPosition) {
         // pass
-    }
-
-    // ---- HeterogeneousExpandableList
-
-    public int getChildType(int groupPosition, int childPosition) {
-        return getChildItem(groupPosition, childPosition).getType();
-    }
-
-    public int getChildTypeCount() {
-        return mChildrenTypes.size();
-    }
-
-    public int getGroupType(int groupPosition) {
-        return mItems.get(groupPosition).getType();
-    }
-
-    public int getGroupTypeCount() {
-        return mGroupTypes.size();
     }
 }

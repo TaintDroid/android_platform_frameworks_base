@@ -22,7 +22,6 @@ import com.android.layoutlib.bridge.impl.DelegateManager;
 import com.android.resources.Density;
 import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.os.Parcel;
 
@@ -33,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.Buffer;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -446,50 +444,6 @@ public final class Bitmap_Delegate {
         }
 
         delegate.mHasAlpha = hasAlpha;
-    }
-
-    @LayoutlibDelegate
-    /*package*/ static boolean nativeSameAs(int nb0, int nb1) {
-        Bitmap_Delegate delegate1 = sManager.getDelegate(nb0);
-        if (delegate1 == null) {
-            return false;
-        }
-
-        Bitmap_Delegate delegate2 = sManager.getDelegate(nb1);
-        if (delegate2 == null) {
-            return false;
-        }
-
-        BufferedImage image1 = delegate1.getImage();
-        BufferedImage image2 = delegate2.getImage();
-        if (delegate1.mConfig != delegate2.mConfig ||
-                image1.getWidth() != image2.getWidth() ||
-                image1.getHeight() != image2.getHeight()) {
-            return false;
-        }
-
-        // get the internal data
-        int w = image1.getWidth();
-        int h = image2.getHeight();
-        int[] argb1 = new int[w*h];
-        int[] argb2 = new int[w*h];
-
-        image1.getRGB(0, 0, w, h, argb1, 0, w);
-        image2.getRGB(0, 0, w, h, argb2, 0, w);
-
-        // compares
-        if (delegate1.mConfig == Config.ALPHA_8) {
-            // in this case we have to manually compare the alpha channel as the rest is garbage.
-            final int length = w*h;
-            for (int i = 0 ; i < length ; i++) {
-                if ((argb1[i] & 0xFF000000) != (argb2[i] & 0xFF000000)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        return Arrays.equals(argb1, argb2);
     }
 
     // ---- Private delegate/helper methods ----
