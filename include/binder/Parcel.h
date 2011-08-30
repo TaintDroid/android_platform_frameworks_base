@@ -176,6 +176,12 @@ public:
                                             release_func relFunc, void* relCookie);
     
     void                print(TextOutput& to, uint32_t flags = 0) const;
+
+/* #ifdef WITH_TAINT_TRACKING */
+	// Do not #ifdef this field. Parcel is used by a lot of projects
+	void updateTaint(const uint32_t tag);
+	uint32_t getTaint();
+/* #endif */
         
 private:
                         Parcel(const Parcel& o);
@@ -214,6 +220,10 @@ private:
     
     release_func        mOwner;
     void*               mOwnerCookie;
+/* #ifdef WITH_TAINT_TRACKING */
+    // Do not #ifdef this field. Parcel is used by a lot of projects
+    uint32_t		mTaintTag;
+/* #endif */
 };
 
 // ---------------------------------------------------------------------------

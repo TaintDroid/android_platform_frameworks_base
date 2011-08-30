@@ -13,5 +13,8 @@ LOCAL_MODULE := servicemanager
 ifeq ($(BOARD_USE_LVMX),true)
     LOCAL_CFLAGS += -DLVMX
 endif
+ifeq ($(WITH_TAINT_TRACKING),true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
 include $(BUILD_EXECUTABLE)
 endif

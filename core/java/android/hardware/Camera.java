@@ -31,6 +31,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * The Camera class is used to set image capture settings, start/stop preview,
  * snap pictures, and retrieve frames for encoding for video.  This class is a
@@ -520,13 +524,23 @@ public class Camera {
 
             case CAMERA_MSG_RAW_IMAGE:
                 if (mRawImageCallback != null) {
-                    mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	// begin WITH_TAINT_TRACKING
+                	//mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	byte[] data = (byte[])msg.obj;
+                	Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                	mRawImageCallback.onPictureTaken(data, mCamera);
+                	// end WITH_TAINT_TRACKING
                 }
                 return;
 
             case CAMERA_MSG_COMPRESSED_IMAGE:
                 if (mJpegCallback != null) {
-                    mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	// begin WITH_TAINT_TRACKING
+                	//mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	byte[] data = (byte[])msg.obj;
+                	Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                	mJpegCallback.onPictureTaken(data, mCamera);
+                	// end WITH_TAINT_TRACKING
                 }
                 return;
 
@@ -544,13 +558,23 @@ public class Camera {
                         // Set to oneshot mode again.
                         setHasPreviewCallback(true, false);
                     }
-                    cb.onPreviewFrame((byte[])msg.obj, mCamera);
+                    // begin WITH_TAINT_TRACKING
+                    //cb.onPreviewFrame((byte[])msg.obj, mCamera);
+                    byte[] data = (byte[])msg.obj;
+                    Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                    cb.onPreviewFrame(data, mCamera);
+                    // end WITH_TAINT_TRACKING
                 }
                 return;
 
             case CAMERA_MSG_POSTVIEW_FRAME:
                 if (mPostviewCallback != null) {
-                    mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	// begin WITH_TAINT_TRACKING
+                	//mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                	byte[] data = (byte[])msg.obj;
+                	Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                	mPostviewCallback.onPictureTaken(data, mCamera);
+                	// end WITH_TAINT_TRACKING
                 }
                 return;
 

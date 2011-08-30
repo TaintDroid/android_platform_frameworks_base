@@ -37,10 +37,16 @@ LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libbinder
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 LOCAL_SRC_FILES := $(sources)
+ifeq ($(WITH_TAINT_TRACKING), true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libbinder
 LOCAL_SRC_FILES := $(sources)
+ifeq ($(WITH_TAINT_TRACKING), true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
 include $(BUILD_STATIC_LIBRARY)

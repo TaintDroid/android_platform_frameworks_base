@@ -1,6 +1,10 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+ifeq ($(WITH_TAINT_TRACKING),true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
+
 LOCAL_SRC_FILES:= \
     android_media_MediaPlayer.cpp \
     android_media_MediaRecorder.cpp \

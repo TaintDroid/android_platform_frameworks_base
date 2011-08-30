@@ -432,6 +432,11 @@ status_t Parcel::appendFrom(Parcel *parcel, size_t offset, size_t len)
         }
     }
 
+#ifdef WITH_TAINT_TRACKING
+    /* propagate the taint tag */
+    updateTaint(parcel->getTaint());
+#endif
+
     return NO_ERROR;
 }
 
@@ -1132,12 +1137,26 @@ void Parcel::closeFileDescriptors()
 
 const uint8_t* Parcel::ipcData() const
 {
+#ifdef WITH_TAINT_TRACKING
+	/* Ensure most current taint tag is appended (if mData not null) */
+	if (mData) {
+		if (mTaintTag != 0) {
+			//LOGW("ipcData(%p:%d) -- Parcel Taint = 0x%08x -- mOwner = %p -- this = %p -- &mTaintTag = %p -- mObjects = %p \n", mData, dataSize(), mTaintTag, mOwner, this, &mTaintTag, mObjects);
+		}
+		memcpy((mData+dataSize()), (uint8_t*)&mTaintTag, sizeof(mTaintTag));
+	}
+#endif
     return mData;
 }
 
 size_t Parcel::ipcDataSize() const
 {
+#ifdef WITH_TAINT_TRACKING
+    /* Don't add taint tag if mData is null */
+    return ((mDataSize > mDataPos ? mDataSize : mDataPos) + (mData ? sizeof(mTaintTag) : 0));
+#else
     return (mDataSize > mDataPos ? mDataSize : mDataPos);
+#endif
 }
 
 const size_t* Parcel::ipcObjects() const
@@ -1156,7 +1175,21 @@ void Parcel::ipcSetDataReference(const uint8_t* data, size_t dataSize,
     freeDataNoInit();
     mError = NO_ERROR;
     mData = const_cast<uint8_t*>(data);
+#ifdef WITH_TAINT_TRACKING
+    // FIXED: no taint tag if data size is less than 4 bytes
+    if (mData && dataSize >= sizeof(mTaintTag)) {
+    	mDataSize = mDataCapacity = (dataSize - sizeof(mTaintTag));
+    	mTaintTag = *(uint32_t*)(mData+mDataSize);
+    	if (mTaintTag != 0) {
+    		//LOGW("ipcSetDataReference(%p:%d) -- Parcel Taint = 0x%08x --\n", mData, mDataSize, mTaintTag);
+    	}
+    } else {
+    	mDataSize = mDataCapacity = dataSize;
+    	mTaintTag = 0; /* TAINT_CLEAR */
+    }
+#else
     mDataSize = mDataCapacity = dataSize;
+#endif
     //LOGI("setDataReference Setting data size of %p to %lu (pid=%d)\n", this, mDataSize, getpid());
     mDataPos = 0;
     LOGV("setDataReference Setting data pos of %p to %d\n", this, mDataPos);
@@ -1232,7 +1265,11 @@ void Parcel::freeDataNoInit()
 {
     if (mOwner) {
         //LOGI("Freeing data ref of %p (pid=%d)\n", this, getpid());
+#ifdef WITH_TAINT_TRACKING
+        mOwner(this, mData, (mDataSize+sizeof(mTaintTag)), mObjects, mObjectsSize, mOwnerCookie);
+#else
         mOwner(this, mData, mDataSize, mObjects, mObjectsSize, mOwnerCookie);
+#endif
     } else {
         releaseObjects();
         if (mData) free(mData);
@@ -1254,8 +1291,12 @@ status_t Parcel::restartWrite(size_t desired)
         freeData();
         return continueWrite(desired);
     }
-    
+
+#ifdef WITH_TAINT_TRACKING
+    uint8_t* data = (uint8_t*)realloc(mData, (desired+sizeof(mTaintTag)));
+#else
     uint8_t* data = (uint8_t*)realloc(mData, desired);
+#endif    
     if (!data && desired > mDataCapacity) {
         mError = NO_MEMORY;
         return NO_MEMORY;
@@ -1308,7 +1349,11 @@ status_t Parcel::continueWrite(size_t desired)
 
         // If there is a different owner, we need to take
         // posession.
+#ifdef WITH_TAINT_TRACKING
+        uint8_t* data = (uint8_t*)malloc(desired+sizeof(mTaintTag));
+#else
         uint8_t* data = (uint8_t*)malloc(desired);
+#endif
         if (!data) {
             mError = NO_MEMORY;
             return NO_MEMORY;
@@ -1337,7 +1382,11 @@ status_t Parcel::continueWrite(size_t desired)
             memcpy(objects, mObjects, objectsSize*sizeof(size_t));
         }
         //LOGI("Freeing data ref of %p (pid=%d)\n", this, getpid());
+#ifdef WITH_TAINT_TRACKING
+        mOwner(this, mData, (mDataSize+sizeof(mTaintTag)), mObjects, mObjectsSize, mOwnerCookie);
+#else
         mOwner(this, mData, mDataSize, mObjects, mObjectsSize, mOwnerCookie);
+#endif
         mOwner = NULL;
 
         mData = data;
@@ -1372,7 +1421,11 @@ status_t Parcel::continueWrite(size_t desired)
 
         // We own the data, so we can just do a realloc().
         if (desired > mDataCapacity) {
+#ifdef WITH_TAINT_TRACKING
+            uint8_t* data = (uint8_t*)realloc(mData, (desired+sizeof(mTaintTag)));
+#else
             uint8_t* data = (uint8_t*)realloc(mData, desired);
+#endif
             if (data) {
                 mData = data;
                 mDataCapacity = desired;
@@ -1391,7 +1444,11 @@ status_t Parcel::continueWrite(size_t desired)
         
     } else {
         // This is the first data.  Easy!
+#ifdef WITH_TAINT_TRACKING
+        uint8_t* data = (uint8_t*)malloc(desired+sizeof(mTaintTag));
+#else
         uint8_t* data = (uint8_t*)malloc(desired);
+#endif
         if (!data) {
             mError = NO_MEMORY;
             return NO_MEMORY;
@@ -1428,6 +1485,9 @@ void Parcel::initState()
     mHasFds = false;
     mFdsKnown = true;
     mOwner = NULL;
+#ifdef WITH_TAINT_TRACKING
+    mTaintTag = 0; /* TAINT_CLEAR */
+#endif
 }
 
 void Parcel::scanForFds() const
@@ -1444,5 +1504,23 @@ void Parcel::scanForFds() const
     mHasFds = hasFds;
     mFdsKnown = true;
 }
+
+#ifdef WITH_TAINT_TRACKING
+void Parcel::updateTaint(const uint32_t tag)
+{
+    // DEBUG
+    mTaintTag |= tag;
+    if (tag != 0) {
+	//LOGW("Parcel::UpdateTaint(0x%08x) -- Parcel Taint = 0x%08x --\n", tag, mTaintTag);
+    }
+}
+#endif
+
+#ifdef WITH_TAINT_TRACKING
+uint32_t Parcel::getTaint()
+{
+    return mTaintTag;
+}
+#endif
 
 }; // namespace android

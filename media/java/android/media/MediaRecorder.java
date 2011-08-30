@@ -29,6 +29,10 @@ import java.io.FileOutputStream;
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Used to record audio and video. The recording control is based on a
  * simple state machine (see below).
@@ -253,8 +257,28 @@ public class MediaRecorder
      * @throws IllegalStateException if it is called after setOutputFormat()
      * @see android.media.MediaRecorder.AudioSource
      */
-    public native void setAudioSource(int audio_source)
+    // begin WITH_TAINT_TRACKING
+    //public native void setAudioSource(int audio_source)
+    //        throws IllegalStateException;
+    public void setAudioSource(int audio_source) throws IllegalStateException
+    {
+    	setAudioSourceNative(audio_source);
+    	mSavedAudioSource = audio_source;
+    }
+    private native void setAudioSourceNative(int audio_source)
             throws IllegalStateException;
+    private int mSavedAudioSource = 0;
+    // end WITH_TAINT_TRACKING
+
+    // begin WITH_TAINT_TRACKING
+    /**
+     * Gets the audio source used for recording. Needed by Taint Tracking hook.
+     */
+    private int getAudioSource()
+    {
+    	return mSavedAudioSource;
+    }
+    // end WITH_TAINT_TRACKING
 
     /**
      * Gets the maximum value for audio sources.
@@ -529,15 +553,32 @@ public class MediaRecorder
      */
     public void prepare() throws IllegalStateException, IOException
     {
+    	// begin WITH_TAINT_TRACKING
+    	int tag = Taint.TAINT_CLEAR;
+    	if (getAudioSource() == MediaRecorder.AudioSource.MIC) {
+    		tag = Taint.TAINT_MIC;
+    	}
+    	// end WITH_TAINT_TRACKING
+    	
         if (mPath != null) {
             FileOutputStream fos = new FileOutputStream(mPath);
             try {
                 _setOutputFile(fos.getFD(), 0, 0);
+        		// begin WITH_TAINT_TRACKING
+        		if (tag != Taint.TAINT_CLEAR) {
+        		    Taint.addTaintFile(fos.getFD().getDescriptor(), tag);
+        		}
+        		// end WITH_TAINT_TRACKING
             } finally {
                 fos.close();
             }
         } else if (mFd != null) {
             _setOutputFile(mFd, 0, 0);
+            // begin WITH_TAINT_TRACKING
+            if (tag != Taint.TAINT_CLEAR) {
+            	Taint.addTaintFile(mFd.getDescriptor(), tag);
+            }
+            // end WITH_TAINT_TRACKING
         } else {
             throw new IOException("No valid output file");
         }

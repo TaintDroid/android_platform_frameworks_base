@@ -224,6 +224,10 @@ ifeq ($(WITH_MALLOC_LEAK_CHECK),true)
 	LOCAL_CFLAGS += -DMALLOC_LEAK_CHECK
 endif
 
+ifeq ($(WITH_TAINT_TRACKING),true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
+
 LOCAL_MODULE:= libandroid_runtime
 
 include $(BUILD_SHARED_LIBRARY)

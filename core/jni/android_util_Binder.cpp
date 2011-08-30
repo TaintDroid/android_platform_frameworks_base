@@ -1604,6 +1604,30 @@ static void android_os_Parcel_enforceInterface(JNIEnv* env, jobject clazz, jstri
             "Binder invocation to an incorrect interface");
 }
 
+#ifdef WITH_TAINT_TRACKING
+static void android_os_Parcel_updateTaint(JNIEnv* env, jobject clazz, jint tag)
+{
+    Parcel* parcel = parcelForJavaObject(env, clazz);
+    if (parcel != NULL) {
+	parcel->updateTaint(tag);
+    }
+}
+#endif
+
+#ifdef WITH_TAINT_TRACKING
+static jint android_os_Parcel_getTaint(JNIEnv* env, jobject clazz)
+{
+    Parcel* parcel = parcelForJavaObject(env, clazz);
+    if (parcel != NULL) {
+	return parcel->getTaint();
+    }
+
+    // An exception is thrown from parcelForJavaObject in most faiure cases,
+    // therefore, we can return TAINT_CLEAR here. Alternatively, return 0xffffffff
+    return 0;
+}
+#endif
+
 // ----------------------------------------------------------------------------
 
 static const JNINativeMethod gParcelMethods[] = {
@@ -1614,20 +1638,38 @@ static const JNINativeMethod gParcelMethods[] = {
     {"setDataSize",         "(I)V", (void*)android_os_Parcel_setDataSize},
     {"setDataPosition",     "(I)V", (void*)android_os_Parcel_setDataPosition},
     {"setDataCapacity",     "(I)V", (void*)android_os_Parcel_setDataCapacity},
+#ifdef WITH_TAINT_TRACKING
+    {"writeNativeNative",   "([BII)V", (void*)android_os_Parcel_writeNative},
+    {"writeIntNative",      "(I)V", (void*)android_os_Parcel_writeInt},
+    {"writeLongNative",     "(J)V", (void*)android_os_Parcel_writeLong},
+    {"writeFloatNative",    "(F)V", (void*)android_os_Parcel_writeFloat},
+    {"writeDoubleNative",   "(D)V", (void*)android_os_Parcel_writeDouble},
+    {"writeStringNative",   "(Ljava/lang/String;)V", (void*)android_os_Parcel_writeString},
+#else
     {"writeNative",         "([BII)V", (void*)android_os_Parcel_writeNative},
     {"writeInt",            "(I)V", (void*)android_os_Parcel_writeInt},
     {"writeLong",           "(J)V", (void*)android_os_Parcel_writeLong},
     {"writeFloat",          "(F)V", (void*)android_os_Parcel_writeFloat},
     {"writeDouble",         "(D)V", (void*)android_os_Parcel_writeDouble},
     {"writeString",         "(Ljava/lang/String;)V", (void*)android_os_Parcel_writeString},
+#endif
     {"writeStrongBinder",   "(Landroid/os/IBinder;)V", (void*)android_os_Parcel_writeStrongBinder},
     {"writeFileDescriptor", "(Ljava/io/FileDescriptor;)V", (void*)android_os_Parcel_writeFileDescriptor},
+#ifdef WITH_TAINT_TRACKING
+    {"createByteArrayNative", "()[B", (void*)android_os_Parcel_createByteArray},
+    {"readIntNative",       "()I", (void*)android_os_Parcel_readInt},
+    {"readLongNative",      "()J", (void*)android_os_Parcel_readLong},
+    {"readFloatNative",     "()F", (void*)android_os_Parcel_readFloat},
+    {"readDoubleNative",    "()D", (void*)android_os_Parcel_readDouble},
+    {"readStringNative",    "()Ljava/lang/String;", (void*)android_os_Parcel_readString},
+#else
     {"createByteArray",     "()[B", (void*)android_os_Parcel_createByteArray},
     {"readInt",             "()I", (void*)android_os_Parcel_readInt},
     {"readLong",            "()J", (void*)android_os_Parcel_readLong},
     {"readFloat",           "()F", (void*)android_os_Parcel_readFloat},
     {"readDouble",          "()D", (void*)android_os_Parcel_readDouble},
     {"readString",          "()Ljava/lang/String;", (void*)android_os_Parcel_readString},
+#endif
     {"readStrongBinder",    "()Landroid/os/IBinder;", (void*)android_os_Parcel_readStrongBinder},
     {"internalReadFileDescriptor",  "()Ljava/io/FileDescriptor;", (void*)android_os_Parcel_readFileDescriptor},
     {"openFileDescriptor",  "(Ljava/lang/String;I)Ljava/io/FileDescriptor;", (void*)android_os_Parcel_openFileDescriptor},
@@ -1635,12 +1677,21 @@ static const JNINativeMethod gParcelMethods[] = {
     {"freeBuffer",          "()V", (void*)android_os_Parcel_freeBuffer},
     {"init",                "(I)V", (void*)android_os_Parcel_init},
     {"destroy",             "()V", (void*)android_os_Parcel_destroy},
+#ifdef WITH_TAINT_TRACKING
+    {"marshallNative",      "()[B", (void*)android_os_Parcel_marshall},
+    {"unmarshallNative",    "([BII)V", (void*)android_os_Parcel_unmarshall},
+#else
     {"marshall",            "()[B", (void*)android_os_Parcel_marshall},
     {"unmarshall",          "([BII)V", (void*)android_os_Parcel_unmarshall},
+#endif
     {"appendFrom",          "(Landroid/os/Parcel;II)V", (void*)android_os_Parcel_appendFrom},
     {"hasFileDescriptors",  "()Z", (void*)android_os_Parcel_hasFileDescriptors},
     {"writeInterfaceToken", "(Ljava/lang/String;)V", (void*)android_os_Parcel_writeInterfaceToken},
     {"enforceInterface",    "(Ljava/lang/String;)V", (void*)android_os_Parcel_enforceInterface},
+#ifdef WITH_TAINT_TRACKING
+    {"updateTaint",         "(I)V", (void*)android_os_Parcel_updateTaint},
+    {"getTaint",            "()I", (void*)android_os_Parcel_getTaint},
+#endif
 };
 
 const char* const kParcelPathName = "android/os/Parcel";

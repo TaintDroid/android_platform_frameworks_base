@@ -79,6 +79,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * {@hide}
  */
@@ -1247,6 +1251,9 @@ public class GSMPhone extends PhoneBase {
                 }
 
                 mImei = (String)ar.result;
+        		// begin WITH_TAINT_TRACKING
+        		Taint.addTaintString(mImei, Taint.TAINT_IMEI);
+        		// end WITH_TAINT_TRACKING
             break;
 
             case EVENT_GET_IMEISV_DONE:

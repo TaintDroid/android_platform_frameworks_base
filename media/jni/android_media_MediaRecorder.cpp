@@ -460,7 +460,11 @@ android_media_MediaRecorder_native_finalize(JNIEnv *env, jobject thiz)
 static JNINativeMethod gMethods[] = {
     {"setCamera",            "(Landroid/hardware/Camera;)V",    (void *)android_media_MediaRecorder_setCamera},
     {"setVideoSource",       "(I)V",                            (void *)android_media_MediaRecorder_setVideoSource},
+#ifdef WITH_TAINT_TRACKING
+    {"setAudioSourceNative", "(I)V",                            (void *)android_media_MediaRecorder_setAudioSource},
+#else
     {"setAudioSource",       "(I)V",                            (void *)android_media_MediaRecorder_setAudioSource},
+#endif
     {"setOutputFormat",      "(I)V",                            (void *)android_media_MediaRecorder_setOutputFormat},
     {"setVideoEncoder",      "(I)V",                            (void *)android_media_MediaRecorder_setVideoEncoder},
     {"setAudioEncoder",      "(I)V",                            (void *)android_media_MediaRecorder_setAudioEncoder},

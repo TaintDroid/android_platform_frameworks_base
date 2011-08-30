@@ -38,6 +38,10 @@ import com.android.internal.telephony.MccTable;
 
 import java.util.ArrayList;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 
 /**
  * {@hide}
@@ -255,6 +259,9 @@ public final class SIMRecords extends IccRecords {
             Message onComplete) {
 
         msisdn = number;
+    	// begin WITH_TAINT_TRACKING
+    	Taint.addTaintString(msisdn, Taint.TAINT_PHONE_NUMBER);
+    	// end WITH_TAINT_TRACKING
         msisdnTag = alphaTag;
 
         if(DBG) log("Set MSISDN: " + msisdnTag + " " + /*msisdn*/ "xxxxxxx");
@@ -507,6 +514,12 @@ public final class SIMRecords extends IccRecords {
                 }
 
                 imsi = (String) ar.result;
+        		// begin WITH_TAINT_TRACKING
+        		//if (imsi != null) {
+        		    //Taint.addTaintString(imsi, Taint.TAINT_IMSI);
+        		//}
+        		// end WITH_TAINT_TRACKING
+
 
                 // IMSI (MCC+MNC+MSIN) is at least 6 digits, but not more
                 // than 15 (and usually 15).
@@ -647,6 +660,9 @@ public final class SIMRecords extends IccRecords {
                 adn = (AdnRecord)ar.result;
 
                 msisdn = adn.getNumber();
+        		// begin WITH_TAINT_TRACKING
+        		Taint.addTaintString(msisdn, Taint.TAINT_PHONE_NUMBER);
+        		// end WITH_TAINT_TRACKING
                 msisdnTag = adn.getAlphaTag();
 
                 Log.d(LOG_TAG, "MSISDN: " + /*msisdn*/ "xxxxxxx");
@@ -736,6 +752,9 @@ public final class SIMRecords extends IccRecords {
                 }
 
                 iccid = IccUtils.bcdToString(data, 0, data.length);
+        		// begin WITH_TAINT_TRACKING
+        		Taint.addTaintString(iccid, Taint.TAINT_ICCID);
+        		// end WITH_TAINT_TRACKING
 
                 Log.d(LOG_TAG, "iccid: " + iccid);
 
