@@ -20,6 +20,10 @@ import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.Bundle;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Wrapper class for Cursor that delegates all calls to the actual cursor object.  The primary
  * use for this class is to extend a cursor while overriding only a subset of its methods.
@@ -52,7 +56,15 @@ public class CursorWrapper implements Cursor {
     public boolean isClosed() {
         return mCursor.isClosed();
     }
+	
+// begin WITH_TAINT_TRACKING
+    private int taint_ = Taint.TAINT_CLEAR;
 
+    public void setTaint(int taint) {
+        this.taint_ = taint;
+    } 
+// end WITH_TAINT_TRACKING
+	
     public int getCount() {
         return mCursor.getCount();
     }
@@ -111,7 +123,13 @@ public class CursorWrapper implements Cursor {
     }
 
     public String getString(int columnIndex) {
-        return mCursor.getString(columnIndex);
+        String retString = mCursor.getString(columnIndex);	
+// begin WITH_TAINT_TRACKING
+        if(taint_ != Taint.TAINT_CLEAR) {
+            Taint.addTaintString(retString, taint_);
+        }
+// end WITH_TAINT_TRACKING
+        return retString;
     }
     
     public void copyStringToBuffer(int columnIndex, CharArrayBuffer buffer) {

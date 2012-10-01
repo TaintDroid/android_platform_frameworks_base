@@ -232,6 +232,16 @@ int binder_parse(struct binder_state *bs, struct binder_io *bio,
                 bio_init(&reply, rdata, sizeof(rdata), 4);
                 bio_init_from_txn(&msg, txn);
                 res = func(bs, txn, &msg, &reply);
+#ifdef WITH_TAINT_TRACKING
+                /* Only add taint tag if there is data to send */
+                if ((reply.data - reply.data0) > 0) {
+                	if (reply.data_avail >= sizeof(uint32_t)) {
+                		bio_put_uint32(&reply, 0); /* add TAINT CLEAR taint tag */
+                	} else {
+                		ALOGE("parse: no room for taint tag!\n");
+                	}
+                }
+#endif
                 binder_send_reply(bs, &reply, txn->data, res);
             }
             ptr += sizeof(*txn) / sizeof(uint32_t);
@@ -395,7 +405,16 @@ void bio_init_from_txn(struct binder_io *bio, struct binder_txn *txn)
 {
     bio->data = bio->data0 = txn->data;
     bio->offs = bio->offs0 = txn->offs;
+#ifdef WITH_TAINT_TRACKING
+    /* remove taint tag if data is not null*/
+#ifdef WITH_TAINT_BYTE_PARCEL
+    bio->data_avail = txn->data_size - ((txn->data && txn->data_size >= sizeof(uint32_t)) ? sizeof(uint32_t) : 0);
+#else
+    bio->data_avail = txn->data_size - (txn->data ? sizeof(uint32_t) : 0);
+#endif /*WITH_TAINT_BYTE_PARCEL*/
+#else
     bio->data_avail = txn->data_size;
+#endif
     bio->offs_avail = txn->offs_size / 4;
     bio->flags = BIO_F_SHARED;
 }

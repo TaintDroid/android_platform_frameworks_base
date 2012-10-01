@@ -71,6 +71,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * A GPS implementation of LocationProvider used by LocationManager.
  *
@@ -1073,6 +1077,35 @@ public class GpsLocationProvider implements LocationProviderInterface {
 
         synchronized (mLocation) {
             mLocationFlags = flags;
+// begin WITH_TAINT_TRACKING
+            int tag = Taint.TAINT_LOCATION | Taint.TAINT_LOCATION_GPS;
+            if ((flags & LOCATION_HAS_LAT_LONG) == LOCATION_HAS_LAT_LONG) {
+                mLocation.setLatitude(Taint.addTaintDouble(latitude, tag));
+                mLocation.setLongitude(Taint.addTaintDouble(longitude, tag));
+                mLocation.setTime(timestamp);
+            }
+            if ((flags & LOCATION_HAS_ALTITUDE) == LOCATION_HAS_ALTITUDE) {
+                mLocation.setAltitude(Taint.addTaintDouble(altitude, tag));
+            } else {
+                mLocation.removeAltitude();
+            }
+            if ((flags & LOCATION_HAS_SPEED) == LOCATION_HAS_SPEED) {
+                mLocation.setSpeed(Taint.addTaintFloat(speed, tag));
+            } else {
+                mLocation.removeSpeed();
+            }
+            if ((flags & LOCATION_HAS_BEARING) == LOCATION_HAS_BEARING) {
+                mLocation.setBearing(Taint.addTaintFloat(bearing, tag));
+            } else {
+                mLocation.removeBearing();
+            }
+            if ((flags & LOCATION_HAS_ACCURACY) == LOCATION_HAS_ACCURACY) {
+                mLocation.setAccuracy(Taint.addTaintFloat(accuracy, tag));
+            } else {
+                mLocation.removeAccuracy();
+            }
+// end WITH_TAINT_TRACKING
+            /*
             if ((flags & LOCATION_HAS_LAT_LONG) == LOCATION_HAS_LAT_LONG) {
                 mLocation.setLatitude(latitude);
                 mLocation.setLongitude(longitude);
@@ -1098,6 +1131,7 @@ public class GpsLocationProvider implements LocationProviderInterface {
             } else {
                 mLocation.removeAccuracy();
             }
+            */
             mLocation.setExtras(mLocationExtras);
 
             try {

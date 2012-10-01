@@ -28,6 +28,10 @@ import android.util.SparseIntArray;
 import java.util.ArrayList;
 import java.util.List;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Sensor manager implementation that communicates with the built-in
  * system sensors.
@@ -138,6 +142,20 @@ public class SystemSensorManager extends SensorManager {
                         }
                         final Sensor sensorObject = sHandleToSensor.get(sensor);
                         if (sensorObject != null) {
+// begin WITH_TAINT_TRACKING
+                            int tag = Taint.TAINT_CLEAR;
+                            if (sensorObject.getType() == Sensor.TYPE_ACCELEROMETER) {
+                                tag = Taint.TAINT_ACCELEROMETER;
+                            }
+
+                            // only taint actual data for now
+                            if (tag != Taint.TAINT_CLEAR) {
+                                Taint.addTaintFloatArray(values, tag);
+                                //Taint.addTaintLongArray(timestamp, tag);
+                                //accuracy = Taint.addTaintInt(accuracy, tag);
+                            }
+// end WITH_TAINT_TRACKING
+
                             // report the sensor event to all listeners that
                             // care about it.
                             final int size = sListeners.size();
