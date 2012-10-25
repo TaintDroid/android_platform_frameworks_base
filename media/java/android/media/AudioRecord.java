@@ -651,10 +651,14 @@ public class AudioRecord
         }
 
 // begin WITH_TAINT_TRACKING
-        // PJG: TODO: now we can!
-        Taint.log("AudioRecord.read(ByteBuffer): cannot taint ByteBuffers!");
+        //return native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+        int tag = Taint.TAINT_MIC;
+        int ret = native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+        if (audioBuffer.isDirect()) {
+            Taint.addTaintDirectByteBuffer(audioBuffer, tag);
+        }
+        return ret;
 // end WITH_TAINT_TRACKING  
-        return native_read_in_direct_buffer(audioBuffer, sizeInBytes);
     }
 
 

@@ -29361,6 +29361,7 @@ package dalvik.system {
     method public static void addTaintByteArray(byte[], int);
     method public static char addTaintChar(char, int);
     method public static void addTaintCharArray(char[], int);
+    method public static void addTaintDirectByteBuffer(java.nio.ByteBuffer, int);
     method public static double addTaintDouble(double, int);
     method public static void addTaintDoubleArray(double[], int);
     method public static void addTaintFile(int, int);
@@ -29413,6 +29414,7 @@ package dalvik.system {
     field public static final int TAINT_MIC = 4; // 0x4
     field public static final int TAINT_PHONE_NUMBER = 8; // 0x8
     field public static final int TAINT_SMS = 512; // 0x200
+    field public static final int dataBytesToLog = 100; // 0x64
   }
 
 }
@@ -33342,6 +33344,7 @@ package java.nio {
   }
 
   public abstract class ByteBuffer extends java.nio.Buffer implements java.lang.Comparable {
+    method public void addDirectByteBufferTaint(int);
     method public static java.nio.ByteBuffer allocate(int);
     method public static java.nio.ByteBuffer allocateDirect(int);
     method public final byte[] array();
