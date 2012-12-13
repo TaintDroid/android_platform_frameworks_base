@@ -72,6 +72,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+import android.database.CursorWrapper;
+// end WITH_TAINT_TRACKING
+
 /**
  * A system service that provides  account, password, and authtoken management for all
  * accounts on the device. Some of these calls are implemented with the help of the corresponding
@@ -152,6 +157,12 @@ public class AccountManagerService
 
     private final LinkedHashMap<String, Session> mSessions = new LinkedHashMap<String, Session>();
     private final AtomicInteger mNotificationIds = new AtomicInteger(1);
+    
+// begin WITH_TAINT_TRACKING
+    // PJG: uncomment following line to enable user account data tainting
+    //private static final int taintTag = Taint.TAINT_ACCOUNT;
+    private static final int taintTag = Taint.TAINT_CLEAR;
+// end WITH_TAINT_TRACKING
 
     static class UserAccounts {
         private final int userId;
@@ -291,9 +302,12 @@ public class AccountManagerService
         synchronized (accounts.cacheLock) {
             final SQLiteDatabase db = accounts.openHelper.getWritableDatabase();
             boolean accountDeleted = false;
-            Cursor cursor = db.query(TABLE_ACCOUNTS,
+// begin WITH_TAINT_TRACKING
+            CursorWrapper cursor = new CursorWrapper(db.query(TABLE_ACCOUNTS,
                     new String[]{ACCOUNTS_ID, ACCOUNTS_TYPE, ACCOUNTS_NAME},
-                    null, null, null, null, null);
+                    null, null, null, null, null));
+            cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
             try {
                 accounts.accountCache.clear();
                 final HashMap<String, ArrayList<String>> accountNamesByType =
@@ -424,9 +438,12 @@ public class AccountManagerService
 
         synchronized (accounts.cacheLock) {
             final SQLiteDatabase db = accounts.openHelper.getReadableDatabase();
-            Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{ACCOUNTS_PASSWORD},
+// begin WITH_TAINT_TRACKING
+            CursorWrapper cursor = new CursorWrapper(db.query(TABLE_ACCOUNTS, new String[]{ACCOUNTS_PASSWORD},
                     ACCOUNTS_NAME + "=? AND " + ACCOUNTS_TYPE+ "=?",
-                    new String[]{account.name, account.type}, null, null, null);
+                    new String[]{account.name, account.type}, null, null, null));
+            cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
             try {
                 if (cursor.moveToNext()) {
                     return cursor.getString(0);
@@ -752,7 +769,8 @@ public class AccountManagerService
         if (authToken == null || accountType == null) {
             return;
         }
-        Cursor cursor = db.rawQuery(
+// begin WITH_TAINT_TRACKING
+        CursorWrapper cursor = new CursorWrapper(db.rawQuery(
                 "SELECT " + TABLE_AUTHTOKENS + "." + AUTHTOKENS_ID
                         + ", " + TABLE_ACCOUNTS + "." + ACCOUNTS_NAME
                         + ", " + TABLE_AUTHTOKENS + "." + AUTHTOKENS_TYPE
@@ -762,7 +780,9 @@ public class AccountManagerService
                         + " = " + AUTHTOKENS_ACCOUNTS_ID
                         + " WHERE " + AUTHTOKENS_AUTHTOKEN + " = ? AND "
                         + TABLE_ACCOUNTS + "." + ACCOUNTS_TYPE + " = ?",
-                new String[]{authToken, accountType});
+                new String[]{authToken, accountType}));
+        cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
         try {
             while (cursor.moveToNext()) {
                 long authTokenId = cursor.getLong(0);
@@ -1568,8 +1588,11 @@ public class AccountManagerService
     }
 
     private long getAccountIdLocked(SQLiteDatabase db, Account account) {
-        Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{ACCOUNTS_ID},
-                "name=? AND type=?", new String[]{account.name, account.type}, null, null, null);
+// begin WITH_TAINT_TRACKING
+        CursorWrapper cursor = new CursorWrapper(db.query(TABLE_ACCOUNTS, new String[]{ACCOUNTS_ID},
+                "name=? AND type=?", new String[]{account.name, account.type}, null, null, null));
+        cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
         try {
             if (cursor.moveToNext()) {
                 return cursor.getLong(0);
@@ -1581,9 +1604,12 @@ public class AccountManagerService
     }
 
     private long getExtrasIdLocked(SQLiteDatabase db, long accountId, String key) {
-        Cursor cursor = db.query(TABLE_EXTRAS, new String[]{EXTRAS_ID},
+// begin WITH_TAINT_TRACKING
+        CursorWrapper cursor = new CursorWrapper(db.query(TABLE_EXTRAS, new String[]{EXTRAS_ID},
                 EXTRAS_ACCOUNTS_ID + "=" + accountId + " AND " + EXTRAS_KEY + "=?",
-                new String[]{key}, null, null, null);
+                new String[]{key}, null, null, null));
+        cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
         try {
             if (cursor.moveToNext()) {
                 return cursor.getLong(0);
@@ -2041,8 +2067,11 @@ public class AccountManagerService
 
             if (isCheckinRequest) {
                 // This is a checkin request. *Only* upload the account types and the count of each.
-                Cursor cursor = db.query(TABLE_ACCOUNTS, ACCOUNT_TYPE_COUNT_PROJECTION,
-                        null, null, ACCOUNTS_TYPE, null, null);
+// begin WITH_TAINT_TRACKING
+                CursorWrapper cursor = new CursorWrapper(db.query(TABLE_ACCOUNTS, ACCOUNT_TYPE_COUNT_PROJECTION,
+                        null, null, ACCOUNTS_TYPE, null, null));
+                cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
                 try {
                     while (cursor.moveToNext()) {
                         // print type,count
@@ -2353,6 +2382,11 @@ public class AccountManagerService
             System.arraycopy(accountsForType, 0, newAccountsForType, 0, oldLength);
         }
         newAccountsForType[oldLength] = account;
+// begin WITH_TAINT_TRACKING
+        // not returned from DB query, so manually taint entry in account cache
+        Taint.addTaintString(newAccountsForType[oldLength].name, taintTag);
+        Taint.addTaintString(newAccountsForType[oldLength].type, taintTag);        
+// end WITH_TAINT_TRACKING
         accounts.accountCache.put(account.type, newAccountsForType);
     }
 
@@ -2441,11 +2475,14 @@ public class AccountManagerService
     protected HashMap<String, String> readUserDataForAccountFromDatabaseLocked(
             final SQLiteDatabase db, Account account) {
         HashMap<String, String> userDataForAccount = new HashMap<String, String>();
-        Cursor cursor = db.query(TABLE_EXTRAS,
+// begin WITH_TAINT_TRACKING
+        CursorWrapper cursor = new CursorWrapper(db.query(TABLE_EXTRAS,
                 COLUMNS_EXTRAS_KEY_AND_VALUE,
                 SELECTION_USERDATA_BY_ACCOUNT,
                 new String[]{account.name, account.type},
-                null, null, null);
+                null, null, null));
+        cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
         try {
             while (cursor.moveToNext()) {
                 final String tmpkey = cursor.getString(0);
@@ -2461,11 +2498,14 @@ public class AccountManagerService
     protected HashMap<String, String> readAuthTokensForAccountFromDatabaseLocked(
             final SQLiteDatabase db, Account account) {
         HashMap<String, String> authTokensForAccount = new HashMap<String, String>();
-        Cursor cursor = db.query(TABLE_AUTHTOKENS,
+// begin WITH_TAINT_TRACKING
+        CursorWrapper cursor = new CursorWrapper(db.query(TABLE_AUTHTOKENS,
                 COLUMNS_AUTHTOKENS_TYPE_AND_AUTHTOKEN,
                 SELECTION_AUTHTOKENS_BY_ACCOUNT,
                 new String[]{account.name, account.type},
-                null, null, null);
+                null, null, null));
+        cursor.setTaint(taintTag);
+// end WITH_TAINT_TRACKING
         try {
             while (cursor.moveToNext()) {
                 final String type = cursor.getString(0);
