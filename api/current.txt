@@ -29372,6 +29372,7 @@ package dalvik.system {
     method public static long addTaintLong(long, int);
     method public static void addTaintLongArray(long[], int);
     method public static void addTaintObjectArray(java.lang.Object[], int);
+    method public static short addTaintShort(short, int);
     method public static void addTaintShortArray(short[], int);
     method public static void addTaintString(java.lang.String, int);
     method public static int getTaintBoolean(boolean);
@@ -29392,6 +29393,7 @@ package dalvik.system {
     method public static int getTaintLongArray(long[]);
     method public static int getTaintObjectArray(java.lang.Object[]);
     method public static int getTaintRef(java.lang.Object);
+    method public static int getTaintShort(short);
     method public static int getTaintShortArray(short[]);
     method public static int getTaintString(java.lang.String);
     method public static void log(java.lang.String);
