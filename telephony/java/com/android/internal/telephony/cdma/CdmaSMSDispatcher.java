@@ -60,6 +60,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+import com.android.internal.telephony.IccUtils;
+// end WITH_TAINT_TRACKING
+
 
 final class CdmaSMSDispatcher extends SMSDispatcher {
     private static final String TAG = "CDMA";
@@ -288,7 +293,9 @@ final class CdmaSMSDispatcher extends SMSDispatcher {
             byte[] data, PendingIntent sentIntent, PendingIntent deliveryIntent) {
         SmsMessage.SubmitPdu pdu = SmsMessage.getSubmitPdu(
                 scAddr, destAddr, destPort, data, (deliveryIntent != null));
-        sendSubmitPdu(pdu, sentIntent, deliveryIntent, destAddr);
+// begin WITH_TAINT_TRACKING
+        sendSubmitPdu(pdu, sentIntent, deliveryIntent, destAddr, "0x"+IccUtils.bytesToHexString(data));
+// end WITH_TAINT_TRACKING
     }
 
     /** {@inheritDoc} */
@@ -297,7 +304,9 @@ final class CdmaSMSDispatcher extends SMSDispatcher {
             PendingIntent sentIntent, PendingIntent deliveryIntent) {
         SmsMessage.SubmitPdu pdu = SmsMessage.getSubmitPdu(
                 scAddr, destAddr, text, (deliveryIntent != null), null);
-        sendSubmitPdu(pdu, sentIntent, deliveryIntent, destAddr);
+// begin WITH_TAINT_TRACKING
+        sendSubmitPdu(pdu, sentIntent, deliveryIntent, destAddr, text);
+// end WITH_TAINT_TRACKING
     }
 
     /** {@inheritDoc} */
@@ -329,11 +338,15 @@ final class CdmaSMSDispatcher extends SMSDispatcher {
         SmsMessage.SubmitPdu submitPdu = SmsMessage.getSubmitPdu(destinationAddress,
                 uData, (deliveryIntent != null) && lastPart);
 
-        sendSubmitPdu(submitPdu, sentIntent, deliveryIntent, destinationAddress);
+// begin WITH_TAINT_TRACKING
+        sendSubmitPdu(submitPdu, sentIntent, deliveryIntent, destinationAddress, message);
+// end WITH_TAINT_TRACKING
     }
 
+// begin WITH_TAINT_TRACKING
     protected void sendSubmitPdu(SmsMessage.SubmitPdu pdu,
-            PendingIntent sentIntent, PendingIntent deliveryIntent, String destAddr) {
+            PendingIntent sentIntent, PendingIntent deliveryIntent, String destAddr, String contents) {
+// end WITH_TAINT_TRACKING
         if (SystemProperties.getBoolean(TelephonyProperties.PROPERTY_INECM_MODE, false)) {
             if (sentIntent != null) {
                 try {
@@ -345,7 +358,9 @@ final class CdmaSMSDispatcher extends SMSDispatcher {
             }
             return;
         }
-        sendRawPdu(pdu.encodedScAddress, pdu.encodedMessage, sentIntent, deliveryIntent, destAddr);
+// begin WITH_TAINT_TRACKING
+        sendRawPdu(pdu.encodedScAddress, pdu.encodedMessage, sentIntent, deliveryIntent, destAddr, contents);
+// end WITH_TAINT_TRACKING
     }
 
     /** {@inheritDoc} */
@@ -355,6 +370,16 @@ final class CdmaSMSDispatcher extends SMSDispatcher {
 
         // byte smsc[] = (byte[]) map.get("smsc");  // unused for CDMA
         byte pdu[] = (byte[]) map.get("pdu");
+        
+// begin WITH_TAINT_TRACKING
+        int tag = Taint.getTaintByteArray(pdu);
+        if (tag != Taint.TAINT_CLEAR) {
+            String tstr = "0x" + Integer.toHexString(tag);
+            Taint.log("CdmaSMSDispatcher.sendSMS(" + tracker.mDestAddress
+                      + ") received data from app " + tracker.mAppPackage
+                      + " with tag " + tstr + " data=[" + tracker.mContents + "]");
+        }
+// end WITH_TAINT_TRACKING
 
         Message reply = obtainMessage(EVENT_SEND_SMS_COMPLETE, tracker);
         mCm.sendCdmaSms(pdu, reply);
