@@ -26,6 +26,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * The AudioRecord class manages the audio resources for Java applications
  * to record audio from the audio input hardware of the platform. This is
@@ -589,7 +593,13 @@ public class AudioRecord
             return ERROR_BAD_VALUE;
         }
 
-        return native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+// begin WITH_TAINT_TRACKING
+        //return native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+        int tag = Taint.TAINT_MIC;
+        int ret = native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+        Taint.addTaintByteArray(audioData, tag);
+        return ret;
+// end WITH_TAINT_TRACKING
     }
 
 
@@ -613,7 +623,13 @@ public class AudioRecord
             return ERROR_BAD_VALUE;
         }
 
-        return native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+// begin WITH_TAINT_TRACKING
+        //return native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+        int tag = Taint.TAINT_MIC;
+        int ret = native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+        Taint.addTaintShortArray(audioData, tag);
+        return ret;
+// end WITH_TAINT_TRACKING
     }
 
 
@@ -637,8 +653,15 @@ public class AudioRecord
         if ( (audioBuffer == null) || (sizeInBytes < 0) ) {
             return ERROR_BAD_VALUE;
         }
-
-        return native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+// begin WITH_TAINT_TRACKING
+        //return native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+        int tag = Taint.TAINT_MIC;
+        int ret = native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+        if (audioBuffer.isDirect()) {
+            Taint.addTaintDirectByteBuffer(audioBuffer, tag);
+        }
+        return ret;
+// end WITH_TAINT_TRACKING  
     }
 
 

@@ -7699,6 +7699,7 @@ package android.database {
     method public boolean requery();
     method public android.os.Bundle respond(android.os.Bundle);
     method public void setNotificationUri(android.content.ContentResolver, android.net.Uri);
+    method public void setTaint(int);
     method public void unregisterContentObserver(android.database.ContentObserver);
     method public void unregisterDataSetObserver(android.database.DataSetObserver);
   }
@@ -31327,6 +31328,72 @@ package dalvik.system {
     ctor public PathClassLoader(java.lang.String, java.lang.String, java.lang.ClassLoader);
   }
 
+  public final class Taint {
+    ctor public Taint();
+    method public static boolean addTaintBoolean(boolean, int);
+    method public static void addTaintBooleanArray(boolean[], int);
+    method public static byte addTaintByte(byte, int);
+    method public static void addTaintByteArray(byte[], int);
+    method public static char addTaintChar(char, int);
+    method public static void addTaintCharArray(char[], int);
+    method public static void addTaintDirectByteBuffer(java.nio.ByteBuffer, int);
+    method public static double addTaintDouble(double, int);
+    method public static void addTaintDoubleArray(double[], int);
+    method public static void addTaintFile(int, int);
+    method public static float addTaintFloat(float, int);
+    method public static void addTaintFloatArray(float[], int);
+    method public static int addTaintInt(int, int);
+    method public static void addTaintIntArray(int[], int);
+    method public static long addTaintLong(long, int);
+    method public static void addTaintLongArray(long[], int);
+    method public static void addTaintObjectArray(java.lang.Object[], int);
+    method public static short addTaintShort(short, int);
+    method public static void addTaintShortArray(short[], int);
+    method public static void addTaintString(java.lang.String, int);
+    method public static int getTaintBoolean(boolean);
+    method public static int getTaintBooleanArray(boolean[]);
+    method public static int getTaintByte(byte);
+    method public static int getTaintByteArray(byte[]);
+    method public static int getTaintChar(char);
+    method public static int getTaintCharArray(char[]);
+    method public static int getTaintDirectByteBuffer(java.nio.ByteBuffer);
+    method public static int getTaintDouble(double);
+    method public static int getTaintDoubleArray(double[]);
+    method public static int getTaintFile(int);
+    method public static int getTaintFloat(float);
+    method public static int getTaintFloatArray(float[]);
+    method public static int getTaintInt(int);
+    method public static int getTaintIntArray(int[]);
+    method public static int getTaintLong(long);
+    method public static int getTaintLongArray(long[]);
+    method public static int getTaintObjectArray(java.lang.Object[]);
+    method public static int getTaintRef(java.lang.Object);
+    method public static int getTaintShort(short);
+    method public static int getTaintShortArray(short[]);
+    method public static int getTaintString(java.lang.String);
+    method public static void log(java.lang.String);
+    method public static void logPathFromFd(int);
+    method public static void logPeerFromFd(int);
+    field public static final int TAINT_ACCELEROMETER = 256; // 0x100
+    field public static final int TAINT_ACCOUNT = 16384; // 0x4000
+    field public static final int TAINT_CAMERA = 128; // 0x80
+    field public static final int TAINT_CLEAR = 0; // 0x0
+    field public static final int TAINT_CONTACTS = 2; // 0x2
+    field public static final int TAINT_DEVICE_SN = 8192; // 0x2000
+    field public static final int TAINT_HISTORY = 32768; // 0x8000
+    field public static final int TAINT_ICCID = 4096; // 0x1000
+    field public static final int TAINT_IMEI = 1024; // 0x400
+    field public static final int TAINT_IMSI = 2048; // 0x800
+    field public static final int TAINT_LOCATION = 1; // 0x1
+    field public static final int TAINT_LOCATION_GPS = 16; // 0x10
+    field public static final int TAINT_LOCATION_LAST = 64; // 0x40
+    field public static final int TAINT_LOCATION_NET = 32; // 0x20
+    field public static final int TAINT_MIC = 4; // 0x4
+    field public static final int TAINT_PHONE_NUMBER = 8; // 0x8
+    field public static final int TAINT_SMS = 512; // 0x200
+    field public static final int dataBytesToLog = 100; // 0x64
+  }
+
 }
 
 package java.awt.font {
@@ -32924,7 +32991,9 @@ package java.lang {
     method public static int compare(double, double);
     method public int compareTo(java.lang.Double);
     method public static long doubleToLongBits(double);
+    method public static long doubleToLongBits_intrinsic(double);
     method public static long doubleToRawLongBits(double);
+    method public static long doubleToRawLongBits_intrinsic(double);
     method public double doubleValue();
     method public float floatValue();
     method public int intValue();
@@ -32933,6 +33002,7 @@ package java.lang {
     method public boolean isNaN();
     method public static boolean isNaN(double);
     method public static double longBitsToDouble(long);
+    method public static double longBitsToDouble_intrinsic(long);
     method public long longValue();
     method public static double parseDouble(java.lang.String) throws java.lang.NumberFormatException;
     method public static java.lang.String toHexString(double);
@@ -32999,9 +33069,12 @@ package java.lang {
     method public int compareTo(java.lang.Float);
     method public double doubleValue();
     method public static int floatToIntBits(float);
+    method public static int floatToIntBits_intrinsic(float);
     method public static int floatToRawIntBits(float);
+    method public static int floatToRawIntBits_intrinsic(float);
     method public float floatValue();
     method public static float intBitsToFloat(int);
+    method public static float intBitsToFloat_intrinsic(int);
     method public int intValue();
     method public boolean isInfinite();
     method public static boolean isInfinite(float);
@@ -33185,6 +33258,10 @@ package java.lang {
     method public static float abs(float);
     method public static int abs(int);
     method public static long abs(long);
+    method public static double abs_intrinsic(double);
+    method public static float abs_intrinsic(float);
+    method public static int abs_intrinsic(int);
+    method public static long abs_intrinsic(long);
     method public static double acos(double);
     method public static double asin(double);
     method public static double atan(double);
@@ -33194,6 +33271,7 @@ package java.lang {
     method public static double copySign(double, double);
     method public static float copySign(float, float);
     method public static double cos(double);
+    method public static double cos_intrinsic(double);
     method public static double cosh(double);
     method public static double exp(double);
     method public static double expm1(double);
@@ -33208,10 +33286,12 @@ package java.lang {
     method public static float max(float, float);
     method public static int max(int, int);
     method public static long max(long, long);
+    method public static int max_intrinsic(int, int);
     method public static double min(double, double);
     method public static float min(float, float);
     method public static int min(int, int);
     method public static long min(long, long);
+    method public static int min_intrinsic(int, int);
     method public static double nextAfter(double, double);
     method public static float nextAfter(float, double);
     method public static double nextUp(double);
@@ -33226,8 +33306,10 @@ package java.lang {
     method public static double signum(double);
     method public static float signum(float);
     method public static double sin(double);
+    method public static double sin_intrinsic(double);
     method public static double sinh(double);
     method public static double sqrt(double);
+    method public static double sqrt_intrinsic(double);
     method public static double tan(double);
     method public static double tanh(double);
     method public static double toDegrees(double);
@@ -33566,11 +33648,13 @@ package java.lang {
     ctor public String(int[], int, int);
     ctor public String(java.lang.StringBuilder);
     method public char charAt(int);
+    method public char charAt_intrinsic(int);
     method public int codePointAt(int);
     method public int codePointBefore(int);
     method public int codePointCount(int, int);
     method public int compareTo(java.lang.String);
     method public int compareToIgnoreCase(java.lang.String);
+    method public int compareTo_intrinsic(java.lang.String);
     method public java.lang.String concat(java.lang.String);
     method public boolean contains(java.lang.CharSequence);
     method public boolean contentEquals(java.lang.StringBuffer);
@@ -33579,6 +33663,7 @@ package java.lang {
     method public static java.lang.String copyValueOf(char[], int, int);
     method public boolean endsWith(java.lang.String);
     method public boolean equalsIgnoreCase(java.lang.String);
+    method public boolean equals_intrinsic(java.lang.Object);
     method public static java.lang.String format(java.lang.String, java.lang.Object...);
     method public static java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...);
     method public deprecated void getBytes(int, int, byte[], int);
@@ -33592,11 +33677,13 @@ package java.lang {
     method public int indexOf(java.lang.String, int);
     method public java.lang.String intern();
     method public boolean isEmpty();
+    method public boolean isEmpty_intrinsic();
     method public int lastIndexOf(int);
     method public int lastIndexOf(int, int);
     method public int lastIndexOf(java.lang.String);
     method public int lastIndexOf(java.lang.String, int);
     method public int length();
+    method public int length_intrinsic();
     method public boolean matches(java.lang.String);
     method public int offsetByCodePoints(int, int);
     method public boolean regionMatches(int, java.lang.String, int, int);
@@ -35234,6 +35321,7 @@ package java.nio {
   }
 
   public abstract class ByteBuffer extends java.nio.Buffer implements java.lang.Comparable {
+    method public void addDirectByteBufferTaint(int);
     method public static java.nio.ByteBuffer allocate(int);
     method public static java.nio.ByteBuffer allocateDirect(int);
     method public final byte[] array();
@@ -35254,6 +35342,7 @@ package java.nio {
     method public abstract byte get(int);
     method public abstract char getChar();
     method public abstract char getChar(int);
+    method public int getDirectByteBufferTaint();
     method public abstract double getDouble();
     method public abstract double getDouble(int);
     method public abstract float getFloat();

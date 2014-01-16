@@ -30,6 +30,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Sensor manager implementation that communicates with the built-in
  * system sensors.
@@ -343,6 +347,20 @@ public class SystemSensorManager extends SensorManager {
                 Log.e(TAG, "Error: Sensor Event is null for Sensor: " + sensor);
                 return;
             }
+// begin WITH_TAINT_TRACKING
+            if(t.sensor != null){
+                int tag = Taint.TAINT_CLEAR;
+                if (t.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                    tag = Taint.TAINT_ACCELEROMETER;
+                }
+                // only taint actual data for now
+                if (tag != Taint.TAINT_CLEAR) {
+                  Taint.addTaintFloatArray(values, tag);
+                  //Taint.addTaintLongArray(timestamp, tag);
+                  //accuracy = Taint.addTaintInt(accuracy, tag);
+                }
+            }//if
+// end WITH_TAINT_TRACKING
             // Copy from the values array.
             System.arraycopy(values, 0, t.values, 0, t.values.length);
             t.timestamp = timestamp;
@@ -403,6 +421,22 @@ public class SystemSensorManager extends SensorManager {
                 Log.e(TAG, "Error: Trigger Event is null for Sensor: " + sensor);
                 return;
             }
+
+// begin WITH_TAINT_TRACKING
+            if(t.sensor != null){
+                int tag = Taint.TAINT_CLEAR;
+                if (t.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                    tag = Taint.TAINT_ACCELEROMETER;
+                }
+                // only taint actual data for now
+                if (tag != Taint.TAINT_CLEAR) {
+                  Taint.addTaintFloatArray(values, tag);
+                  //Taint.addTaintLongArray(timestamp, tag);
+                  //accuracy = Taint.addTaintInt(accuracy, tag);
+                }
+            }//if
+// end WITH_TAINT_TRACKING
+
 
             // Copy from the values array.
             System.arraycopy(values, 0, t.values, 0, t.values.length);

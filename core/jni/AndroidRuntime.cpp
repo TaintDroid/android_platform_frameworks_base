@@ -548,7 +548,12 @@ int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv)
     mOptions.add(opt);
 
     // Increase the main thread's interpreter stack size for bug 6315322.
+#ifdef WITH_TAINT_TRACKING
+    // 2x stack size for interleaved taint tags
+    opt.optionString = "-XX:mainThreadStackSize=48K";
+#else
     opt.optionString = "-XX:mainThreadStackSize=24K";
+#endif /*WITH_TAINT_TRACKING*/
     mOptions.add(opt);
 
     strcpy(heapgrowthlimitOptsBuf, "-XX:HeapGrowthLimit=");

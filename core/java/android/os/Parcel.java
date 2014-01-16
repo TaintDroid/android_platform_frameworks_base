@@ -37,6 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Container for a message (data and object references) that can
  * be sent through an IBinder.  A Parcel can contain both flattened data
@@ -220,6 +224,13 @@ public final class Parcel {
     private static final int VAL_SPARSEBOOLEANARRAY = 22;
     private static final int VAL_BOOLEANARRAY = 23;
     private static final int VAL_CHARSEQUENCEARRAY = 24;
+
+    // begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+	//Do not write float[], double[], and char as serializable
+	private static final int VAL_FLOATARRAY = 25;
+	private static final int VAL_DOUBLEARRAY = 26;
+	private static final int VAL_CHAR = 27;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
 
     // The initial int32 in a Binder call's reply Parcel header:
     private static final int EX_SECURITY = -1;
@@ -414,7 +425,17 @@ public final class Parcel {
      * in different versions of the platform.
      */
     public final byte[] marshall() {
-        return nativeMarshall(mNativePtr);
+// begin WITH_TAINT_TRACKING
+        byte[] data = nativeMarshall(mNativePtr);
+// begin WITH_TAINT_BYTE_PARCEL
+        //int tag = getTaint();
+        int tag = getTaint(0, dataSize());
+// end WITH_TAINT_BYTE_PARCEL
+        Taint.addTaintByteArray(data, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "marshall() tag = " + tstr + "\n");
+        return data;
+// end WITH_TAINT_TRACKING
     }
 
     /**
@@ -422,6 +443,15 @@ public final class Parcel {
      */
     public final void unmarshall(byte[] data, int offest, int length) {
         nativeUnmarshall(mNativePtr, data, offest, length);
+// begin WITH_TAINT_TRACKING
+        int tag = Taint.getTaintByteArray(data);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "unmarshall() tag = " + tstr + "\n"); 
+// begin WITH_TAINT_BYTE_PARCEL
+        //updateTaint(tag);
+        updateTaint(tag, 0, length);
+// end WITH_TAINT_BYTE_PARCEL
+// end WITH_TAINT_TRACKING
     }
 
     public final void appendFrom(Parcel parcel, int offset, int length) {
@@ -470,7 +500,14 @@ public final class Parcel {
             return;
         }
         Arrays.checkOffsetAndCount(b.length, offset, len);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
+		int start = dataPosition();
         nativeWriteByteArray(mNativePtr, b, offset, len);
+        int end = dataPosition();
+        int length = end - start;
+        int tag = Taint.getTaintByteArray(b);
+		updateTaint(tag, start, length);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
     }
 
     /**
@@ -478,7 +515,17 @@ public final class Parcel {
      * growing dataCapacity() if needed.
      */
     public final void writeInt(int val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
         nativeWriteInt(mNativePtr, val);
+        int end = dataPosition();
+        int len = end - start;
+        int tag = Taint.getTaintInt(val);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "writeInt("+val+") tag = " + tstr + "\n"); 
+        //updateTaint(tag);
+        updateTaint(tag, start, len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -486,7 +533,17 @@ public final class Parcel {
      * growing dataCapacity() if needed.
      */
     public final void writeLong(long val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
         nativeWriteLong(mNativePtr, val);
+        int end = dataPosition();
+        int len = end - start;
+        int tag = Taint.getTaintLong(val);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "writeLong("+val+") tag = " + tstr + "\n");
+        //updateTaint(tag);
+        updateTaint(tag, start, len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -494,7 +551,17 @@ public final class Parcel {
      * dataPosition(), growing dataCapacity() if needed.
      */
     public final void writeFloat(float val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
         nativeWriteFloat(mNativePtr, val);
+        int end = dataPosition();
+        int len = end - start;
+        int tag = Taint.getTaintFloat(val);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "writeFloat("+val+") tag = " + tstr + "\n");
+        //updateTaint(tag);
+        updateTaint(tag, start, len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -502,7 +569,17 @@ public final class Parcel {
      * current dataPosition(), growing dataCapacity() if needed.
      */
     public final void writeDouble(double val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
         nativeWriteDouble(mNativePtr, val);
+        int end = dataPosition();
+        int len = end - start;
+        int tag = Taint.getTaintDouble(val);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "writeDouble("+val+") tag = " + tstr + "\n");
+        //updateTaint(tag);
+        updateTaint(tag, start, len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -510,7 +587,17 @@ public final class Parcel {
      * growing dataCapacity() if needed.
      */
     public final void writeString(String val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
         nativeWriteString(mNativePtr, val);
+        int end = dataPosition();
+        int len = end - start;
+        int tag = Taint.getTaintString(val);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "writeString("+val+") tag = " + tstr + "\n");
+        //updateTaint(tag);
+        updateTaint(tag, start, len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -519,6 +606,9 @@ public final class Parcel {
      * @hide
      */
     public final void writeCharSequence(CharSequence val) {
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        // sy- TODO: check this function 
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
         TextUtils.writeToParcel(val, this, 0);
     }
 
@@ -674,7 +764,12 @@ public final class Parcel {
         int i=0;
         while (i < N) {
             writeInt(val.keyAt(i));
-            writeByte((byte)(val.valueAt(i) ? 1 : 0));
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+			boolean b = val.valueAt(i);
+			int tag = Taint.getTaintBoolean(b);
+			writeByte(Taint.addTaintByte(b ? (byte)1 : (byte)0, tag));
+//            writeByte((byte)(val.valueAt(i) ? 1 : 0));
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
             i++;
         }
     }
@@ -684,7 +779,12 @@ public final class Parcel {
             int N = val.length;
             writeInt(N);
             for (int i=0; i<N; i++) {
-                writeInt(val[i] ? 1 : 0);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+				boolean b = val[i];
+				int tag = Taint.getTaintBoolean(b);
+				writeInt(Taint.addTaintInt(b ? 1 : 0, tag));
+				//writeInt(val[i] ? 1 : 0);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
             }
         } else {
             writeInt(-1);
@@ -699,7 +799,11 @@ public final class Parcel {
         if (N >= 0 && N <= (dataAvail() >> 2)) {
             boolean[] val = new boolean[N];
             for (int i=0; i<N; i++) {
-                val[i] = readInt() != 0;
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
+				int iVal = readInt();
+				val[i] = Taint.addTaintBoolean(iVal != 0, Taint.getTaintInt(iVal));
+//                val[i] = readInt() != 0;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
             }
             return val;
         } else {
@@ -711,7 +815,11 @@ public final class Parcel {
         int N = readInt();
         if (N == val.length) {
             for (int i=0; i<N; i++) {
-                val[i] = readInt() != 0;
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
+				int iVal = readInt();
+				val[i] = Taint.addTaintBoolean(iVal != 0 , Taint.getTaintInt(iVal));             
+			 //  val[i] = readInt() != 0;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
             }
         } else {
             throw new RuntimeException("bad array lengths");
@@ -1185,7 +1293,12 @@ public final class Parcel {
             writeDouble((Double) v);
         } else if (v instanceof Boolean) {
             writeInt(VAL_BOOLEAN);
-            writeInt((Boolean) v ? 1 : 0);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
+			boolean b = (Boolean)v;
+			int tag = Taint.getTaintBoolean(b);
+			writeInt(Taint.addTaintInt((Boolean)v ? 1 : 0, tag));
+//			writeInt((Boolean) v ? 1 : 0);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
         } else if (v instanceof CharSequence) {
             // Must be after String
             writeInt(VAL_CHARSEQUENCE);
@@ -1227,6 +1340,17 @@ public final class Parcel {
         } else if (v instanceof Byte) {
             writeInt(VAL_BYTE);
             writeInt((Byte) v);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        } else if(v instanceof float[]) {
+			writeInt(VAL_FLOATARRAY);
+			writeFloatArray((float[])v);
+		} else if(v instanceof double[]) {
+			writeInt(VAL_DOUBLEARRAY);
+			writeDoubleArray((double[])v);
+		} else if(v instanceof Character){
+			writeInt(VAL_CHAR);
+			writeInt((int)((Character)v));
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
         } else if (v instanceof Serializable) {
             // Must be last
             writeInt(VAL_SERIALIZABLE);
@@ -1446,14 +1570,36 @@ public final class Parcel {
      * Read an integer value from the parcel at the current dataPosition().
      */
     public final int readInt() {
-        return nativeReadInt(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
+        int val1 = nativeReadInt(mNativePtr);
+        int end = dataPosition();
+        int len = end - start;
+        //int tag = getTaint();
+    	int tag = getTaint(start, len);
+        int val2 = Taint.addTaintInt(val1, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "readInt("+val2+") tag = " + tstr + "\n");
+        return val2;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
      * Read a long integer value from the parcel at the current dataPosition().
      */
     public final long readLong() {
-        return nativeReadLong(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
+        long val1 = nativeReadLong(mNativePtr);
+        int end = dataPosition();
+        int len = end - start;
+        //int tag = getTaint();
+    	int tag = getTaint(start, len);
+        long val2 = Taint.addTaintLong(val1, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "readLong("+val2+") tag = " + tstr + "\n");
+        return val2;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -1461,7 +1607,18 @@ public final class Parcel {
      * dataPosition().
      */
     public final float readFloat() {
-        return nativeReadFloat(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
+        float val1 = nativeReadFloat(mNativePtr);
+        int end = dataPosition();
+        int len = end - start;
+        //int tag = getTaint();
+    	int tag = getTaint(start, len);
+        float val2 = Taint.addTaintFloat(val1, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "readFloat("+val2+") tag = " + tstr + "\n");
+        return val2;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -1469,14 +1626,36 @@ public final class Parcel {
      * current dataPosition().
      */
     public final double readDouble() {
-        return nativeReadDouble(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
+        double val1 = nativeReadDouble(mNativePtr);
+        int end = dataPosition();
+        int len = end - start;
+        //int tag = getTaint();
+    	int tag = getTaint(start, len);
+        double val2 = Taint.addTaintDouble(val1, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "readDouble("+val2+") tag = " + tstr + "\n");
+        return val2;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
      * Read a string value from the parcel at the current dataPosition().
      */
     public final String readString() {
-        return nativeReadString(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+        int start = dataPosition();
+        String val = nativeReadString(mNativePtr);
+        int end = dataPosition();
+        int len = end - start;
+        //int tag = getTaint();
+    	int tag = getTaint(start, len);
+        Taint.addTaintString(val, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "readString("+val+") tag = " + tstr + "\n");
+        return val;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -1587,7 +1766,19 @@ public final class Parcel {
      * Read and return a byte[] object from the parcel.
      */
     public final byte[] createByteArray() {
-        return nativeCreateByteArray(mNativePtr);
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+		int start = dataPosition();
+        byte[] data = nativeCreateByteArray(mNativePtr);
+        //int tag = getTaint();
+		int end = dataPosition();
+		int len = end - start;
+		int tag = getTaint(start, len);
+//        int tag = getTaint(0, dataSize());
+        Taint.addTaintByteArray(data, tag);
+        //String tstr = "0x" + Integer.toHexString(tag);
+        //if (tag != 0) Log.w("ParcelJava", "createByteArray() tag = " + tstr + "\n");
+		return data;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
     }
 
     /**
@@ -1983,8 +2174,11 @@ public final class Parcel {
             return readDouble();
 
         case VAL_BOOLEAN:
-            return readInt() == 1;
-
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+			int iVal = readInt();
+			return Taint.addTaintBoolean(iVal == 1, Taint.getTaintInt(iVal));
+//            return readInt() == 1;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
         case VAL_CHARSEQUENCE:
             return readCharSequence();
 
@@ -2033,6 +2227,16 @@ public final class Parcel {
         case VAL_BUNDLE:
             return readBundle(loader); // loading will be deferred
 
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+ 		case VAL_FLOATARRAY:
+			return createFloatArray();
+
+		case VAL_DOUBLEARRAY:
+			return createDoubleArray();
+
+		case VAL_CHAR:
+			return (char)readInt();
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
         default:
             int off = dataPosition() - 4;
             throw new RuntimeException(
@@ -2292,10 +2496,21 @@ public final class Parcel {
     private void readSparseBooleanArrayInternal(SparseBooleanArray outVal, int N) {
         while (N > 0) {
             int key = readInt();
-            boolean value = this.readByte() == 1;
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
+			byte val = this.readByte();
+			boolean value = Taint.addTaintBoolean(val == 1, Taint.getTaintByte(val));
+//            boolean value = this.readByte() == 1;
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL (benandow)
             //Log.i(TAG, "Unmarshalling key=" + key + " value=" + value);
             outVal.append(key, value);
             N--;
         }
     }
+
+// begin WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
+    //private native void updateTaint(int tag);
+    //private native int getTaint();
+    private native void updateTaint(int tag, int start, int len);
+    private native int getTaint(int start, int len);
+// end WITH_TAINT_TRACKING && WITH_TAINT_BYTE_PARCEL
 }
