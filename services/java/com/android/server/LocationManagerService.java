@@ -1935,19 +1935,19 @@ public class LocationManagerService extends ILocationManager.Stub {
 		if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
 			tag |= Taint.TAINT_LOCATION_NET;
 		}
-		location.setLatitude(Taint.addTaintDouble(location.getLatitude(), tag));
-		location.setLongitude(Taint.addTaintDouble(location.getLongitude(), tag));
-		if (location.hasAltitude()) {
-			location.setAltitude(Taint.addTaintDouble(location.getAltitude(), tag));
+		myLocation.setLatitude(Taint.addTaintDouble(myLocation.getLatitude(), tag));
+		myLocation.setLongitude(Taint.addTaintDouble(myLocation.getLongitude(), tag));
+		if (myLocation.hasAltitude()) {
+			myLocation.setAltitude(Taint.addTaintDouble(myLocation.getAltitude(), tag));
 		}
-		if (location.hasSpeed()) {
-			location.setSpeed(Taint.addTaintFloat(location.getSpeed(), tag));
+		if (myLocation.hasSpeed()) {
+			myLocation.setSpeed(Taint.addTaintFloat(myLocation.getSpeed(), tag));
 		}
-		if (location.hasBearing()) {
-			location.setBearing(Taint.addTaintFloat(location.getBearing(), tag));
+		if (myLocation.hasBearing()) {
+			myLocation.setBearing(Taint.addTaintFloat(myLocation.getBearing(), tag));
 		}
-		if (location.hasAccuracy()) {
-			location.setAccuracy(Taint.addTaintFloat(location.getAccuracy(), tag));
+		if (myLocation.hasAccuracy()) {
+			myLocation.setAccuracy(Taint.addTaintFloat(myLocation.getAccuracy(), tag));
 		}
 // end WITH_TAINT_TRACKING 
 
