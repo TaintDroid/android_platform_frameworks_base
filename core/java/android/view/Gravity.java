@@ -153,9 +153,8 @@ public class Gravity
      *                container.
      * @param layoutDirection The layout direction.
      *
-     * @see {@link View#LAYOUT_DIRECTION_LTR}
-     * @see {@link View#LAYOUT_DIRECTION_RTL}
-     * @hide
+     * @see View#LAYOUT_DIRECTION_LTR
+     * @see View#LAYOUT_DIRECTION_RTL
      */
     public static void apply(int gravity, int w, int h, Rect container,
             Rect outRect, int layoutDirection) {
@@ -291,9 +290,8 @@ public class Gravity
      *                container.
      * @param layoutDirection The layout direction.
      *
-     * @see {@link View#LAYOUT_DIRECTION_LTR}
-     * @see {@link View#LAYOUT_DIRECTION_RTL}
-     * @hide
+     * @see View#LAYOUT_DIRECTION_LTR
+     * @see View#LAYOUT_DIRECTION_RTL
      */
     public static void apply(int gravity, int w, int h, Rect container,
                              int xAdj, int yAdj, Rect outRect, int layoutDirection) {
@@ -372,9 +370,8 @@ public class Gravity
      * modified if needed to fit in the display.
      * @param layoutDirection The layout direction.
      *
-     * @see {@link View#LAYOUT_DIRECTION_LTR}
-     * @see {@link View#LAYOUT_DIRECTION_RTL}
-     * @hide
+     * @see View#LAYOUT_DIRECTION_LTR
+     * @see View#LAYOUT_DIRECTION_RTL
      */
     public static void applyDisplay(int gravity, Rect display, Rect inoutObj, int layoutDirection) {
         int absGravity = getAbsoluteGravity(gravity, layoutDirection);
@@ -411,7 +408,6 @@ public class Gravity
      * @param gravity The gravity to convert to absolute (horizontal) values.
      * @param layoutDirection The layout direction.
      * @return gravity converted to absolute (horizontal) values.
-     * @hide
      */
     public static int getAbsoluteGravity(int gravity, int layoutDirection) {
         int result = gravity;

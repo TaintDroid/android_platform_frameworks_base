@@ -1,4 +1,5 @@
 page.title=Typography
+page.tags="textview","font"
 @jd:body
 
 <div class="layout-content-row">
@@ -18,8 +19,10 @@ italic weights by default.</p>
 
     <img src="{@docRoot}design/media/typography_alphas.png">
 
-<p><a href="https://dl-ssl.google.com/android/design/Roboto_Hinted_20111129.zip">Download Roboto</a></p>
-<p><a href="https://dl-ssl.google.com/android/design/Roboto_Specimen_Book_20111129.pdf">Specimen Book</a></p>
+<p><a onClick="_gaq.push(['_trackEvent', 'Design', 'Download', 'Roboto ZIP (@typography page)']);"
+      href="{@docRoot}downloads/design/Roboto_Hinted_20120823.zip">Download Roboto</a></p>
+<p><a onClick="_gaq.push(['_trackEvent', 'Design', 'Download', 'Roboto Specimen Booke (@typography page)']);"
+      href="{@docRoot}downloads/design/Roboto_Specimen_Book_20111129.pdf">Specimen Book</a></p>
 
   </div>
 </div>

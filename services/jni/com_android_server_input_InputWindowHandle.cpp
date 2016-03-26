@@ -52,6 +52,7 @@ static struct {
     jfieldID ownerPid;
     jfieldID ownerUid;
     jfieldID inputFeatures;
+    jfieldID displayId;
 } gInputWindowHandleClassInfo;
 
 static Mutex gHandleMutex;
@@ -151,6 +152,8 @@ bool NativeInputWindowHandle::updateInfo() {
             gInputWindowHandleClassInfo.ownerUid);
     mInfo->inputFeatures = env->GetIntField(obj,
             gInputWindowHandleClassInfo.inputFeatures);
+    mInfo->displayId = env->GetIntField(obj,
+            gInputWindowHandleClassInfo.displayId);
 
     env->DeleteLocalRef(obj);
     return true;
@@ -180,7 +183,7 @@ sp<NativeInputWindowHandle> android_server_InputWindowHandle_getHandle(
 
         jweak objWeak = env->NewWeakGlobalRef(inputWindowHandleObj);
         handle = new NativeInputWindowHandle(inputApplicationHandle, objWeak);
-        handle->incStrong(inputWindowHandleObj);
+        handle->incStrong((void*)android_server_InputWindowHandle_getHandle);
         env->SetIntField(inputWindowHandleObj, gInputWindowHandleClassInfo.ptr,
                 reinterpret_cast<int>(handle));
     }
@@ -198,7 +201,7 @@ static void android_server_InputWindowHandle_nativeDispose(JNIEnv* env, jobject 
         env->SetIntField(obj, gInputWindowHandleClassInfo.ptr, 0);
 
         NativeInputWindowHandle* handle = reinterpret_cast<NativeInputWindowHandle*>(ptr);
-        handle->decStrong(obj);
+        handle->decStrong((void*)android_server_InputWindowHandle_getHandle);
     }
 }
 
@@ -291,6 +294,9 @@ int register_android_server_InputWindowHandle(JNIEnv* env) {
 
     GET_FIELD_ID(gInputWindowHandleClassInfo.inputFeatures, clazz,
             "inputFeatures", "I");
+
+    GET_FIELD_ID(gInputWindowHandleClassInfo.displayId, clazz,
+            "displayId", "I");
     return 0;
 }
 

@@ -16,32 +16,13 @@
 
 package com.android.statusbartest;
 
-import android.app.ListActivity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.widget.ArrayAdapter;
-import android.view.View;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.IPowerManager;
-import android.widget.ListView;
-import android.content.Intent;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.StatusBarManager;
-import android.os.RemoteException;
-import android.os.Vibrator;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.LocalPowerManager;
 import android.os.ServiceManager;
-import android.util.Log;
-import android.net.Uri;
-import android.os.SystemClock;
-import android.widget.RemoteViews;
-import android.widget.Toast;
 import android.os.PowerManager;
 
 public class PowerTest extends TestActivity
@@ -101,68 +82,26 @@ public class PowerTest extends TestActivity
                 mProx.release(PowerManager.WAIT_FOR_PROXIMITY_NEGATIVE);
             }
         },
-        new Test("Touch events don't poke") {
+        new Test("Enable proximity, wait 5 seconds then disable") {
             public void run() {
-                mPokeState |= LocalPowerManager.POKE_LOCK_IGNORE_TOUCH_EVENTS;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
+                mProx.acquire();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProx.release();
+                    }
+                }, 5000);
             }
         },
-
-        new Test("Touch events poke") {
+        new Test("Enable proximity, wait 5 seconds then disable  (WAIT_FOR_PROXIMITY_NEGATIVE)") {
             public void run() {
-                mPokeState &= ~LocalPowerManager.POKE_LOCK_IGNORE_TOUCH_EVENTS;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        },
-        new Test("Short timeout") {
-            public void run() {
-                mPokeState &= ~LocalPowerManager.POKE_LOCK_TIMEOUT_MASK;
-                mPokeState |= LocalPowerManager.POKE_LOCK_SHORT_TIMEOUT;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        },
-        new Test("Medium timeout") {
-            public void run() {
-                mPokeState &= ~LocalPowerManager.POKE_LOCK_TIMEOUT_MASK;
-                mPokeState |= LocalPowerManager.POKE_LOCK_MEDIUM_TIMEOUT;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        },
-        new Test("Normal timeout") {
-            public void run() {
-                mPokeState &= ~LocalPowerManager.POKE_LOCK_TIMEOUT_MASK;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        },
-        new Test("Illegal timeout") {
-            public void run() {
-                mPokeState |= LocalPowerManager.POKE_LOCK_SHORT_TIMEOUT
-                        | LocalPowerManager.POKE_LOCK_MEDIUM_TIMEOUT;
-                try {
-                    mPowerManager.setPokeLock(mPokeState, mPokeToken, TAG);
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
+                mProx.acquire();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProx.release(PowerManager.WAIT_FOR_PROXIMITY_NEGATIVE);
+                    }
+                }, 5000);
             }
         },
     };

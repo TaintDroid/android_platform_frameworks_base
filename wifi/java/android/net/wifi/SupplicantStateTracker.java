@@ -25,7 +25,11 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.os.UserHandle;
 import android.util.Log;
+
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 
 /**
  * Tracks the state changes in supplicant and provides functionality
@@ -79,7 +83,8 @@ class SupplicantStateTracker extends StateMachine {
             addState(mDormantState, mDefaultState);
 
         setInitialState(mUninitializedState);
-
+        setLogRecSize(50);
+        setLogOnlyTransitions(true);
         //start the state machine
         start();
     }
@@ -145,7 +150,7 @@ class SupplicantStateTracker extends StateMachine {
                 WifiManager.EXTRA_SUPPLICANT_ERROR,
                 WifiManager.ERROR_AUTHENTICATING);
         }
-        mContext.sendStickyBroadcast(intent);
+        mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
     }
 
     /********************************************************
@@ -325,5 +330,14 @@ class SupplicantStateTracker extends StateMachine {
         public void enter() {
             if (DBG) Log.d(TAG, getName() + "\n");
         }
+    }
+
+    @Override
+    public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        super.dump(fd, pw, args);
+        pw.println("mAuthenticationFailuresCount " + mAuthenticationFailuresCount);
+        pw.println("mAuthFailureInSupplicantBroadcast " + mAuthFailureInSupplicantBroadcast);
+        pw.println("mNetworksDisabledDuringConnect " + mNetworksDisabledDuringConnect);
+        pw.println();
     }
 }

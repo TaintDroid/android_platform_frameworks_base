@@ -45,6 +45,7 @@ public class StatusBarManager {
     public static final int DISABLE_RECENT = View.STATUS_BAR_DISABLE_RECENT;
     public static final int DISABLE_BACK = View.STATUS_BAR_DISABLE_BACK;
     public static final int DISABLE_CLOCK = View.STATUS_BAR_DISABLE_CLOCK;
+    public static final int DISABLE_SEARCH = View.STATUS_BAR_DISABLE_SEARCH;
 
     @Deprecated
     public static final int DISABLE_NAVIGATION = 
@@ -54,7 +55,8 @@ public class StatusBarManager {
 
     public static final int DISABLE_MASK = DISABLE_EXPAND | DISABLE_NOTIFICATION_ICONS
             | DISABLE_NOTIFICATION_ALERTS | DISABLE_NOTIFICATION_TICKER
-            | DISABLE_SYSTEM_INFO | DISABLE_RECENT | DISABLE_HOME | DISABLE_BACK | DISABLE_CLOCK;
+            | DISABLE_SYSTEM_INFO | DISABLE_RECENT | DISABLE_HOME | DISABLE_BACK | DISABLE_CLOCK
+            | DISABLE_SEARCH;
 
     public static final int NAVIGATION_HINT_BACK_NOP      = 1 << 0;
     public static final int NAVIGATION_HINT_HOME_NOP      = 1 << 1;
@@ -97,13 +99,13 @@ public class StatusBarManager {
     }
     
     /**
-     * Expand the status bar.
+     * Expand the notifications panel.
      */
-    public void expand() {
+    public void expandNotificationsPanel() {
         try {
             final IStatusBarService svc = getService();
             if (svc != null) {
-                svc.expand();
+                svc.expandNotificationsPanel();
             }
         } catch (RemoteException ex) {
             // system process is dead anyway.
@@ -112,13 +114,28 @@ public class StatusBarManager {
     }
     
     /**
-     * Collapse the status bar.
+     * Collapse the notifications and settings panels.
      */
-    public void collapse() {
+    public void collapsePanels() {
         try {
             final IStatusBarService svc = getService();
             if (svc != null) {
-                svc.collapse();
+                svc.collapsePanels();
+            }
+        } catch (RemoteException ex) {
+            // system process is dead anyway.
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Expand the settings panel.
+     */
+    public void expandSettingsPanel() {
+        try {
+            final IStatusBarService svc = getService();
+            if (svc != null) {
+                svc.expandSettingsPanel();
             }
         } catch (RemoteException ex) {
             // system process is dead anyway.

@@ -61,15 +61,15 @@ well-designed class, though, a custom view should:
     existing view
     subclasses, such as {@link android.widget.Button}.</p>
 
-<p>To allow the <a href=”{@docRoot}guide/developing/tools/adt.html”>Android Developer Tools
+<p>To allow the <a href="{@docRoot}guide/developing/tools/adt.html">Android Developer Tools
 </a> to interact with your view, at a minimum you must provide a constructor that takes a
 {@link android.content.Context} and an {@link android.util.AttributeSet} object as parameters.
 This constructor allows the layout editor to create and edit an instance of your view.</p>
 
 <pre class="prettyprint">
 class PieChart extends View {
-    public PieChart(Context ctx, AttributeSet attrs) {
-        super(ctx, attrs);
+    public PieChart(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 }
 </pre>
@@ -104,8 +104,8 @@ enable this behavior in your custom view, you must:
 </p>
 
 <pre>
-&lt;resources>;
-   &ltdeclare-styleable name="PieChart">
+&lt;resources>
+   &lt;declare-styleable name="PieChart">
        &lt;attr name="showText" format="boolean" />
        &lt;attr name="labelPosition" format="enum">
            &lt;enum name="left" value="0"/>
@@ -189,8 +189,8 @@ enable this behavior in your custom view, you must:
             reads its attributes:</p>
 
 <pre>
-public PieChart(Context ctx, AttributeSet attrs) {
-   super(ctx, attrs);
+public PieChart(Context context, AttributeSet attrs) {
+   super(context, attrs);
    TypedArray a = context.getTheme().obtainStyledAttributes(
         attrs,
         R.styleable.PieChart,
@@ -276,6 +276,6 @@ public void setShowText(boolean showText) {
             </ul>
 
             <p>For more information on creating accessible views, see
-                <a href=”{@docRoot}guide/topics/ui/accessibility/apps.html#custom-views”>
+                <a href="{@docRoot}guide/topics/ui/accessibility/apps.html#custom-views">
               Making Applications Accessible</a> in the Android Developers Guide.
         </p>

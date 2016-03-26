@@ -10,6 +10,7 @@ LOCAL_SHARED_LIBRARIES := \
         libnativehelper \
         libRS \
         libcutils \
+        liblog \
         libskia \
         libutils \
         libui \
@@ -32,6 +33,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(addprefix $(rs_generated_include_dir)/,rsgApi
 LOCAL_MODULE:= librs_jni
 LOCAL_ADDITIONAL_DEPENDENCIES += $(rs_generated_source)
 LOCAL_MODULE_TAGS := optional
-LOCAL_REQUIRED_MODULES := libRS
+LOCAL_REQUIRED_MODULES := libRS libRSDriver
 
 include $(BUILD_SHARED_LIBRARY)

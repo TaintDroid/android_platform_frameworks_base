@@ -1,11 +1,11 @@
 page.title=&lt;application&gt;
-parent.title=The AndroidManifest.xml File
-parent.link=manifest-intro.html
+
 @jd:body
 
 <dl class="xml">
 <dt>syntax:</dt>
 <dd><pre class="stx">&lt;application android:<a href="#reparent">allowTaskReparenting</a>=["true" | "false"]
+             android:<a href="#allowbackup">allowBackup</a>=["true" | "false"]
              android:<a href="#agent">backupAgent</a>="<i>string</i>"
              android:<a href="#debug">debuggable</a>=["true" | "false"]
              android:<a href="#desc">description</a>="<i>string resource</i>"
@@ -23,9 +23,14 @@ parent.link=manifest-intro.html
              android:<a href="#persistent">persistent</a>=["true" | "false"]
              android:<a href="#proc">process</a>="<i>string</i>"
              android:<a href="#restoreany">restoreAnyVersion</a>=["true" | "false"]
+             android:<a href="#requiredAccountType">requiredAccountType</a>="<i>string</i>"
+             android:<a href="#restrictedAccountType">restrictedAccountType</a>="<i>string</i>"
+             android:<a href="#supportsrtl">supportsRtl</a>=["true" | "false"]
              android:<a href="#aff">taskAffinity</a>="<i>string</i>"
+             android:<a href="#testOnly">testOnly</a>=["true" | "false"]
              android:<a href="#theme">theme</a>="<i>resource or theme</i>"
-             android:<a href="#uioptions">uiOptions</a>=["none" | "splitActionBarWhenNarrow"] &gt;
+             android:<a href="#uioptions">uiOptions</a>=["none" | "splitActionBarWhenNarrow"]
+             android:<a href="#vmSafeMode">vmSafeMode</a>=["true" | "false"] &gt;
     . . .
 &lt;/application&gt;</pre></dd>
 
@@ -51,15 +56,19 @@ for corresponding attributes of the component elements.  Others (such as
 {@code allowClearUserData})  set values for the application as a whole and 
 cannot be overridden by the components.</dd>
 
+
+
+
+
 <dt>attributes</dt>
 <dd><dl class="attr">
 
 <dt><a name="reparent"></a>{@code android:allowTaskReparenting}</dt>
 <dd>Whether or not activities that the application defines can move from 
 the task that started them to the task they have an affinity for when that task 
-is next brought to the front &mdash; "{@code true}" if they can move, and 
-"{@code false}" if they must remain with the task where they started.  
-The default value is "{@code false}".
+is next brought to the front &mdash; {@code "true"} if they can move, and 
+{@code "false"} if they must remain with the task where they started.  
+The default value is {@code "false"}.
 
 <p>
 The 
@@ -70,12 +79,21 @@ attribute that can override the value set here.  See that attribute for more
 information.
 </p></dd>
 
+
+<dt><a name="allowbackup"></a>{@code android:allowbackup}</dt>
+<dd>Whether to allow the application to participate in the backup
+and restore infrastructure. If this attribute is set to false, no backup
+or restore of the application will ever be performed, even by a full-system
+backup that would otherwise cause all application data to be saved via adb.
+The default value of this attribute is true.</dd>
+
+
 <dt><a name="agent"></a>{@code android:backupAgent}</dt>
 <dd>The name of the class that implement's the application's backup agent,
 a subclass of {@link android.app.backup.BackupAgent}.  The attribute value should be
-a fully qualified  class name (such as, "{@code com.example.project.MyBackupAgent}").  
+a fully qualified  class name (such as, {@code "com.example.project.MyBackupAgent"}).  
 However, as a shorthand, if the first character of the name is a period 
-(for example, "{@code .MyBackupAgent}"), it is appended to the 
+(for example, {@code ".MyBackupAgent"}), it is appended to the 
 package name specified in the 
 <code><a href="{@docRoot}guide/topics/manifest/manifest-element.html">&lt;manifest&gt;</a></code> 
 element.
@@ -86,29 +104,29 @@ There is no default.  The name must be specified.
 
 <dt><a name="debug"></a>{@code android:debuggable}</dt>
 <dd>Whether or not the application can be debugged, even when running 
-on a device in user mode &mdash; "{@code true}" if it can be, and "{@code false}"
-if not.  The default value is "{@code false}".</dd> 
+on a device in user mode &mdash; {@code "true"} if it can be, and {@code "false"}
+if not.  The default value is {@code "false"}.</dd> 
 
 <dt><a name="desc"></a>{@code android:description}</dt>
 <dd>User-readable text about the application, longer and more descriptive than the application label.  The value must be set as a reference to a string resource.  Unlike the label, it cannot be a raw string.  There is no default value.</dd>
 
 <dt><a name="enabled"></a>{@code android:enabled}</dt>
 <dd>Whether or not the Android system can instantiate components of 
-the application &mdash; "{@code true}" if it can, and "{@code false}" 
-if not.  If the value is "{@code true}", each component's 
+the application &mdash; {@code "true"} if it can, and {@code "false"} 
+if not.  If the value is {@code "true"}, each component's 
 {@code enabled} attribute determines whether that component is enabled 
-or not.  If the value is "{@code false}", it overrides the 
+or not.  If the value is {@code "false"}, it overrides the 
 component-specific values; all components are disabled.
 
 <p>
-The default value is "{@code true}".
+The default value is {@code "true"}.
 </p></dd>  
 
 <dt><a name="code"></a>{@code android:hasCode}</dt>
-<dd>Whether or not the application contains any code &mdash; "{@code true}" 
-if it does, and "{@code false}" if not.  When the value is "{@code false}", 
+<dd>Whether or not the application contains any code &mdash; {@code "true"} 
+if it does, and {@code "false"} if not.  When the value is {@code "false"}, 
 the system does not try to load any application code when launching components.  
-The default value is "{@code true}".
+The default value is {@code "true"}.
 
 <p>
 An application would not have any code of its own only if it's using nothing
@@ -118,10 +136,14 @@ android.app.AliasActivity} class, a rare occurrence.</p>
 
 <dt><a name="hwaccel"></a>{@code android:hardwareAccelerated}</dt>
 <dd>Whether or not hardware-accelerated rendering should be enabled for all
-Activities and Views in this application &mdash; "{@code true}" if it
-should be enabled, and "{@code false}" if not. The default value is "{@code false}".
+activities and views in this application &mdash; {@code "true"} if it
+should be enabled, and {@code "false"} if not. The default value is {@code "true"} if you've set
+either <a href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code minSdkVersion}</a>
+or <a 
+href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code targetSdkVersion}</a>
+to {@code "14"} or higher; otherwise, it's {@code "false"}.
 
-<p>Starting from Android 3.0, a hardware-accelerated OpenGL renderer is
+<p>Starting from Android 3.0 (API level 11), a hardware-accelerated OpenGL renderer is
 available to applications, to improve performance for many common 2D graphics
 operations. When the hardware-accelerated renderer is enabled, most operations
 in Canvas, Paint, Xfermode, ColorFilter, Shader, and Camera are accelerated.
@@ -132,6 +154,9 @@ the framework's OpenGL libraries. </p>
 <p>Note that not all of the OpenGL 2D operations are accelerated. If you enable
 the hardware-accelerated renderer, test your application to ensure that it can
 make use of the renderer without errors.</p>
+
+<p>For more information, read the <a href="{@docRoot}guide/topics/graphics/hardware-accel.html"
+>Hardware Acceleration</a> guide.</p>
 </dd>
 
 <dt><a name="icon"></a>{@code android:icon}</dt>
@@ -146,7 +171,7 @@ each of the application's components.  See the individual
 
 <p>
 This attribute must be set as a reference to a drawable resource containing
-the image (for example {@code "@drawable/icon"}).   There is no default icon.
+the image (for example {@code "@drawable/icon"}). There is no default icon.
 </p></dd>
 
 <dt><a name="killrst"></a>{@code android:killAfterRestore}</dt>
@@ -233,8 +258,8 @@ Permissions</a>.
 
 <dt><a name="persistent"></a>{@code android:persistent}</dt>
 <dd>Whether or not the application should remain running at all times &mdash; 
-"{@code true}" if it should, and "{@code false}" if not.  The default value 
-is "{@code false}".  Applications should not normally set this flag; 
+{@code "true"} if it should, and {@code "false"} if not.  The default value 
+is {@code "false"}.  Applications should not normally set this flag; 
 persistence mode is intended only for certain system applications.</dd>
 
 <dt><a name="proc"></a>{@code android:process}</dt>
@@ -264,7 +289,7 @@ applications, reducing resource usage.
 </p></dd>
 
 <dt><a name="restoreany"></a>{@code android:restoreAnyVersion}</dt>
-<dd>Indicate that the application is prepared to attempt a restore of any
+<dd>Indicates that the application is prepared to attempt a restore of any
 backed-up data set, even if the backup was stored by a newer version
 of the application than is currently installed on the device.  Setting
 this attribute to {@code true} will permit the Backup Manager to
@@ -273,6 +298,72 @@ incompatible.  <em>Use with caution!</em>
 
 <p>The default value of this attribute is {@code false}.
 </p></dd>
+
+
+
+<dt><a name="requiredAccountType"></a>{@code android:requiredAccountType}</dt>
+<dd>Specifies the account type required by the application in order to function.
+If your app requires an {@link android.accounts.Account}, the value for this attribute must
+correspond to the account authenticator
+type used by your app (as defined by {@link android.accounts.AuthenticatorDescription}),
+such as "com.google".  
+
+<p>The default value is null and indicates that the application
+can work <em>without</em> any accounts.
+
+<p>Because restricted profiles currently
+cannot add accounts, specifying this attribute <strong>makes your app
+unavailable from a restricted profile</strong> unless you also declare
+<a href="#restrictedAccountType">{@code android:restrictedAccountType}</a> with
+the same value.</p>
+
+<p class="caution"><strong>Caution:</strong>
+If the account data may reveal personally identifiable information, it's important
+that you declare this attribute and leave <a href="#restrictedAccountType">{@code android:restrictedAccountType}</a> null, so that restricted profiles cannot use
+your app to access personal information that belongs to the owner user.</p>
+
+<p>This attribute was added in API level 18.</p>
+</dd>
+
+
+<dt><a name="restrictedAccountType"></a>{@code android:restrictedAccountType}</dt>
+<dd>Specifies the account type required by this application and indicates that restricted profiles
+are allowed to access such accounts that belong to the owner user. If your app requires an
+{@link android.accounts.Account} and restricted profiles <strong>are allowed to
+access</strong> the primary user's accounts, the value for this attribute must
+correspond to the account authenticator type used by your app (as
+defined by {@link android.accounts.AuthenticatorDescription}), such as "com.google".
+
+<p>The default value is null and indicates that the application can work <em>without</em> any
+accounts.
+
+<p class="caution"><strong>Caution:</strong>
+Specifying this attribute allows restricted profiles to use your
+app with accounts that belong to the owner user, which may reveal personally identifiable
+information. If the account may reveal personal details, you <strong>should not</strong>
+use this attribute and you should instead declare the <a
+href="#requiredAccountType">{@code android:requiredAccountType}</a> attribute
+to make your app unavailable to restricted profiles.</p>
+
+<p>This attribute was added in API level 18.</p>
+</dd>
+
+
+
+<dt><a name="supportsrtl"></a>{@code android:supportsRtl}</dt>
+<dd>Declares whether your application is willing to support right-to-left (RTL) layouts.
+<p>If set to {@code true} and <a href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target"
+>{@code targetSdkVersion}</a> is set to 17 or higher, various RTL APIs will be
+activated and used by the system so your app can display RTL layouts.
+If set to {@code false} or if <a href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target"
+>{@code targetSdkVersion}</a> is set to 16 or lower, the RTL APIs will be ignored
+or will have no effect and your app will behave the same regardless of the layout
+direction associated to the user's Locale choice (your layouts will always be left-to-right).
+
+<p>The default value of this attribute is {@code false}.</p>
+
+<p>This attribute was added in API level 17.</p>
+</dd>
 
 <dt><a name="aff"></a>{@code android:taskAffinity}</dt>
 <dd>An affinity name that applies to all activities within the application,
@@ -286,6 +377,13 @@ affinity.  The name of that affinity is the same as the package name
 set by the 
 <code><a href="{@docRoot}guide/topics/manifest/manifest-element.html">&lt;manifest&gt;</a></code> element.
 </p></dd>
+
+<dt><a name="testOnly"></a>{@code android:testOnly}</dt>
+<dd>Indicates whether this application is only for testing purposes. For example,
+it may expose functionality or data outside of itself that would cause a security
+hole, but is useful for testing. This kind of application can be installed
+only through adb.</dd>
+
 
 <dt><a name="theme"></a>{@code android:theme}</dt>
 <dd>A reference to a style resource defining a default theme for all
@@ -316,6 +414,14 @@ together.</td></tr>
 href="{@docRoot}guide/topics/ui/actionbar.html">Action Bar</a> developer guide.</p>
   <p>This attribute was added in API level 14.</p>
 </dd>
+
+<dt><a name="vmSafeMode"></a>{@code android:vmSafeMode}</dt>
+<dd>Indicates whether the app would like the virtual machine (VM) to operate
+in safe mode. The default value is {@code "false"}.
+</dd>
+
+
+
 
 </dl></dd>
 

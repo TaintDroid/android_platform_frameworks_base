@@ -27,7 +27,9 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 /**
- * A class representing a Wi-Fi P2p group
+ * A class representing a Wi-Fi P2p group. A p2p group consists of a single group
+ * owner and one or more clients. In the case of a group with only two devices, one
+ * will be the group owner and the other will be a group client.
  *
  * {@see WifiP2pManager}
  */
@@ -68,7 +70,7 @@ public class WifiP2pGroup implements Parcelable {
         "ssid=\"(.+)\" " +
         "freq=(\\d+) " +
         "(?:psk=)?([0-9a-fA-F]{64})?" +
-        "(?:passphrase=)?(?:\"(.{8,63})\")? " +
+        "(?:passphrase=)?(?:\"(.{0,63})\")? " +
         "go_dev_addr=((?:[0-9a-f]{2}:){5}[0-9a-f]{2})" +
         " ?(\\[PERSISTENT\\])?"
     );

@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.UserHandle;
 import android.util.AndroidException;
 
 
@@ -113,8 +114,8 @@ public class IntentSender implements Parcelable {
             mWho = who;
             mHandler = handler;
         }
-        public void performReceive(Intent intent, int resultCode,
-                String data, Bundle extras, boolean serialized, boolean sticky) {
+        public void performReceive(Intent intent, int resultCode, String data,
+                Bundle extras, boolean serialized, boolean sticky, int sendingUser) {
             mIntent = intent;
             mResultCode = resultCode;
             mResultData = data;
@@ -204,6 +205,20 @@ public class IntentSender implements Parcelable {
     }
 
     /**
+     * @deprecated Renamed to {@link #getCreatorPackage()}.
+     */
+    @Deprecated
+    public String getTargetPackage() {
+        try {
+            return ActivityManagerNative.getDefault()
+                .getPackageForIntentSender(mTarget);
+        } catch (RemoteException e) {
+            // Should never happen.
+            return null;
+        }
+    }
+
+    /**
      * Return the package name of the application that created this
      * IntentSender, that is the identity under which you will actually be
      * sending the Intent.  The returned string is supplied by the system, so
@@ -212,10 +227,51 @@ public class IntentSender implements Parcelable {
      * @return The package name of the PendingIntent, or null if there is
      * none associated with it.
      */
-    public String getTargetPackage() {
+    public String getCreatorPackage() {
         try {
             return ActivityManagerNative.getDefault()
                 .getPackageForIntentSender(mTarget);
+        } catch (RemoteException e) {
+            // Should never happen.
+            return null;
+        }
+    }
+
+    /**
+     * Return the uid of the application that created this
+     * PendingIntent, that is the identity under which you will actually be
+     * sending the Intent.  The returned integer is supplied by the system, so
+     * that an application can not spoof its uid.
+     *
+     * @return The uid of the PendingIntent, or -1 if there is
+     * none associated with it.
+     */
+    public int getCreatorUid() {
+        try {
+            return ActivityManagerNative.getDefault()
+                .getUidForIntentSender(mTarget);
+        } catch (RemoteException e) {
+            // Should never happen.
+            return -1;
+        }
+    }
+
+    /**
+     * Return the user handle of the application that created this
+     * PendingIntent, that is the user under which you will actually be
+     * sending the Intent.  The returned UserHandle is supplied by the system, so
+     * that an application can not spoof its user.  See
+     * {@link android.os.Process#myUserHandle() Process.myUserHandle()} for
+     * more explanation of user handles.
+     *
+     * @return The user handle of the PendingIntent, or null if there is
+     * none associated with it.
+     */
+    public UserHandle getCreatorUserHandle() {
+        try {
+            int uid = ActivityManagerNative.getDefault()
+                .getUidForIntentSender(mTarget);
+            return uid > 0 ? new UserHandle(UserHandle.getUserId(uid)) : null;
         } catch (RemoteException e) {
             // Should never happen.
             return null;

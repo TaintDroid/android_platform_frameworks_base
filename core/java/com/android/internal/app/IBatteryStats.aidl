@@ -37,6 +37,8 @@ interface IBatteryStats {
     void noteStartWakelockFromSource(in WorkSource ws, int pid, String name, int type);
     void noteStopWakelockFromSource(in WorkSource ws, int pid, String name, int type);
 
+    void noteVibratorOn(int uid, long durationMillis);
+    void noteVibratorOff(int uid);
     void noteStartGps(int uid);
     void noteStopGps(int uid);
     void noteScreenOn();
@@ -58,14 +60,14 @@ interface IBatteryStats {
     void noteBluetoothOff();
     void noteFullWifiLockAcquired(int uid);
     void noteFullWifiLockReleased(int uid);
-    void noteScanWifiLockAcquired(int uid);
-    void noteScanWifiLockReleased(int uid);
+    void noteWifiScanStarted(int uid);
+    void noteWifiScanStopped(int uid);
     void noteWifiMulticastEnabled(int uid);
     void noteWifiMulticastDisabled(int uid);
     void noteFullWifiLockAcquiredFromSource(in WorkSource ws);
     void noteFullWifiLockReleasedFromSource(in WorkSource ws);
-    void noteScanWifiLockAcquiredFromSource(in WorkSource ws);
-    void noteScanWifiLockReleasedFromSource(in WorkSource ws);
+    void noteWifiScanStartedFromSource(in WorkSource ws);
+    void noteWifiScanStoppedFromSource(in WorkSource ws);
     void noteWifiMulticastEnabledFromSource(in WorkSource ws);
     void noteWifiMulticastDisabledFromSource(in WorkSource ws);
     void noteNetworkInterfaceType(String iface, int type);

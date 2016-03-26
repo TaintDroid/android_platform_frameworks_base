@@ -24,7 +24,6 @@
 #include <androidfw/Input.h>
 #include <androidfw/VelocityControl.h>
 #include <androidfw/VelocityTracker.h>
-#include <ui/DisplayInfo.h>
 #include <utils/KeyedVector.h>
 #include <utils/threads.h>
 #include <utils/Timers.h>
@@ -48,6 +47,69 @@ namespace android {
 class InputDevice;
 class InputMapper;
 
+/*
+ * Describes how coordinates are mapped on a physical display.
+ * See com.android.server.display.DisplayViewport.
+ */
+struct DisplayViewport {
+    int32_t displayId; // -1 if invalid
+    int32_t orientation;
+    int32_t logicalLeft;
+    int32_t logicalTop;
+    int32_t logicalRight;
+    int32_t logicalBottom;
+    int32_t physicalLeft;
+    int32_t physicalTop;
+    int32_t physicalRight;
+    int32_t physicalBottom;
+    int32_t deviceWidth;
+    int32_t deviceHeight;
+
+    DisplayViewport() :
+            displayId(ADISPLAY_ID_NONE), orientation(DISPLAY_ORIENTATION_0),
+            logicalLeft(0), logicalTop(0), logicalRight(0), logicalBottom(0),
+            physicalLeft(0), physicalTop(0), physicalRight(0), physicalBottom(0),
+            deviceWidth(0), deviceHeight(0) {
+    }
+
+    bool operator==(const DisplayViewport& other) const {
+        return displayId == other.displayId
+                && orientation == other.orientation
+                && logicalLeft == other.logicalLeft
+                && logicalTop == other.logicalTop
+                && logicalRight == other.logicalRight
+                && logicalBottom == other.logicalBottom
+                && physicalLeft == other.physicalLeft
+                && physicalTop == other.physicalTop
+                && physicalRight == other.physicalRight
+                && physicalBottom == other.physicalBottom
+                && deviceWidth == other.deviceWidth
+                && deviceHeight == other.deviceHeight;
+    }
+
+    bool operator!=(const DisplayViewport& other) const {
+        return !(*this == other);
+    }
+
+    inline bool isValid() const {
+        return displayId >= 0;
+    }
+
+    void setNonDisplayViewport(int32_t width, int32_t height) {
+        displayId = ADISPLAY_ID_NONE;
+        orientation = DISPLAY_ORIENTATION_0;
+        logicalLeft = 0;
+        logicalTop = 0;
+        logicalRight = width;
+        logicalBottom = height;
+        physicalLeft = 0;
+        physicalTop = 0;
+        physicalRight = width;
+        physicalBottom = height;
+        deviceWidth = width;
+        deviceHeight = height;
+    }
+};
 
 /*
  * Input reader configuration.
@@ -180,25 +242,12 @@ struct InputReaderConfiguration {
             pointerGestureZoomSpeedRatio(0.3f),
             showTouches(false) { }
 
-    bool getDisplayInfo(int32_t displayId, bool external,
-            int32_t* width, int32_t* height, int32_t* orientation) const;
-
-    void setDisplayInfo(int32_t displayId, bool external,
-            int32_t width, int32_t height, int32_t orientation);
+    bool getDisplayInfo(bool external, DisplayViewport* outViewport) const;
+    void setDisplayInfo(bool external, const DisplayViewport& viewport);
 
 private:
-    struct DisplayInfo {
-        int32_t width;
-        int32_t height;
-        int32_t orientation;
-
-        DisplayInfo() :
-            width(-1), height(-1), orientation(DISPLAY_ORIENTATION_0) {
-        }
-    };
-
-    DisplayInfo mInternalDisplay;
-    DisplayInfo mExternalDisplay;
+    DisplayViewport mInternalDisplay;
+    DisplayViewport mExternalDisplay;
 };
 
 
@@ -742,6 +791,10 @@ struct CookedPointerData {
     void clear();
     void copyFrom(const CookedPointerData& other);
 
+    inline const PointerCoords& pointerCoordsForId(uint32_t id) const {
+        return pointerCoords[idToIndex[id]];
+    }
+
     inline bool isHovering(uint32_t pointerIndex) {
         return hoveringIdBits.hasBit(pointerProperties[pointerIndex].id);
     }
@@ -913,7 +966,11 @@ public:
     virtual int32_t getSwitchState(uint32_t sourceMask, int32_t switchCode);
 
 private:
-    void processSwitch(nsecs_t when, int32_t switchCode, int32_t switchValue);
+    uint32_t mUpdatedSwitchValues;
+    uint32_t mUpdatedSwitchMask;
+
+    void processSwitch(int32_t switchCode, int32_t switchValue);
+    void sync(nsecs_t when);
 };
 
 
@@ -992,7 +1049,7 @@ private:
 
     // Immutable configuration parameters.
     struct Parameters {
-        int32_t associatedDisplayId;
+        bool hasAssociatedDisplay;
         bool orientationAware;
     } mParameters;
 
@@ -1042,7 +1099,7 @@ private:
         };
 
         Mode mode;
-        int32_t associatedDisplayId;
+        bool hasAssociatedDisplay;
         bool orientationAware;
     } mParameters;
 
@@ -1127,6 +1184,7 @@ protected:
         DEVICE_MODE_DISABLED, // input is disabled
         DEVICE_MODE_DIRECT, // direct mapping (touchscreen)
         DEVICE_MODE_UNSCALED, // unscaled mapping (touchpad)
+        DEVICE_MODE_NAVIGATION, // unscaled mapping with assist gesture (touch navigation)
         DEVICE_MODE_POINTER, // pointer mapping (pointer)
     };
     DeviceMode mDeviceMode;
@@ -1139,11 +1197,12 @@ protected:
         enum DeviceType {
             DEVICE_TYPE_TOUCH_SCREEN,
             DEVICE_TYPE_TOUCH_PAD,
+            DEVICE_TYPE_TOUCH_NAVIGATION,
             DEVICE_TYPE_POINTER,
         };
 
         DeviceType deviceType;
-        int32_t associatedDisplayId;
+        bool hasAssociatedDisplay;
         bool associatedDisplayIsExternal;
         bool orientationAware;
 
@@ -1162,6 +1221,7 @@ protected:
             SIZE_CALIBRATION_NONE,
             SIZE_CALIBRATION_GEOMETRIC,
             SIZE_CALIBRATION_DIAMETER,
+            SIZE_CALIBRATION_BOX,
             SIZE_CALIBRATION_AREA,
         };
 
@@ -1206,6 +1266,14 @@ protected:
         DistanceCalibration distanceCalibration;
         bool haveDistanceScale;
         float distanceScale;
+
+        enum CoverageCalibration {
+            COVERAGE_CALIBRATION_DEFAULT,
+            COVERAGE_CALIBRATION_NONE,
+            COVERAGE_CALIBRATION_BOX,
+        };
+
+        CoverageCalibration coverageCalibration;
 
         inline void applySizeScaleAndBias(float* outSize) const {
             if (haveSizeScale) {
@@ -1271,20 +1339,30 @@ protected:
     virtual void syncTouch(nsecs_t when, bool* outHavePointerIds) = 0;
 
 private:
-    // The surface orientation and width and height set by configureSurface().
-    int32_t mSurfaceOrientation;
+    // The current viewport.
+    // The components of the viewport are specified in the display's rotated orientation.
+    DisplayViewport mViewport;
+
+    // The surface orientation, width and height set by configureSurface().
+    // The width and height are derived from the viewport but are specified
+    // in the natural orientation.
+    // The surface origin specifies how the surface coordinates should be translated
+    // to align with the logical display coordinate space.
+    // The orientation may be different from the viewport orientation as it specifies
+    // the rotation of the surface coordinates required to produce the viewport's
+    // requested orientation, so it will depend on whether the device is orientation aware.
     int32_t mSurfaceWidth;
     int32_t mSurfaceHeight;
-
-    // The associated display orientation and width and height set by configureSurface().
-    int32_t mAssociatedDisplayOrientation;
-    int32_t mAssociatedDisplayWidth;
-    int32_t mAssociatedDisplayHeight;
+    int32_t mSurfaceLeft;
+    int32_t mSurfaceTop;
+    int32_t mSurfaceOrientation;
 
     // Translation and scaling factors, orientation-independent.
+    float mXTranslate;
     float mXScale;
     float mXPrecision;
 
+    float mYTranslate;
     float mYScale;
     float mYPrecision;
 
@@ -1294,7 +1372,6 @@ private:
 
     float mSizeScale;
 
-    float mOrientationCenter;
     float mOrientationScale;
 
     float mDistanceScale;
@@ -1346,8 +1423,6 @@ private:
     } mOrientedRanges;
 
     // Oriented dimensions and precision.
-    float mOrientedSurfaceWidth;
-    float mOrientedSurfaceHeight;
     float mOrientedXPrecision;
     float mOrientedYPrecision;
 
@@ -1668,10 +1743,11 @@ private:
         float highScale;  // scale factor from raw to normalized values of high split
         float highOffset; // offset to add after scaling for normalization of high split
 
-        float min;     // normalized inclusive minimum
-        float max;     // normalized inclusive maximum
-        float flat;    // normalized flat region size
-        float fuzz;    // normalized error tolerance
+        float min;        // normalized inclusive minimum
+        float max;        // normalized inclusive maximum
+        float flat;       // normalized flat region size
+        float fuzz;       // normalized error tolerance
+        float resolution; // normalized resolution in units/mm
 
         float filter;  // filter out small variations of this size
         float currentValue; // current value
@@ -1682,7 +1758,7 @@ private:
         void initialize(const RawAbsoluteAxisInfo& rawAxisInfo, const AxisInfo& axisInfo,
                 bool explicitlyMapped, float scale, float offset,
                 float highScale, float highOffset,
-                float min, float max, float flat, float fuzz) {
+                float min, float max, float flat, float fuzz, float resolution) {
             this->rawAxisInfo = rawAxisInfo;
             this->axisInfo = axisInfo;
             this->explicitlyMapped = explicitlyMapped;
@@ -1694,6 +1770,7 @@ private:
             this->max = max;
             this->flat = flat;
             this->fuzz = fuzz;
+            this->resolution = resolution;
             this->filter = 0;
             resetValue();
         }
@@ -1721,6 +1798,11 @@ private:
             float newValue, float currentValue, float thresholdValue);
 
     static bool isCenteredAxis(int32_t axis);
+    static int32_t getCompatAxis(int32_t axis);
+
+    static void addMotionRange(int32_t axisId, const Axis& axis, InputDeviceInfo* info);
+    static void setPointerCoordsAxisValue(PointerCoords* pointerCoords, int32_t axis,
+            float value);
 };
 
 } // namespace android

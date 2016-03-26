@@ -19,6 +19,7 @@ package android.inputmethodservice;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -47,6 +48,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.WindowManager.BadTokenException;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
@@ -250,6 +252,7 @@ public class InputMethodService extends AbstractInputMethodService {
     InputMethodManager mImm;
     
     int mTheme = 0;
+    boolean mHardwareAccelerated = false;
     
     LayoutInflater mInflater;
     TypedArray mThemeAttrs;
@@ -419,7 +422,13 @@ public class InputMethodService extends AbstractInputMethodService {
             boolean wasVis = isInputViewShown();
             mShowInputFlags = 0;
             if (onShowInputRequested(flags, false)) {
-                showWindow(true);
+                try {
+                    showWindow(true);
+                } catch (BadTokenException e) {
+                    if (DEBUG) Log.v(TAG, "BadTokenException: IME is done.");
+                    mWindowVisible = false;
+                    mWindowAdded = false;
+                }
             }
             // If user uses hard keyboard, IME button should always be shown.
             boolean showing = onEvaluateInputViewShown();
@@ -614,6 +623,26 @@ public class InputMethodService extends AbstractInputMethodService {
         mTheme = theme;
     }
 
+    /**
+     * You can call this to try to enable hardware accelerated drawing for
+     * your IME. This must be set before {@link #onCreate}, so you
+     * will typically call it in your constructor.  It is not always possible
+     * to use hardware acclerated drawing in an IME (for example on low-end
+     * devices that do not have the resources to support this), so the call
+     * returns true if it succeeds otherwise false if you will need to draw
+     * in software.  You must be able to handle either case.
+     */
+    public boolean enableHardwareAcceleration() {
+        if (mWindow != null) {
+            throw new IllegalStateException("Must be called before onCreate()");
+        }
+        if (ActivityManager.isHighEndGfx()) {
+            mHardwareAccelerated = true;
+            return true;
+        }
+        return false;
+    }
+
     @Override public void onCreate() {
         mTheme = Resources.selectSystemTheme(mTheme,
                 getApplicationInfo().targetSdkVersion,
@@ -626,6 +655,9 @@ public class InputMethodService extends AbstractInputMethodService {
         mInflater = (LayoutInflater)getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
         mWindow = new SoftInputWindow(this, mTheme, mDispatcherState);
+        if (mHardwareAccelerated) {
+            mWindow.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        }
         initViews();
         mWindow.getWindow().setLayout(MATCH_PARENT, WRAP_CONTENT);
     }
@@ -658,8 +690,8 @@ public class InputMethodService extends AbstractInputMethodService {
                 com.android.internal.R.layout.input_method, null);
         mWindow.setContentView(mRootView);
         mRootView.getViewTreeObserver().addOnComputeInternalInsetsListener(mInsetsComputer);
-        if (Settings.System.getInt(getContentResolver(),
-                Settings.System.FANCY_IME_ANIMATIONS, 0) != 0) {
+        if (Settings.Global.getInt(getContentResolver(),
+                Settings.Global.FANCY_IME_ANIMATIONS, 0) != 0) {
             mWindow.getWindow().setWindowAnimations(
                     com.android.internal.R.style.Animation_InputMethodFancy);
         }
@@ -905,11 +937,13 @@ public class InputMethodService extends AbstractInputMethodService {
      */
     public void onConfigureWindow(Window win, boolean isFullscreen,
             boolean isCandidatesOnly) {
-        if (isFullscreen) {
-            mWindow.getWindow().setLayout(MATCH_PARENT, MATCH_PARENT);
-        } else {
-            mWindow.getWindow().setLayout(MATCH_PARENT, WRAP_CONTENT);
+        final int currentHeight = mWindow.getWindow().getAttributes().height;
+        final int newHeight = isFullscreen ? MATCH_PARENT : WRAP_CONTENT;
+        if (mIsInputViewShown && currentHeight != newHeight) {
+            Log.w(TAG, "Window size has been changed. This may cause jankiness of resizing window: "
+                    + currentHeight + " -> " + newHeight);
         }
+        mWindow.getWindow().setLayout(MATCH_PARENT, newHeight);
     }
     
     /**
@@ -972,10 +1006,11 @@ public class InputMethodService extends AbstractInputMethodService {
     }
     
     void updateExtractFrameVisibility() {
-        int vis;
+        final int vis;
         if (isFullscreenMode()) {
             vis = mExtractViewHidden ? View.INVISIBLE : View.VISIBLE;
-            mExtractFrame.setVisibility(View.VISIBLE);
+            // "vis" should be applied for the extract frame as well in the fullscreen mode.
+            mExtractFrame.setVisibility(vis);
         } else {
             vis = View.VISIBLE;
             mExtractFrame.setVisibility(View.GONE);
@@ -1674,9 +1709,6 @@ public class InputMethodService extends AbstractInputMethodService {
     /**
      * Show the input method. This is a call back to the
      * IMF to handle showing the input method.
-     * Close this input method's soft input area, removing it from the display.
-     * The input method will continue running, but the user can no longer use
-     * it to generate input by touching the screen.
      * @param flags Provides additional operating flags.  Currently may be
      * 0 or have the {@link InputMethodManager#SHOW_FORCED
      * InputMethodManager.} bit set.
@@ -1751,7 +1783,7 @@ public class InputMethodService extends AbstractInputMethodService {
      * Override this to intercept special key multiple events before they are
      * processed by the
      * application.  If you return true, the application will not itself
-     * process the event.  If you return true, the normal application processing
+     * process the event.  If you return false, the normal application processing
      * will occur as if the IME had not seen the event at all.
      * 
      * <p>The default implementation always returns false, except when
@@ -1766,7 +1798,7 @@ public class InputMethodService extends AbstractInputMethodService {
     /**
      * Override this to intercept key up events before they are processed by the
      * application.  If you return true, the application will not itself
-     * process the event.  If you return true, the normal application processing
+     * process the event.  If you return false, the normal application processing
      * will occur as if the IME had not seen the event at all.
      * 
      * <p>The default implementation intercepts {@link KeyEvent#KEYCODE_BACK
@@ -1784,8 +1816,29 @@ public class InputMethodService extends AbstractInputMethodService {
         return doMovementKey(keyCode, event, MOVEMENT_UP);
     }
 
+    /**
+     * Override this to intercept trackball motion events before they are
+     * processed by the application.
+     * If you return true, the application will not itself process the event.
+     * If you return false, the normal application processing will occur as if
+     * the IME had not seen the event at all.
+     */
     @Override
     public boolean onTrackballEvent(MotionEvent event) {
+        if (DEBUG) Log.v(TAG, "onTrackballEvent: " + event);
+        return false;
+    }
+
+    /**
+     * Override this to intercept generic motion events before they are
+     * processed by the application.
+     * If you return true, the application will not itself process the event.
+     * If you return false, the normal application processing will occur as if
+     * the IME had not seen the event at all.
+     */
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        if (DEBUG) Log.v(TAG, "onGenericMotionEvent(): event " + event);
         return false;
     }
 
@@ -1909,7 +1962,7 @@ public class InputMethodService extends AbstractInputMethodService {
         ic.sendKeyEvent(new KeyEvent(eventTime, eventTime,
                 KeyEvent.ACTION_DOWN, keyEventCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
-        ic.sendKeyEvent(new KeyEvent(SystemClock.uptimeMillis(), eventTime,
+        ic.sendKeyEvent(new KeyEvent(eventTime, SystemClock.uptimeMillis(),
                 KeyEvent.ACTION_UP, keyEventCode, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
                 KeyEvent.FLAG_SOFT_KEYBOARD|KeyEvent.FLAG_KEEP_TOUCH_MODE));
     }

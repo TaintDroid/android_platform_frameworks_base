@@ -34,24 +34,28 @@ import android.text.style.RelativeSizeSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
+import android.util.Slog;
 import android.view.View;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
+
+import libcore.icu.LocaleData;
 
 import com.android.internal.R;
 
 /**
- * This widget display an analogic clock with two hands for hours and
- * minutes.
+ * Digital clock for the status bar.
  */
 public class Clock extends TextView {
     private boolean mAttached;
     private Calendar mCalendar;
     private String mClockFormatString;
     private SimpleDateFormat mClockFormat;
+    private Locale mLocale;
 
     private static final int AM_PM_STYLE_NORMAL  = 0;
     private static final int AM_PM_STYLE_SMALL   = 1;
@@ -83,6 +87,7 @@ public class Clock extends TextView {
             filter.addAction(Intent.ACTION_TIME_CHANGED);
             filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
+            filter.addAction(Intent.ACTION_USER_SWITCHED);
 
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
         }
@@ -116,6 +121,12 @@ public class Clock extends TextView {
                 if (mClockFormat != null) {
                     mClockFormat.setTimeZone(mCalendar.getTimeZone());
                 }
+            } else if (action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
+                final Locale newLocale = getResources().getConfiguration().locale;
+                if (! newLocale.equals(mLocale)) {
+                    mLocale = newLocale;
+                    mClockFormatString = ""; // force refresh
+                }
             }
             updateClock();
         }
@@ -128,20 +139,14 @@ public class Clock extends TextView {
 
     private final CharSequence getSmallTime() {
         Context context = getContext();
-        boolean b24 = DateFormat.is24HourFormat(context);
-        int res;
-
-        if (b24) {
-            res = R.string.twenty_four_hour_time_format;
-        } else {
-            res = R.string.twelve_hour_time_format;
-        }
+        boolean is24 = DateFormat.is24HourFormat(context);
+        LocaleData d = LocaleData.get(context.getResources().getConfiguration().locale);
 
         final char MAGIC1 = '\uEF00';
         final char MAGIC2 = '\uEF01';
 
         SimpleDateFormat sdf;
-        String format = context.getString(res);
+        String format = is24 ? d.timeFormat24 : d.timeFormat12;
         if (!format.equals(mClockFormatString)) {
             /*
              * Search for an unquoted "a" in the format string, so we can
@@ -173,7 +178,6 @@ public class Clock extends TextView {
                         + "a" + MAGIC2 + format.substring(b + 1);
                 }
             }
-
             mClockFormat = sdf = new SimpleDateFormat(format);
             mClockFormatString = format;
         } else {

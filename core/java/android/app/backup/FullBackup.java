@@ -46,6 +46,7 @@ public class FullBackup {
     public static final String DATA_TREE_TOKEN = "f";
     public static final String DATABASE_TREE_TOKEN = "db";
     public static final String SHAREDPREFS_TREE_TOKEN = "sp";
+    public static final String MANAGED_EXTERNAL_TREE_TOKEN = "ef";
     public static final String CACHE_TREE_TOKEN = "c";
     public static final String SHARED_STORAGE_TOKEN = "shared";
 
@@ -64,7 +65,9 @@ public class FullBackup {
 
     /**
      * Copy data from a socket to the given File location on permanent storage.  The
-     * modification time and access mode of the resulting file will be set if desired.
+     * modification time and access mode of the resulting file will be set if desired,
+     * although group/all rwx modes will be stripped: the restored file will not be
+     * accessible from outside the target application even if the original file was.
      * If the {@code type} parameter indicates that the result should be a directory,
      * the socket parameter may be {@code null}; even if it is valid, no data will be
      * read from it in this case.
@@ -79,13 +82,14 @@ public class FullBackup {
      * @param type Must be either {@link BackupAgent#TYPE_FILE} for ordinary file data
      *    or {@link BackupAgent#TYPE_DIRECTORY} for a directory.
      * @param mode Unix-style file mode (as used by the chmod(2) syscall) to be set on
-     *    the output file or directory.  If this parameter is negative then neither
-     *    the mode nor the mtime parameters will be used.
+     *    the output file or directory.  group/all rwx modes are stripped even if set
+     *    in this parameter.  If this parameter is negative then neither
+     *    the mode nor the mtime values will be applied to the restored file.
      * @param mtime A timestamp in the standard Unix epoch that will be imposed as the
      *    last modification time of the output file.  if the {@code mode} parameter is
      *    negative then this parameter will be ignored.
      * @param outFile Location within the filesystem to place the data.  This must point
-     *    to a location that is writeable by the caller, prefereably using an absolute path.
+     *    to a location that is writeable by the caller, preferably using an absolute path.
      * @throws IOException
      */
     static public void restoreFile(ParcelFileDescriptor data,
@@ -105,8 +109,6 @@ public class FullBackup {
                     if (!parent.exists()) {
                         // in practice this will only be for the default semantic directories,
                         // and using the default mode for those is appropriate.
-                        // TODO: support the edge case of apps that have adjusted the
-                        //       permissions on these core directories
                         parent.mkdirs();
                     }
                     out = new FileOutputStream(outFile);
@@ -146,6 +148,8 @@ public class FullBackup {
         // Now twiddle the state to match the backup, assuming all went well
         if (mode >= 0 && outFile != null) {
             try {
+                // explicitly prevent emplacement of files accessible by outside apps
+                mode &= 0700;
                 Libcore.os.chmod(outFile.getPath(), (int)mode);
             } catch (ErrnoException e) {
                 e.rethrowAsIOException();

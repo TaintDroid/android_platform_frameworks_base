@@ -38,8 +38,9 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
-import android.content.pm.UserInfo;
+import android.content.pm.VerificationParams;
 import android.content.pm.VerifierDeviceIdentity;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
@@ -77,6 +78,13 @@ public class MockPackageManager extends PackageManager {
 
     @Override
     public int[] getPackageGids(String packageName) throws NameNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public int getPackageUid(String packageName, int userHandle)
+            throws NameNotFoundException {
         throw new UnsupportedOperationException();
     }
 
@@ -135,6 +143,18 @@ public class MockPackageManager extends PackageManager {
 
     @Override
     public List<PackageInfo> getInstalledPackages(int flags) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<PackageInfo> getPackagesHoldingPermissions(String[] permissions,
+            int flags) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public List<PackageInfo> getInstalledPackages(int flags, int userId) {
         throw new UnsupportedOperationException();
     }
 
@@ -208,8 +228,21 @@ public class MockPackageManager extends PackageManager {
         throw new UnsupportedOperationException();
     }
 
+    /** @hide */
+    @Override
+    public ResolveInfo resolveActivityAsUser(Intent intent, int flags, int userId) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public List<ResolveInfo> queryIntentActivities(Intent intent, int flags) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public List<ResolveInfo> queryIntentActivitiesAsUser(Intent intent,
+                                                   int flags, int userId) {
         throw new UnsupportedOperationException();
     }
 
@@ -224,6 +257,12 @@ public class MockPackageManager extends PackageManager {
         throw new UnsupportedOperationException();
     }
 
+    /** @hide */
+    @Override
+    public List<ResolveInfo> queryBroadcastReceivers(Intent intent, int flags, int userId) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public ResolveInfo resolveService(Intent intent, int flags) {
         throw new UnsupportedOperationException();
@@ -231,6 +270,12 @@ public class MockPackageManager extends PackageManager {
 
     @Override
     public List<ResolveInfo> queryIntentServices(Intent intent, int flags) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public List<ResolveInfo> queryIntentServicesAsUser(Intent intent, int flags, int userId) {
         throw new UnsupportedOperationException();
     }
 
@@ -337,6 +382,12 @@ public class MockPackageManager extends PackageManager {
     @Override
     public Resources getResourcesForApplication(String appPackageName)
     throws NameNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public Resources getResourcesForApplicationAsUser(String appPackageName, int userId) {
         throw new UnsupportedOperationException();
     }
 
@@ -479,7 +530,8 @@ public class MockPackageManager extends PackageManager {
      * @hide - to match hiding in superclass
      */
     @Override
-    public void getPackageSizeInfo(String packageName, IPackageStatsObserver observer) {
+    public void getPackageSizeInfo(String packageName, int userHandle,
+            IPackageStatsObserver observer) {
         throw new UnsupportedOperationException();
     }
 
@@ -513,62 +565,39 @@ public class MockPackageManager extends PackageManager {
      * @hide
      */
     @Override
-    public UserInfo createUser(String name, int flags) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
-    public List<UserInfo> getUsers() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
-    public UserInfo getUser(int userId) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
-    public boolean removeUser(int id) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
-    public void updateUserName(int id, String name) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
-    public void updateUserFlags(int id, int flags) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @hide
-     */
-    @Override
     public void installPackageWithVerification(Uri packageURI, IPackageInstallObserver observer,
             int flags, String installerPackageName, Uri verificationURI,
             ManifestDigest manifestDigest, ContainerEncryptionParams encryptionParams) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @hide
+     */
+    @Override
+    public void installPackageWithVerificationAndEncryption(Uri packageURI,
+            IPackageInstallObserver observer, int flags, String installerPackageName,
+            VerificationParams verificationParams, ContainerEncryptionParams encryptionParams) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @hide
+     */
+    @Override
+    public int installExistingPackage(String packageName)
+            throws NameNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public void verifyPendingInstall(int id, int verificationCode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void extendVerificationTimeout(int id, int verificationCodeAtTimeout,
+            long millisecondsToDelay) {
         throw new UnsupportedOperationException();
     }
 

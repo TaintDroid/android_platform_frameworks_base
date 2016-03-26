@@ -106,16 +106,13 @@ public final class CalendarContract {
      * {@link Activity#RESULT_OK} or {@link Activity#RESULT_CANCELED} to
      * acknowledge whether the action was handled or not.
      *
-     * The custom app should have an intent-filter like the following
+     * The custom app should have an intent filter like the following:
      * <pre>
-     * {@code
-     * <intent-filter>
-     *    <action android:name="android.provider.calendar.action.HANDLE_CUSTOM_EVENT" />
-     *    <category android:name="android.intent.category.DEFAULT" />
-     *    <data android:mimeType="vnd.android.cursor.item/event" />
-     * </intent-filter>
-     * }
-     * </pre>
+     * &lt;intent-filter&gt;
+     *    &lt;action android:name="android.provider.calendar.action.HANDLE_CUSTOM_EVENT" /&gt;
+     *    &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+     *    &lt;data android:mimeType="vnd.android.cursor.item/event" /&gt;
+     * &lt;/intent-filter&gt;</pre>
      * <p>
      * Input: {@link Intent#getData} has the event URI. The extra
      * {@link #EXTRA_EVENT_BEGIN_TIME} has the start time of the instance. The
@@ -123,7 +120,7 @@ public final class CalendarContract {
      * {@link EventsColumns#CUSTOM_APP_URI}.
      * <p>
      * Output: {@link Activity#RESULT_OK} if this was handled; otherwise
-     * {@link Activity#RESULT_CANCELED}
+     * {@link Activity#RESULT_CANCELED}.
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_HANDLE_CUSTOM_EVENT =
@@ -302,7 +299,14 @@ public final class CalendarContract {
          * Used to indicate that local, unsynced, changes are present.
          * <P>Type: INTEGER (long)</P>
          */
+
         public static final String DIRTY = "dirty";
+
+        /**
+         * Used in conjunction with {@link #DIRTY} to indicate what packages wrote local changes.
+         * <P>Type: TEXT</P>
+         */
+        public static final String MUTATORS = "mutators";
 
         /**
          * Whether the row has been deleted but not synced to the server. A
@@ -467,6 +471,13 @@ public final class CalendarContract {
          *
          */
         public static final String ALLOWED_ATTENDEE_TYPES = "allowedAttendeeTypes";
+
+        /**
+         * Is this the primary calendar for this account. If this column is not explicitly set, the
+         * provider will return 1 if {@link Calendars#ACCOUNT_NAME} is equal to
+         * {@link Calendars#OWNER_ACCOUNT}.
+         */
+        public static final String IS_PRIMARY = "isPrimary";
     }
 
     /**
@@ -518,6 +529,7 @@ public final class CalendarContract {
 
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, _SYNC_ID);
                 DatabaseUtils.cursorLongToContentValuesIfPresent(cursor, cv, DIRTY);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, MUTATORS);
 
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, CAL_SYNC1);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, CAL_SYNC2);
@@ -535,6 +547,8 @@ public final class CalendarContract {
                         Calendars.CALENDAR_DISPLAY_NAME);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv,
                         Calendars.CALENDAR_COLOR);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv,
+                        Calendars.CALENDAR_COLOR_KEY);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, CALENDAR_ACCESS_LEVEL);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, VISIBLE);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, SYNC_EVENTS);
@@ -640,6 +654,7 @@ public final class CalendarContract {
      * <li>{@link #CALENDAR_COLOR}</li>
      * <li>{@link #_SYNC_ID}</li>
      * <li>{@link #DIRTY}</li>
+     * <li>{@link #MUTATORS}</li>
      * <li>{@link #OWNER_ACCOUNT}</li>
      * <li>{@link #MAX_REMINDERS}</li>
      * <li>{@link #ALLOWED_REMINDERS}</li>
@@ -707,6 +722,7 @@ public final class CalendarContract {
             ACCOUNT_TYPE,
             _SYNC_ID,
             DIRTY,
+            MUTATORS,
             OWNER_ACCOUNT,
             MAX_REMINDERS,
             ALLOWED_REMINDERS,
@@ -1206,6 +1222,14 @@ public final class CalendarContract {
         public static final String ORGANIZER = "organizer";
 
         /**
+         * Are we the organizer of this event. If this column is not explicitly set, the provider
+         * will return 1 if {@link #ORGANIZER} is equal to {@link Calendars#OWNER_ACCOUNT}.
+         * Column name.
+         * <P>Type: STRING</P>
+         */
+        public static final String IS_ORGANIZER = "isOrganizer";
+
+        /**
          * Whether the user can invite others to the event. The
          * GUESTS_CAN_INVITE_OTHERS is a setting that applies to an arbitrary
          * guest, while CAN_INVITE_OTHERS indicates if the user can invite
@@ -1230,6 +1254,12 @@ public final class CalendarContract {
          */
         public static final String CUSTOM_APP_URI = "customAppUri";
 
+        /**
+         * The UID for events added from the RFC 2445 iCalendar format.
+         * Column name.
+         * <P>Type: TEXT</P>
+         */
+        public static final String UID_2445 = "uid2445";
     }
 
     /**
@@ -1347,6 +1377,8 @@ public final class CalendarContract {
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, ALL_DAY);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, ACCESS_LEVEL);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, AVAILABILITY);
+                DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, EVENT_COLOR);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, EVENT_COLOR_KEY);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, HAS_ALARM);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv,
                         HAS_EXTENDED_PROPERTIES);
@@ -1367,9 +1399,12 @@ public final class CalendarContract {
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, GUESTS_CAN_SEE_GUESTS);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, CUSTOM_APP_PACKAGE);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, CUSTOM_APP_URI);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, UID_2445);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, ORGANIZER);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, IS_ORGANIZER);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, _SYNC_ID);
                 DatabaseUtils.cursorLongToContentValuesIfPresent(cursor, cv, DIRTY);
+                DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, MUTATORS);
                 DatabaseUtils.cursorLongToContentValuesIfPresent(cursor, cv, LAST_SYNCED);
                 DatabaseUtils.cursorIntToContentValuesIfPresent(cursor, cv, DELETED);
                 DatabaseUtils.cursorStringToContentValuesIfPresent(cursor, cv, SYNC_DATA1);
@@ -1442,9 +1477,9 @@ public final class CalendarContract {
                         attendeeValues.put(Attendees.ATTENDEE_STATUS,
                                 subCursor.getInt(COLUMN_ATTENDEE_STATUS));
                         attendeeValues.put(Attendees.ATTENDEE_IDENTITY,
-                                subCursor.getInt(COLUMN_ATTENDEE_IDENTITY));
+                                subCursor.getString(COLUMN_ATTENDEE_IDENTITY));
                         attendeeValues.put(Attendees.ATTENDEE_ID_NAMESPACE,
-                                subCursor.getInt(COLUMN_ATTENDEE_ID_NAMESPACE));
+                                subCursor.getString(COLUMN_ATTENDEE_ID_NAMESPACE));
                         entity.addSubValue(Attendees.CONTENT_URI, attendeeValues);
                     }
                 } finally {
@@ -1571,10 +1606,12 @@ public final class CalendarContract {
      * <li>{@link #GUESTS_CAN_SEE_GUESTS}</li>
      * <li>{@link #CUSTOM_APP_PACKAGE}</li>
      * <li>{@link #CUSTOM_APP_URI}</li>
+     * <li>{@link #UID_2445}</li>
      * </ul>
      * The following Events columns are writable only by a sync adapter
      * <ul>
      * <li>{@link #DIRTY}</li>
+     * <li>{@link #MUTATORS}</li>
      * <li>{@link #_SYNC_ID}</li>
      * <li>{@link #SYNC_DATA1}</li>
      * <li>{@link #SYNC_DATA2}</li>
@@ -1664,6 +1701,7 @@ public final class CalendarContract {
         public static final String[] SYNC_WRITABLE_COLUMNS = new String[] {
             _SYNC_ID,
             DIRTY,
+            MUTATORS,
             SYNC_DATA1,
             SYNC_DATA2,
             SYNC_DATA3,

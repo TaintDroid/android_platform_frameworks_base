@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package android.webkit;
 
@@ -75,9 +90,10 @@ public class HTML5VideoFullScreen extends HTML5VideoView
     // ratio is correct.
     private int mVideoWidth;
     private int mVideoHeight;
-
+    private boolean mPlayingWhenDestroyed = false;
     SurfaceHolder.Callback mSHCallback = new SurfaceHolder.Callback()
     {
+        @Override
         public void surfaceChanged(SurfaceHolder holder, int format,
                                     int w, int h)
         {
@@ -91,6 +107,7 @@ public class HTML5VideoFullScreen extends HTML5VideoView
             }
         }
 
+        @Override
         public void surfaceCreated(SurfaceHolder holder)
         {
             mSurfaceHolder = holder;
@@ -99,14 +116,14 @@ public class HTML5VideoFullScreen extends HTML5VideoView
             prepareForFullScreen();
         }
 
+        @Override
         public void surfaceDestroyed(SurfaceHolder holder)
         {
-            // After we return from this we can't use the surface any more.
-            // The current Video View will be destroy when we play a new video.
+            mPlayingWhenDestroyed = mPlayer.isPlaying();
             pauseAndDispatch(mProxy);
-            // TODO: handle full screen->inline mode transition without a reload.
-            mPlayer.release();
-            mPlayer = null;
+            // We need to set the display to null before switching into inline
+            // mode to avoid error.
+            mPlayer.setDisplay(null);
             mSurfaceHolder = null;
             if (mMediaController != null) {
                 mMediaController.hide();
@@ -194,18 +211,6 @@ public class HTML5VideoFullScreen extends HTML5VideoView
             mCanPause = mCanSeekBack = mCanSeekForward = true;
         }
 
-        if (mProgressView != null) {
-            mProgressView.setVisibility(View.GONE);
-        }
-
-        mVideoWidth = mp.getVideoWidth();
-        mVideoHeight = mp.getVideoHeight();
-        // This will trigger the onMeasure to get the display size right.
-        mVideoSurfaceView.getHolder().setFixedSize(mVideoWidth, mVideoHeight);
-        // Call into the native to ask for the state, if still in play mode,
-        // this will trigger the video to play.
-        mProxy.dispatchOnRestoreState();
-
         if (getStartWhenPrepared()) {
             mPlayer.start();
             // Clear the flag.
@@ -219,20 +224,31 @@ public class HTML5VideoFullScreen extends HTML5VideoView
             mMediaController.setEnabled(true);
             mMediaController.show();
         }
+
+        if (mProgressView != null) {
+            mProgressView.setVisibility(View.GONE);
+        }
+
+        mVideoWidth = mp.getVideoWidth();
+        mVideoHeight = mp.getVideoHeight();
+        // This will trigger the onMeasure to get the display size right.
+        mVideoSurfaceView.getHolder().setFixedSize(mVideoWidth, mVideoHeight);
+
     }
 
+    @Override
     public boolean fullScreenExited() {
         return (mLayout == null);
     }
 
     private final WebChromeClient.CustomViewCallback mCallback =
         new WebChromeClient.CustomViewCallback() {
+            @Override
             public void onCustomViewHidden() {
                 // It listens to SurfaceHolder.Callback.SurfaceDestroyed event
                 // which happens when the video view is detached from its parent
                 // view. This happens in the WebChromeClient before this method
                 // is invoked.
-                mProxy.dispatchOnStopFullScreen();
                 mLayout.removeView(getSurfaceView());
 
                 if (mProgressView != null) {
@@ -242,12 +258,11 @@ public class HTML5VideoFullScreen extends HTML5VideoView
                 mLayout = null;
                 // Re enable plugin views.
                 mProxy.getWebView().getViewManager().showAll();
-
-                mProxy = null;
-
                 // Don't show the controller after exiting the full screen.
                 mMediaController = null;
-                mCurrentState = STATE_RESETTED;
+                // Continue the inline mode playing if necessary.
+                mProxy.dispatchOnStopFullScreen(mPlayingWhenDestroyed);
+                mProxy = null;
             }
         };
 
@@ -264,7 +279,7 @@ public class HTML5VideoFullScreen extends HTML5VideoView
         mVideoSurfaceView.setFocusable(true);
         mVideoSurfaceView.setFocusableInTouchMode(true);
         mVideoSurfaceView.requestFocus();
-
+        mVideoSurfaceView.setOnKeyListener(mProxy);
         // Create a FrameLayout that will contain the VideoView and the
         // progress view (if any).
         mLayout = new FrameLayout(mProxy.getContext());
@@ -296,6 +311,7 @@ public class HTML5VideoFullScreen extends HTML5VideoView
      * @return true when we are in full screen mode, even the surface not fully
      * created.
      */
+    @Override
     public boolean isFullScreenMode() {
         return true;
     }
@@ -325,6 +341,14 @@ public class HTML5VideoFullScreen extends HTML5VideoView
     }
 
     @Override
+    public int getAudioSessionId() {
+        if (mPlayer == null) {
+            return 0;
+        }
+        return mPlayer.getAudioSessionId();
+    }
+
+    @Override
     public void showControllerInFullScreen() {
         if (mMediaController != null) {
             mMediaController.show(0);
@@ -334,6 +358,7 @@ public class HTML5VideoFullScreen extends HTML5VideoView
     // Other listeners functions:
     private MediaPlayer.OnBufferingUpdateListener mBufferingUpdateListener =
         new MediaPlayer.OnBufferingUpdateListener() {
+        @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
             mCurrentBufferPercentage = percent;
         }

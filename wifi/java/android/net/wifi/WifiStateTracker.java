@@ -23,10 +23,11 @@ import android.content.IntentFilter;
 import android.net.LinkCapabilities;
 import android.net.LinkProperties;
 import android.net.NetworkInfo;
+import android.net.NetworkInfo.DetailedState;
 import android.net.NetworkStateTracker;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Messenger;
 import android.util.Slog;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,7 +88,6 @@ public class WifiStateTracker implements NetworkStateTracker {
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.LINK_CONFIGURATION_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
         mWifiStateReceiver = new WifiStateReceiver();
         mContext.registerReceiver(mWifiStateReceiver, filter);
@@ -110,6 +110,14 @@ public class WifiStateTracker implements NetworkStateTracker {
         mTeardownRequested.set(false);
         mWifiManager.startWifi();
         return true;
+    }
+
+    /**
+     * Captive check is complete, switch to network
+     */
+    @Override
+    public void captivePortalCheckComplete() {
+        mWifiManager.captivePortalCheckComplete();
     }
 
     /**
@@ -208,20 +216,7 @@ public class WifiStateTracker implements NetworkStateTracker {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if (intent.getAction().equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
-                    mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(
-                            WifiP2pManager.EXTRA_NETWORK_INFO);
-                    mLinkProperties = intent.getParcelableExtra(
-                            WifiP2pManager.EXTRA_LINK_PROPERTIES);
-                    if (mLinkProperties == null) {
-                        mLinkProperties = new LinkProperties();
-                    }
-                    mLinkCapabilities = intent.getParcelableExtra(
-                        WifiP2pManager.EXTRA_LINK_CAPABILITIES);
-                    if (mLinkCapabilities == null) {
-                        mLinkCapabilities = new LinkCapabilities();
-                    }
-             } else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+            if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
                 mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(
                         WifiManager.EXTRA_NETWORK_INFO);
                 mLinkProperties = intent.getParcelableExtra(
@@ -235,9 +230,10 @@ public class WifiStateTracker implements NetworkStateTracker {
                     mLinkCapabilities = new LinkCapabilities();
                 }
                 // don't want to send redundent state messages
-                // TODO can this be fixed in WifiStateMachine?
+                // but send portal check detailed state notice
                 NetworkInfo.State state = mNetworkInfo.getState();
-                if (mLastState == state) {
+                if (mLastState == state &&
+                        mNetworkInfo.getDetailedState() != DetailedState.CAPTIVE_PORTAL_CHECK) {
                     return;
                 } else {
                     mLastState = state;
@@ -255,6 +251,21 @@ public class WifiStateTracker implements NetworkStateTracker {
     }
 
     public void setDependencyMet(boolean met) {
+        // not supported on this network
+    }
+
+    @Override
+    public void addStackedLink(LinkProperties link) {
+        mLinkProperties.addStackedLink(link);
+    }
+
+    @Override
+    public void removeStackedLink(LinkProperties link) {
+        mLinkProperties.removeStackedLink(link);
+    }
+
+    @Override
+    public void supplyMessenger(Messenger messenger) {
         // not supported on this network
     }
 }

@@ -27,6 +27,8 @@ import android.util.Slog;
 import android.view.IWindowManager;
 import android.widget.CompoundButton;
 
+import com.android.systemui.settings.ToggleSlider;
+
 public class VolumeController implements ToggleSlider.Listener {
     private static final String TAG = "StatusBar.VolumeController";
     private static final int STREAM = AudioManager.STREAM_NOTIFICATION;
@@ -51,11 +53,15 @@ public class VolumeController implements ToggleSlider.Listener {
 
         mMute = mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL;
         mVolume = mAudioManager.getStreamVolume(STREAM);
+
+        control.setOnChangedListener(this);
+    }
+
+    @Override
+    public void onInit(ToggleSlider control) {
         control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
         control.setValue(mVolume);
         control.setChecked(mMute);
-
-        control.setOnChangedListener(this);
     }
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {

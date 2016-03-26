@@ -1,11 +1,23 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package android.webkit;
 
-import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.util.Log;
-import android.view.SurfaceView;
 import android.webkit.HTML5VideoViewProxy;
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,6 +47,7 @@ public class HTML5VideoView implements MediaPlayer.OnPreparedListener {
     static final int STATE_PREPARED           = 2;
     static final int STATE_PLAYING            = 3;
     static final int STATE_RESETTED           = 4;
+    static final int STATE_RELEASED           = 5;
 
     protected HTML5VideoViewProxy mProxy;
 
@@ -126,7 +139,7 @@ public class HTML5VideoView implements MediaPlayer.OnPreparedListener {
     }
 
     public void reset() {
-        if (mCurrentState != STATE_RESETTED) {
+        if (mCurrentState < STATE_RESETTED) {
             mPlayer.reset();
         }
         mCurrentState = STATE_RESETTED;
@@ -136,6 +149,18 @@ public class HTML5VideoView implements MediaPlayer.OnPreparedListener {
         if (mCurrentState == STATE_PREPARED) {
             mPlayer.stop();
         }
+    }
+
+    public static void release() {
+        if (mPlayer != null && mCurrentState != STATE_RELEASED) {
+            mPlayer.release();
+            mPlayer = null;
+        }
+        mCurrentState = STATE_RELEASED;
+    }
+
+    public boolean isReleased() {
+        return mCurrentState == STATE_RELEASED;
     }
 
     public boolean getPauseDuringPreparing() {
@@ -335,11 +360,6 @@ public class HTML5VideoView implements MediaPlayer.OnPreparedListener {
 
     protected void switchProgressView(boolean playerBuffering) {
         // Only used in HTML5VideoFullScreen
-    }
-
-    public boolean surfaceTextureDeleted() {
-        // Only meaningful for HTML5VideoInline
-        return false;
     }
 
     public boolean fullScreenExited() {

@@ -154,6 +154,15 @@
     <!-- Checkbox label for USB accessory dialogs.  [CHAR LIMIT=50] -->
     <string name="always_use_accessory">Use by default for this USB accessory</string>
 
+    <!-- Title of confirmation dialog for USB debugging -->
+    <string name="usb_debugging_title">Allow USB debugging?</string>
+
+    <!-- Message of confirmation dialog for USB debugging -->
+    <string name="usb_debugging_message">The computer\'s RSA key fingerprint is:\n<xliff:g id="fingerprint">%1$s</xliff:g></string>
+
+    <!-- Option to always allow USB debugging from the attached computer -->
+    <string name="usb_debugging_always">Always allow from this computer</string>
+
     <!-- Checkbox label for application compatibility mode ON (zooming app to look like it's running
          on a phone).  [CHAR LIMIT=25] -->
     <string name="compat_mode_on">Zoom to fill screen</string>
@@ -247,16 +256,18 @@
     <!-- Content description of the data signal when it is full for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_data_signal_full">Data signal full.</string>
 
+    <!-- Content description of the WIFI signal when WIFI is disabled for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_wifi_off">Wifi off.</string>
     <!-- Content description of the WIFI signal when no signal for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_no_wifi">No Wi-Fi.</string>
+    <string name="accessibility_no_wifi">Wifi disconnected.</string>
     <!-- Content description of the WIFI signal when it is one bar for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_wifi_one_bar">Wi-Fi one bar.</string>
+    <string name="accessibility_wifi_one_bar">Wifi one bar.</string>
     <!-- Content description of the WIFI signal when it is two bars for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_wifi_two_bars">Wi-Fi two bars.</string>
+    <string name="accessibility_wifi_two_bars">Wifi two bars.</string>
     <!-- Content description of the WIFI signal when it is three bars for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_wifi_three_bars">Wi-Fi three bars.</string>
+    <string name="accessibility_wifi_three_bars">Wifi three bars.</string>
     <!-- Content description of the WIFI signal when it is full for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_wifi_signal_full">WiFi signal full.</string>
+    <string name="accessibility_wifi_signal_full">Wifi signal full.</string>
 
     <!-- Content description of the WiMAX signal when no signal for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_no_wimax">No WiMAX.</string>
@@ -269,8 +280,36 @@
     <!-- Content description of the WiMAX signal when it is full for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_wimax_signal_full">WiMAX signal full.</string>
 
+    <!-- Content description of an item with no signal for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_no_signal">No signal.</string>
+    <!-- Content description of an item with no signal and no connection for accessibility (not shown on the screen) [CHAR LIMIT=NONE] -->
+    <string name="accessibility_not_connected">Not connected.</string>
+    <!-- Content description of an item with zero signal bars for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_zero_bars">Zero bars.</string>
+    <!-- Content description of an item with one signal bar for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_one_bar">One bar.</string>
+    <!-- Content description of an item with two signal bars for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_two_bars">Two bars.</string>
+    <!-- Content description of an item with three signal bars for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_three_bars">Three bars.</string>
+    <!-- Content description of an item with full signal for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_signal_full">Signal full.</string>
+
+    <!-- Content description of an item that is turned on for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_on">On.</string>
+    <!-- Content description of an item that is turned off for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_off">Off.</string>
+    <!-- Content description of an item that is connected for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_connected">Connected.</string>
+
     <!-- Content description of the data connection type GPRS for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_data_connection_gprs">GPRS</string>
+
+    <!-- Content description of the data connection type 1x for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_data_connection_1x">1 X</string>
+
+    <!-- Content description of the data connection type HSPA and its variants for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_data_connection_hspa">HSPA</string>
 
     <!-- Content description of the data connection type 3G for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_data_connection_3g">3G</string>
@@ -283,6 +322,9 @@
 
     <!-- Content description of the data connection type CDMA for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_data_connection_cdma">CDMA</string>
+
+    <!-- Content description of the roaming data connection type for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_data_connection_roaming">Roaming</string>
 
     <!-- Content description of the data connection type Edge for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_data_connection_edge">Edge</string>
@@ -328,6 +370,30 @@
 
     <!-- Content description to tell the user an application has been removed from recents -->
     <string name="accessibility_recents_item_dismissed"><xliff:g id="app" example="Calendar">%s</xliff:g> dismissed.</string>
+    <!-- Content description to tell the user a notification has been removed from the notification shade -->
+    <string name="accessibility_notification_dismissed">Notification dismissed.</string>
+
+    <!-- Content description for the notification shade panel (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_notification_shade">Notification shade.</string>
+    <!-- Content description for the quick settings panel (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_quick_settings">Quick settings.</string>
+    <!-- Content description for the recent apps panel (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_desc_recent_apps">Recent apps.</string>
+
+    <!-- Content description of the user tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_user">User <xliff:g id="user" example="John Doe">%s</xliff:g>.</string>
+    <!-- Content description of the wifi tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_wifi"><xliff:g id="signal" example="Three bars">%1$s</xliff:g>. <xliff:g id="network" example="MyWifiNetwork">%2$s</xliff:g></string>
+    <!-- Content description of the mobile data tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_mobile">Mobile <xliff:g id="signal" example="Three bars">%1$s</xliff:g>. <xliff:g id="type" example="4G">%2$s</xliff:g>. <xliff:g id="network" example="T-Mobile">%3$s</xliff:g>.</string>
+    <!-- Content description of the battery tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_battery">Battery <xliff:g id="state" example="50% charging">%s</xliff:g>.</string>
+    <!-- Content description of the airplane mode tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_airplane">Airplane Mode <xliff:g id="state" example="Off">%s</xliff:g>.</string>
+    <!-- Content description of the bluetooth tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_bluetooth">Bluetooth <xliff:g id="state" example="Off">%s</xliff:g>.</string>
+    <!-- Content description of the alarm tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_alarm">Alarm set for <xliff:g id="time" example="Wed 3:30 PM">%s</xliff:g>.</string>
 
     <!-- Title of dialog shown when 2G-3G data usage has exceeded limit and has been disabled. [CHAR LIMIT=48] -->
     <string name="data_usage_disabled_dialog_3g_title">2G-3G data disabled</string>
@@ -363,12 +429,12 @@
     <!-- Content description of the clear button in the notification panel for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_clear_all">Clear all notifications.</string>
 
-    <!-- Description of the desk dock action that invokes the Android Dreams screen saver feature -->
-    <string name="dreams_dock_launcher">Activate screen saver</string>
-
     <!-- Title shown in notification popup for inspecting the responsible
          application -->
     <string name="status_bar_notification_inspect_item_title">App info</string>
+
+    <!-- [CHAR LIMIT=NONE] -->
+    <string name="close_universe">Close</string>
 
     <!-- Title for the pseudo-notification shown when notifications are disabled (do-not-disturb
          mode) -->
@@ -385,4 +451,69 @@
 
     <!-- Description of the button in the phone-style notification panel that controls auto-rotation, when auto-rotation is off. [CHAR LIMIT=NONE] -->
     <string name="accessibility_rotation_lock_on_portrait">Screen is locked in portrait orientation.</string>
+
+    <!-- Name of the Jelly Bean platlogo screensaver -->
+    <string name="jelly_bean_dream_name">BeanFlinger</string>
+
+    <!-- Name of the launcher shortcut icon that allows dreams to be started immediately [CHAR LIMIT=20] -->
+    <string name="start_dreams">Daydream</string>
+
+    <!-- Textual description of Ethernet connections -->
+    <string name="ethernet_label">Ethernet</string>
+
+    <!-- QuickSettings: Airplane mode [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_airplane_mode_label">Airplane mode</string>
+    <!-- QuickSettings: Battery Charging [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_battery_charging_label">Charging, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
+    <!-- QuickSettings: Battery Charged [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_battery_charged_label">Charged</string>
+    <!-- QuickSettings: Bluetooth [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_label">Bluetooth</string>
+    <!-- QuickSettings: Bluetooth (Multiple) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_multiple_devices_label">Bluetooth (<xliff:g id="number">%d</xliff:g> Devices)</string>
+    <!-- QuickSettings: Bluetooth (Off) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_bluetooth_off_label">Bluetooth Off</string>
+    <!-- QuickSettings: Brightness [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_label">Brightness</string>
+    <!-- QuickSettings: Rotation Unlocked [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rotation_unlocked_label">Auto Rotate</string>
+    <!-- QuickSettings: Rotation Locked [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rotation_locked_label">Rotation Locked</string>
+    <!-- QuickSettings: IME [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ime_label">Input Method</string>
+    <!-- QuickSettings: Location [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_location_label">Location in use</string>
+    <!-- QuickSettings: Media device [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_media_device_label">Media device</string>
+    <!-- QuickSettings: RSSI [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rssi_label">RSSI</string>
+    <!-- QuickSettings: RSSI (No network) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_rssi_emergency_only">Emergency Calls Only</string>
+    <!-- QuickSettings: Settings [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_settings_label">Settings</string>
+    <!-- QuickSettings: Time [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_time_label">Time</string>
+    <!-- QuickSettings: User [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_user_label">Me</string>
+    <!-- QuickSettings: Wifi [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_label">Wi-Fi</string>
+    <!-- QuickSettings: Wifi (Not connected) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_not_connected">Not Connected</string>
+    <!-- QuickSettings: Wifi (No network) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_no_network">No Network</string>
+    <!-- QuickSettings: Wifi (Off) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_off_label">Wi-Fi Off</string>
+    <!-- QuickSettings: Wifi display [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_display_label">Wi-Fi Display</string>
+    <!-- QuickSettings: Wifi display [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_wifi_display_no_connection_label">Wireless Display</string>
+    <!-- QuickSettings: Brightness dialog title [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_dialog_title">Brightness</string>
+    <!-- QuickSettings: Brightness dialog auto brightness button [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_brightness_dialog_auto_brightness_label">AUTO</string>
+
+    <!-- Title of help text shown when the notification panel is pulled down for the very first time. [CHAR LIMIT=NONE] -->
+    <string name="status_bar_help_title">Notifications appear here</string>
+    <!-- Body of help text shown when the notification panel is pulled down for the very first time. [CHAR LIMIT=NONE] -->
+    <string name="status_bar_help_text">Access them anytime by swiping down.\nSwipe down again for system controls.</string>
 </resources>

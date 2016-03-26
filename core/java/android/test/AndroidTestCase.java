@@ -20,9 +20,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+
 import junit.framework.TestCase;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Extend this if you need to access Resources or other things that depend on Activity Context.
@@ -135,7 +137,8 @@ public class AndroidTestCase extends TestCase {
             fail("expected SecurityException requiring " + permission);
         } catch (SecurityException expected) {
             assertNotNull("security exception's error message.", expected.getMessage());
-            assertTrue("error message should contain " + permission + ".",
+            assertTrue("error message should contain \"" + permission + "\". Got: \""
+                    + expected.getMessage() + "\".",
                     expected.getMessage().contains(permission));
         }
     }
@@ -151,11 +154,11 @@ public class AndroidTestCase extends TestCase {
      * @throws IllegalAccessException
      */
     protected void scrubClass(final Class<?> testCaseClass)
-    throws IllegalAccessException {
+            throws IllegalAccessException {
         final Field[] fields = getClass().getDeclaredFields();
         for (Field field : fields) {
-            final Class<?> fieldClass = field.getDeclaringClass();
-            if (testCaseClass.isAssignableFrom(fieldClass) && !field.getType().isPrimitive()) {
+            if (!field.getType().isPrimitive() &&
+                    !Modifier.isStatic(field.getModifiers())) {
                 try {
                     field.setAccessible(true);
                     field.set(this, null);
@@ -169,6 +172,4 @@ public class AndroidTestCase extends TestCase {
             }
         }
     }
-
-
 }

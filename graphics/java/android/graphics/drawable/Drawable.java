@@ -17,6 +17,7 @@
 package android.graphics.drawable;
 
 import android.graphics.Insets;
+import android.os.Trace;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -37,7 +38,6 @@ import android.util.DisplayMetrics;
 import android.util.StateSet;
 import android.util.TypedValue;
 import android.util.Xml;
-import android.view.View;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -124,6 +124,8 @@ public abstract class Drawable {
     private WeakReference<Callback> mCallback = null;
     private boolean mVisible = true;
 
+    private int mLayoutDirection;
+
     /**
      * Draw in its bounds (set via setBounds) respecting optional effects such
      * as alpha (set via setAlpha) and color filter (set via setColorFilter).
@@ -145,6 +147,10 @@ public abstract class Drawable {
 
         if (oldBounds.left != left || oldBounds.top != top ||
                 oldBounds.right != right || oldBounds.bottom != bottom) {
+            if (!oldBounds.isEmpty()) {
+                // first invalidate the previous bounds
+                invalidateSelf();
+            }
             mBounds.set(left, top, right, bottom);
             onBoundsChange(mBounds);
         }
@@ -296,19 +302,6 @@ public abstract class Drawable {
     }
 
     /**
-     * Implement this interface if you want to create an drawable that is RTL aware
-     * @hide
-     */
-    public static interface Callback2 extends Callback {
-        /**
-         * A Drawable can call this to get the resolved layout direction of the <var>who</var>.
-         *
-         * @param who The drawable being queried.
-         */
-        public int getResolvedLayoutDirection(Drawable who);
-    }
-
-    /**
      * Bind a {@link Callback} object to this Drawable.  Required for clients
      * that want to support animated drawables.
      *
@@ -385,15 +378,30 @@ public abstract class Drawable {
     }
 
     /**
-     * Get the resolved layout direction of this Drawable.
+     * Returns the resolved layout direction for this Drawable.
+     *
+     * @return One of {@link android.view.View#LAYOUT_DIRECTION_LTR},
+     *   {@link android.view.View#LAYOUT_DIRECTION_RTL}
+     *
      * @hide
      */
-    public int getResolvedLayoutDirectionSelf() {
-        final Callback callback = getCallback();
-        if (callback == null || !(callback instanceof Callback2)) {
-            return View.LAYOUT_DIRECTION_LTR;
+    public int getLayoutDirection() {
+        return mLayoutDirection;
+    }
+
+    /**
+     * Set the layout direction for this drawable. Should be a resolved direction as the
+     * Drawable as no capacity to do the resolution on his own.
+     *
+     * @param layoutDirection One of {@link android.view.View#LAYOUT_DIRECTION_LTR},
+     *   {@link android.view.View#LAYOUT_DIRECTION_RTL}
+     *
+     * @hide
+     */
+    public void setLayoutDirection(int layoutDirection) {
+        if (getLayoutDirection() != layoutDirection) {
+            mLayoutDirection = layoutDirection;
         }
-        return ((Callback2) callback).getResolvedLayoutDirection(this);
     }
 
     /**
@@ -712,7 +720,7 @@ public abstract class Drawable {
      *
      * @hide
      */
-    public Insets getLayoutInsets() {
+    public Insets getOpticalInsets() {
         return Insets.NONE;
     }
 
@@ -738,7 +746,12 @@ public abstract class Drawable {
      * Create a drawable from an inputstream
      */
     public static Drawable createFromStream(InputStream is, String srcName) {
-        return createFromResourceStream(null, null, is, srcName, null);
+        Trace.traceBegin(Trace.TRACE_TAG_RESOURCES, srcName != null ? srcName : "Unknown drawable");
+        try {
+            return createFromResourceStream(null, null, is, srcName, null);
+        } finally {
+            Trace.traceEnd(Trace.TRACE_TAG_RESOURCES);
+        }
     }
 
     /**
@@ -747,7 +760,12 @@ public abstract class Drawable {
      */
     public static Drawable createFromResourceStream(Resources res, TypedValue value,
             InputStream is, String srcName) {
-        return createFromResourceStream(res, value, is, srcName, null);
+        Trace.traceBegin(Trace.TRACE_TAG_RESOURCES, srcName != null ? srcName : "Unknown drawable");
+        try {
+            return createFromResourceStream(res, value, is, srcName, null);
+        } finally {
+            Trace.traceEnd(Trace.TRACE_TAG_RESOURCES);
+        }
     }
 
     /**
@@ -777,7 +795,8 @@ public abstract class Drawable {
         // to the compatibility density only to have them scaled back up when
         // drawn to the screen.
         if (opts == null) opts = new BitmapFactory.Options();
-        opts.inScreenDensity = DisplayMetrics.DENSITY_DEVICE;
+        opts.inScreenDensity = res != null
+                ? res.getDisplayMetrics().noncompatDensityDpi : DisplayMetrics.DENSITY_DEVICE;
         Bitmap  bm = BitmapFactory.decodeResourceStream(res, value, is, pad, opts);
         if (bm != null) {
             byte[] np = bm.getNinePatchChunk();
@@ -864,6 +883,7 @@ public abstract class Drawable {
         } else if (name.equals("inset")) {
             drawable = new InsetDrawable();
         } else if (name.equals("bitmap")) {
+            //noinspection deprecation
             drawable = new BitmapDrawable(r);
             if (r != null) {
                ((BitmapDrawable) drawable).setTargetDensity(r.getDisplayMetrics());
@@ -891,9 +911,14 @@ public abstract class Drawable {
             return null;
         }
 
-        Bitmap bm = BitmapFactory.decodeFile(pathName);
-        if (bm != null) {
-            return drawableFromBitmap(null, bm, null, null, null, pathName);
+        Trace.traceBegin(Trace.TRACE_TAG_RESOURCES, pathName);
+        try {
+            Bitmap bm = BitmapFactory.decodeFile(pathName);
+            if (bm != null) {
+                return drawableFromBitmap(null, bm, null, null, null, pathName);
+            }
+        } finally {
+            Trace.traceEnd(Trace.TRACE_TAG_RESOURCES);
         }
 
         return null;

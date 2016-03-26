@@ -19,43 +19,102 @@ package com.android.test.hwui;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public class ViewLayersActivity5 extends Activity {
+    private final Paint mPaint = new Paint();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        setContentView(R.layout.view_layers_5);
 
+        init();
+
+        setContentView(R.layout.view_layers_5);
         setupList(R.id.list1);
     }
 
-    public void setLayerDisabled(View v) {
-        ((ViewGroup) findViewById(R.id.list1).getParent()).setChildrenLayersEnabled(false);
+    public static class ClipFrameLayout extends FrameLayout {
+        private final Path mClipPath = new Path();
+        private boolean mClipEnabled;
+
+        public ClipFrameLayout(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        public ClipFrameLayout(Context context, AttributeSet attrs, int defStyle) {
+            super(context, attrs, defStyle);
+        }
+
+        public boolean isClipEnabled() {
+            return mClipEnabled;
+        }
+
+        public void setClipEnabled(boolean clipEnabled) {
+            mClipEnabled = clipEnabled;
+            invalidate();
+        }
+
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            if (mClipEnabled) {
+                mClipPath.reset();
+                mClipPath.addCircle(getWidth() / 2.0f, getHeight() / 2.0f,
+                        Math.min(getWidth(), getHeight()) / 3.0f, Path.Direction.CW);
+
+                canvas.clipPath(mClipPath);
+            }
+            super.dispatchDraw(canvas);
+        }
+    }
+
+    private void init() {
+        mPaint.setColorFilter(new PorterDuffColorFilter(0xff00ff00, PorterDuff.Mode.MULTIPLY));
+    }
+
+    public void enableClip(View v) {
+        ((ClipFrameLayout) findViewById(R.id.container)).setClipEnabled(true);
+    }
+
+    public void disableClip(View v) {
+        ((ClipFrameLayout) findViewById(R.id.container)).setClipEnabled(false);
+    }
+
+    public void enableLayer(View v) {
+        findViewById(R.id.container).setLayerType(View.LAYER_TYPE_HARDWARE, mPaint);
+    }
+
+    public void disableLayer(View v) {
+        findViewById(R.id.container).setLayerType(View.LAYER_TYPE_NONE, null);
     }
     
-    public void setLayerEnabled(View v) {
-        ((ViewGroup) findViewById(R.id.list1).getParent()).setChildrenLayersEnabled(true);
+    public void growLayer(View v) {
+        findViewById(R.id.container).getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
+        findViewById(R.id.container).requestLayout();
+    }
+
+    public void shrinkLayer(View v) {
+        findViewById(R.id.container).getLayoutParams().height = 300;
+        findViewById(R.id.container).requestLayout();
     }
     
     private void setupList(int listId) {
-        final Paint p = new Paint();
-        p.setColorFilter(new PorterDuffColorFilter(0xff00ff00, PorterDuff.Mode.MULTIPLY));
-
         final ListView list = (ListView) findViewById(listId);
         list.setAdapter(new SimpleListAdapter(this));
-        list.setLayerType(View.LAYER_TYPE_HARDWARE, p);
     }
 
     private static class SimpleListAdapter extends ArrayAdapter<String> {

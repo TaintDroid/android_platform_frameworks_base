@@ -18,8 +18,8 @@
 */
 -->
 <resources>
-      <drawable name="screen_background_light">#ffffffff</drawable>
-      <drawable name="screen_background_dark">#ff000000</drawable>
+    <drawable name="screen_background_light">#ffffffff</drawable>
+    <drawable name="screen_background_dark">#ff000000</drawable>
     <drawable name="status_bar_closed_default_background">#ff000000</drawable>
     <drawable name="status_bar_opened_default_background">#ff000000</drawable>
     <drawable name="notification_item_background_color">#ff111111</drawable>
@@ -90,7 +90,8 @@
     <color name="perms_dangerous_grp_color">#33b5e5</color>
     <color name="perms_dangerous_perm_color">#33b5e5</color>
     <color name="shadow">#cc222222</color>
-
+    <color name="perms_costs_money">#ffffbb33</color>
+    
     <!-- For search-related UIs -->
     <color name="search_url_text_normal">#7fa87f</color>
     <color name="search_url_text_selected">@android:color/black</color>
@@ -113,6 +114,11 @@
     <color name="lockscreen_clock_foreground">#ffffffff</color>
     <color name="lockscreen_clock_am_pm">#ffffffff</color>
     <color name="lockscreen_owner_info">#ff9a9a9a</color>
+
+    <!-- keyguard overscroll widget pager -->
+    <color name="kg_multi_user_text_active">#ffffffff</color>
+    <color name="kg_multi_user_text_inactive">#ff808080</color>
+    <color name="kg_widget_pager_gradient">#ffffffff</color>
 
     <!-- FaceLock -->
     <color name="facelock_spotlight_mask">#CC000000</color>
@@ -184,5 +190,10 @@
     <drawable name="notification_template_icon_bg">#3333B5E5</drawable>
     <drawable name="notification_template_icon_low_bg">#0cffffff</drawable>
 
+    <!-- Keyguard colors -->
+    <color name="keyguard_avatar_frame_color">#ffffffff</color>
+    <color name="keyguard_avatar_frame_shadow_color">#80000000</color>
+    <color name="keyguard_avatar_nick_color">#ffffffff</color>
+    <color name="keyguard_avatar_frame_pressed_color">#ff35b5e5</color>
 </resources>
 

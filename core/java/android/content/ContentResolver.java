@@ -20,6 +20,7 @@ import dalvik.system.CloseGuard;
 
 import android.accounts.Account;
 import android.app.ActivityManagerNative;
+import android.app.ActivityThread;
 import android.app.AppGlobals;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetFileDescriptor;
@@ -39,6 +40,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.EventLog;
 import android.util.Log;
@@ -53,6 +55,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
 
 /**
  * This class provides applications access to the content model.
@@ -115,6 +120,10 @@ public abstract class ContentResolver {
      */
     public static final String SYNC_EXTRAS_INITIALIZE = "initialize";
 
+    /** @hide */
+    public static final Intent ACTION_SYNC_CONN_STATUS_CHANGED =
+            new Intent("com.android.sync.SYNC_CONN_STATUS_CHANGED");
+
     public static final String SCHEME_CONTENT = "content";
     public static final String SCHEME_ANDROID_RESOURCE = "android.resource";
     public static final String SCHEME_FILE = "file";
@@ -168,6 +177,42 @@ public abstract class ContentResolver {
     /** @hide */
     public static final int SYNC_ERROR_INTERNAL = 8;
 
+    private static final String[] SYNC_ERROR_NAMES = new String[] {
+          "already-in-progress",
+          "authentication-error",
+          "io-error",
+          "parse-error",
+          "conflict",
+          "too-many-deletions",
+          "too-many-retries",
+          "internal-error",
+    };
+
+    /** @hide */
+    public static String syncErrorToString(int error) {
+        if (error < 1 || error > SYNC_ERROR_NAMES.length) {
+            return String.valueOf(error);
+        }
+        return SYNC_ERROR_NAMES[error - 1];
+    }
+
+    /** @hide */
+    public static int syncErrorStringToInt(String error) {
+        for (int i = 0, n = SYNC_ERROR_NAMES.length; i < n; i++) {
+            if (SYNC_ERROR_NAMES[i].equals(error)) {
+                return i + 1;
+            }
+        }
+        if (error != null) {
+            try {
+                return Integer.parseInt(error);
+            } catch (NumberFormatException e) {
+                Log.d(TAG, "error parsing sync error: " + error);
+            }
+        }
+        return 0;
+    }
+
     public static final int SYNC_OBSERVER_TYPE_SETTINGS = 1<<0;
     public static final int SYNC_OBSERVER_TYPE_PENDING = 1<<1;
     public static final int SYNC_OBSERVER_TYPE_ACTIVE = 1<<2;
@@ -182,7 +227,8 @@ public abstract class ContentResolver {
     private final Random mRandom = new Random();  // guarded by itself
 
     public ContentResolver(Context context) {
-        mContext = context;
+        mContext = context != null ? context : ActivityThread.currentApplication();
+        mPackageName = mContext.getBasePackageName();
     }
 
     /** @hide */
@@ -230,7 +276,8 @@ public abstract class ContentResolver {
         }
 
         try {
-            String type = ActivityManagerNative.getDefault().getProviderMimeType(url);
+            String type = ActivityManagerNative.getDefault().getProviderMimeType(
+                    url, UserHandle.myUserId());
             return type;
         } catch (RemoteException e) {
             // Arbitrary and not worth documenting, as Activity
@@ -356,6 +403,7 @@ public abstract class ContentResolver {
             return null;
         }
         IContentProvider stableProvider = null;
+        Cursor qCursor = null;
         try {
             long startTime = SystemClock.uptimeMillis();
 
@@ -365,9 +413,8 @@ public abstract class ContentResolver {
                 remoteCancellationSignal = unstableProvider.createCancellationSignal();
                 cancellationSignal.setRemote(remoteCancellationSignal);
             }
-            Cursor qCursor;
             try {
-                qCursor = unstableProvider.query(uri, projection,
+                qCursor = unstableProvider.query(mPackageName, uri, projection,
                         selection, selectionArgs, sortOrder, remoteCancellationSignal);
             } catch (DeadObjectException e) {
                 // The remote process has died...  but we only hold an unstable
@@ -378,26 +425,54 @@ public abstract class ContentResolver {
                 if (stableProvider == null) {
                     return null;
                 }
-                qCursor = stableProvider.query(uri, projection,
+                qCursor = stableProvider.query(mPackageName, uri, projection,
                         selection, selectionArgs, sortOrder, remoteCancellationSignal);
             }
             if (qCursor == null) {
                 return null;
             }
-            // force query execution
+
+// begin WITH_TAINT_TRACKING
+// TODO BEA: There has to be a better way to do this
+            int taint = Taint.TAINT_CLEAR;
+            if(uri.toString().indexOf("com.android.contacts") != -1) {
+                taint = Taint.TAINT_CONTACTS;
+            }
+            else if(uri.toString().indexOf("browser/bookmarks") != -1) {
+                taint = Taint.TAINT_HISTORY;
+            }
+            else if(uri.toString().indexOf("content://sms") != -1) {
+                taint = Taint.TAINT_SMS;
+            }
+            else if(uri.toString().indexOf("content://mms") != -1) {
+                taint = Taint.TAINT_SMS;
+            }
+// end WITH_TAINT_TRACKING
+
+            // Force query execution.  Might fail and throw a runtime exception here.
             qCursor.getCount();
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogQueryToEventLog(durationMillis, uri, projection, selection, sortOrder);
-            // Wrap the cursor object into CursorWrapperInner object
+
+            // Wrap the cursor object into CursorWrapperInner object.
             CursorWrapperInner wrapper = new CursorWrapperInner(qCursor,
                     stableProvider != null ? stableProvider : acquireProvider(uri));
             stableProvider = null;
+            qCursor = null;
+// begin WITH_TAINT_TRACKING
+            if(taint != Taint.TAINT_CLEAR) {
+                wrapper.setTaint(taint);
+            }
+// end WITH_TAINT_TRACKING
             return wrapper;
         } catch (RemoteException e) {
             // Arbitrary and not worth documenting, as Activity
             // Manager will kill this process shortly anyway.
             return null;
         } finally {
+            if (qCursor != null) {
+                qCursor.close();
+            }
             if (unstableProvider != null) {
                 releaseUnstableProvider(unstableProvider);
             }
@@ -516,7 +591,7 @@ public abstract class ContentResolver {
      * ContentProvider.openFile}.
      * @return Returns a new ParcelFileDescriptor pointing to the file.  You
      * own this descriptor and are responsible for closing it when done.
-     * @throws FileNotFoundException Throws FileNotFoundException of no
+     * @throws FileNotFoundException Throws FileNotFoundException if no
      * file exists under the URI or the mode is invalid.
      * @see #openAssetFileDescriptor(Uri, String)
      */
@@ -620,7 +695,7 @@ public abstract class ContentResolver {
 
                 try {
                     try {
-                        fd = unstableProvider.openAssetFile(uri, mode);
+                        fd = unstableProvider.openAssetFile(mPackageName, uri, mode);
                         if (fd == null) {
                             // The provider will be released by the finally{} clause
                             return null;
@@ -634,7 +709,7 @@ public abstract class ContentResolver {
                         if (stableProvider == null) {
                             throw new FileNotFoundException("No content provider: " + uri);
                         }
-                        fd = stableProvider.openAssetFile(uri, mode);
+                        fd = stableProvider.openAssetFile(mPackageName, uri, mode);
                         if (fd == null) {
                             // The provider will be released by the finally{} clause
                             return null;
@@ -712,7 +787,7 @@ public abstract class ContentResolver {
 
         try {
             try {
-                fd = unstableProvider.openTypedAssetFile(uri, mimeType, opts);
+                fd = unstableProvider.openTypedAssetFile(mPackageName, uri, mimeType, opts);
                 if (fd == null) {
                     // The provider will be released by the finally{} clause
                     return null;
@@ -726,7 +801,7 @@ public abstract class ContentResolver {
                 if (stableProvider == null) {
                     throw new FileNotFoundException("No content provider: " + uri);
                 }
-                fd = stableProvider.openTypedAssetFile(uri, mimeType, opts);
+                fd = stableProvider.openTypedAssetFile(mPackageName, uri, mimeType, opts);
                 if (fd == null) {
                     // The provider will be released by the finally{} clause
                     return null;
@@ -861,7 +936,7 @@ public abstract class ContentResolver {
         }
         try {
             long startTime = SystemClock.uptimeMillis();
-            Uri createdRow = provider.insert(url, values);
+            Uri createdRow = provider.insert(mPackageName, url, values);
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogUpdateToEventLog(durationMillis, url, "insert", null /* where */);
             return createdRow;
@@ -922,7 +997,7 @@ public abstract class ContentResolver {
         }
         try {
             long startTime = SystemClock.uptimeMillis();
-            int rowsCreated = provider.bulkInsert(url, values);
+            int rowsCreated = provider.bulkInsert(mPackageName, url, values);
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogUpdateToEventLog(durationMillis, url, "bulkinsert", null /* where */);
             return rowsCreated;
@@ -953,7 +1028,7 @@ public abstract class ContentResolver {
         }
         try {
             long startTime = SystemClock.uptimeMillis();
-            int rowsDeleted = provider.delete(url, where, selectionArgs);
+            int rowsDeleted = provider.delete(mPackageName, url, where, selectionArgs);
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogUpdateToEventLog(durationMillis, url, "delete", where);
             return rowsDeleted;
@@ -987,7 +1062,7 @@ public abstract class ContentResolver {
         }
         try {
             long startTime = SystemClock.uptimeMillis();
-            int rowsUpdated = provider.update(uri, values, where, selectionArgs);
+            int rowsUpdated = provider.update(mPackageName, uri, values, where, selectionArgs);
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogUpdateToEventLog(durationMillis, uri, "update", where);
             return rowsUpdated;
@@ -1026,7 +1101,7 @@ public abstract class ContentResolver {
             throw new IllegalArgumentException("Unknown URI " + uri);
         }
         try {
-            return provider.call(method, arg, extras);
+            return provider.call(mPackageName, method, arg, extras);
         } catch (RemoteException e) {
             // Arbitrary and not worth documenting, as Activity
             // Manager will kill this process shortly anyway.
@@ -1047,9 +1122,9 @@ public abstract class ContentResolver {
         if (!SCHEME_CONTENT.equals(uri.getScheme())) {
             return null;
         }
-        String auth = uri.getAuthority();
+        final String auth = uri.getAuthority();
         if (auth != null) {
-            return acquireProvider(mContext, uri.getAuthority());
+            return acquireProvider(mContext, auth);
         }
         return null;
     }
@@ -1066,9 +1141,9 @@ public abstract class ContentResolver {
         if (!SCHEME_CONTENT.equals(uri.getScheme())) {
             return null;
         }
-        String auth = uri.getAuthority();
+        final String auth = uri.getAuthority();
         if (auth != null) {
-            return acquireExistingProvider(mContext, uri.getAuthority());
+            return acquireExistingProvider(mContext, auth);
         }
         return null;
     }
@@ -1217,9 +1292,16 @@ public abstract class ContentResolver {
     public final void registerContentObserver(Uri uri, boolean notifyForDescendents,
             ContentObserver observer)
     {
+        registerContentObserver(uri, notifyForDescendents, observer, UserHandle.myUserId());
+    }
+
+    /** @hide - designated user version */
+    public final void registerContentObserver(Uri uri, boolean notifyForDescendents,
+            ContentObserver observer, int userHandle)
+    {
         try {
             getContentService().registerContentObserver(uri, notifyForDescendents,
-                    observer.getContentObserver());
+                    observer.getContentObserver(), userHandle);
         } catch (RemoteException e) {
         }
     }
@@ -1274,10 +1356,21 @@ public abstract class ContentResolver {
      * @see #requestSync(android.accounts.Account, String, android.os.Bundle)
      */
     public void notifyChange(Uri uri, ContentObserver observer, boolean syncToNetwork) {
+        notifyChange(uri, observer, syncToNetwork, UserHandle.getCallingUserId());
+    }
+
+    /**
+     * Notify registered observers within the designated user(s) that a row was updated.
+     *
+     * @hide
+     */
+    public void notifyChange(Uri uri, ContentObserver observer, boolean syncToNetwork,
+            int userHandle) {
         try {
             getContentService().notifyChange(
                     uri, observer == null ? null : observer.getContentObserver(),
-                    observer != null && observer.deliverSelfNotifications(), syncToNetwork);
+                    observer != null && observer.deliverSelfNotifications(), syncToNetwork,
+                    userHandle);
         } catch (RemoteException e) {
         }
     }
@@ -1906,7 +1999,13 @@ public abstract class ContentResolver {
         return sContentService;
     }
 
+    /** @hide */
+    public String getPackageName() {
+        return mPackageName;
+    }
+
     private static IContentService sContentService;
     private final Context mContext;
+    final String mPackageName;
     private static final String TAG = "ContentResolver";
 }

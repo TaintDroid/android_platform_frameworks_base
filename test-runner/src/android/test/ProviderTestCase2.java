@@ -64,7 +64,7 @@ import java.io.File;
  *     {@link #ProviderTestCase2(Class, String)} as  its first operation.
  * </p>
  * For more information on content provider testing, please see
- * <a href="{@docRoot}guide/topics/testing/provider_testing.html">Content Provider Testing</a>.
+ * <a href="{@docRoot}tools/testing/contentprovider_testing.html">Content Provider Testing</a>.
  */
 public abstract class ProviderTestCase2<T extends ContentProvider> extends AndroidTestCase {
 
@@ -140,7 +140,7 @@ public abstract class ProviderTestCase2<T extends ContentProvider> extends Andro
         mProviderContext = new IsolatedContext(mResolver, targetContextWrapper);
 
         mProvider = mProviderClass.newInstance();
-        mProvider.attachInfo(mProviderContext, null);
+        mProvider.attachInfoForTesting(mProviderContext, null);
         assertNotNull(mProvider);
         mResolver.addProvider(mProviderAuthority, getProvider());
     }
@@ -219,7 +219,7 @@ public abstract class ProviderTestCase2<T extends ContentProvider> extends Andro
         DatabaseUtils.createDbFromSqlStatements(context, databaseName, databaseVersion, sql);
 
         T provider = providerClass.newInstance();
-        provider.attachInfo(context, null);
+        provider.attachInfoForTesting(context, null);
         resolver.addProvider(authority, provider);
 
         return resolver;

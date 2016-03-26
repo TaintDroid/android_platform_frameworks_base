@@ -154,6 +154,9 @@
     <string name="global_actions" product="default" msgid="2406416831541615258">"Možnosti telefónu"</string>
     <string name="global_action_lock" msgid="2844945191792119712">"Uzamknutie obrazovky"</string>
     <string name="global_action_power_off" msgid="4471879440839879722">"Vypnúť"</string>
+    <string name="global_action_bug_report" msgid="7934010578922304799">"Správa o chybe"</string>
+    <string name="bugreport_title" msgid="2667494803742548533">"Zaznamenať správu o chybe"</string>
+    <string name="bugreport_message" msgid="398447048750350456">"Zhromažďuje informácie o aktuálnom stave zariadenia a tieto informácie je následne možné odoslať prostredníctvom e-mailovej správy. Od spustenia vytvárania správy o chybe až do chvíle, kedy je tento nástroj pripravený odoslať prvú správu, môže uplynúť nejaký čas. Prosíme vás preto o trpezlivosť."</string>
     <string name="global_action_toggle_silent_mode" msgid="8219525344246810925">"Tichý režim"</string>
     <string name="global_action_silent_mode_on_status" msgid="3289841937003758806">"Zvuk je VYPNUTÝ."</string>
     <string name="global_action_silent_mode_off_status" msgid="1506046579177066419">"Zvuk je zapnutý"</string>
@@ -168,12 +171,47 @@
     <string name="permgrouplab_messages" msgid="7521249148445456662">"Vaše správy"</string>
     <string name="permgroupdesc_messages" msgid="7821999071003699236">"Čítanie a písanie správ SMS, e-mailov a ďalších správ."</string>
     <string name="permgrouplab_personalInfo" msgid="3519163141070533474">"Vaše osobné informácie"</string>
-    <string name="permgroupdesc_personalInfo" product="tablet" msgid="6975389054186265786">"Priamy prístup k vašim kontaktom a kalendáru uloženým v tablete."</string>
-    <string name="permgroupdesc_personalInfo" product="default" msgid="5488050357388806068">"Priamy prístup k vašim kontaktom a kalendáru uloženým v telefóne."</string>
+    <string name="permgroupdesc_personalInfo" msgid="8426453129788861338">"Priamy prístup k informáciám o vás uložených na vašej karte kontaktu."</string>
+    <string name="permgrouplab_socialInfo" msgid="5799096623412043791">"Vaše sociálne informácie"</string>
+    <string name="permgroupdesc_socialInfo" msgid="7129842457611643493">"Priamy prístup k informáciám o vašich kontaktoch a sociálnych prepojeniach."</string>
     <string name="permgrouplab_location" msgid="635149742436692049">"Vaša poloha"</string>
     <string name="permgroupdesc_location" msgid="5704679763124170100">"Sledovanie vašej fyzickej polohy."</string>
     <string name="permgrouplab_network" msgid="5808983377727109831">"Sieťová komunikácia"</string>
     <string name="permgroupdesc_network" msgid="4478299413241861987">"Prístup k rôznym funkciám siete."</string>
+    <string name="permgrouplab_bluetoothNetwork" msgid="1585403544162128109">"Bluetooth"</string>
+    <string name="permgroupdesc_bluetoothNetwork" msgid="5625288577164282391">"Prístup k zariadeniam a sieťam prostredníctvom rozhrania Bluetooth."</string>
+    <string name="permgrouplab_audioSettings" msgid="8329261670151871235">"Nastavenia zvuku"</string>
+    <string name="permgroupdesc_audioSettings" msgid="2641515403347568130">"Zmena nastavení zvuku."</string>
+    <string name="permgrouplab_affectsBattery" msgid="6209246653424798033">"Má vplyv na batériu"</string>
+    <string name="permgroupdesc_affectsBattery" msgid="6441275320638916947">"Používanie funkcií, ktoré môžu rýchlo vyčerpať batériu."</string>
+    <string name="permgrouplab_calendar" msgid="5863508437783683902">"Kalendár"</string>
+    <string name="permgroupdesc_calendar" msgid="5777534316982184416">"Priamy prístup ku kalendáru a udalostiam."</string>
+    <string name="permgrouplab_dictionary" msgid="4148597128843641379">"Čítanie požívateľského slovníka"</string>
+    <string name="permgroupdesc_dictionary" msgid="7921166355964764490">"Čítanie slov v používateľskom slovníku."</string>
+    <string name="permgrouplab_writeDictionary" msgid="8090237702432576788">"Zápis do používateľského slovníka"</string>
+    <string name="permgroupdesc_writeDictionary" msgid="2711561994497361646">"Pridávanie slov do používateľského slovníka."</string>
+    <string name="permgrouplab_bookmarks" msgid="1949519673103968229">"Záložky a história"</string>
+    <string name="permgroupdesc_bookmarks" msgid="4169771606257963028">"Priamy prístup k záložkám a histórii prehliadača."</string>
+    <string name="permgrouplab_deviceAlarms" msgid="6117704629728824101">"Budík"</string>
+    <string name="permgroupdesc_deviceAlarms" msgid="4769356362251641175">"Nastavenie budíka."</string>
+    <string name="permgrouplab_voicemail" msgid="4162237145027592133">"Hlasová schránka"</string>
+    <string name="permgroupdesc_voicemail" msgid="2498403969862951393">"Priamy prístup do hlasovej schránky."</string>
+    <string name="permgrouplab_microphone" msgid="171539900250043464">"Mikrofón"</string>
+    <string name="permgroupdesc_microphone" msgid="7106618286905738408">"Priamy prístup k mikrofónu na záznam zvuku."</string>
+    <string name="permgrouplab_camera" msgid="4820372495894586615">"Fotoaparát"</string>
+    <string name="permgroupdesc_camera" msgid="2933667372289567714">"Priamy prístup k fotoaparátu na nasnímanie fotografií alebo natočenie videí."</string>
+    <string name="permgrouplab_screenlock" msgid="8275500173330718168">"Uzamknúť obrazovku"</string>
+    <string name="permgroupdesc_screenlock" msgid="7067497128925499401">"Možnosť ovplyvniť správanie zámky obrazovky na vašom zariadení."</string>
+    <string name="permgrouplab_appInfo" msgid="8028789762634147725">"Informácie o vašich aplikáciách"</string>
+    <string name="permgroupdesc_appInfo" msgid="3950378538049625907">"Schopnosť ovplyvniť správanie ďalších aplikácií na vašom zariadení."</string>
+    <string name="permgrouplab_wallpaper" msgid="3850280158041175998">"Tapeta"</string>
+    <string name="permgroupdesc_wallpaper" msgid="5630417854750540154">"Zmena nastavení tapety zariadenia."</string>
+    <string name="permgrouplab_systemClock" msgid="406535759236612992">"Hodiny"</string>
+    <string name="permgroupdesc_systemClock" msgid="3944359833624094992">"Zmena času a časového pásma zariadenia."</string>
+    <string name="permgrouplab_statusBar" msgid="2095862568113945398">"Stavový riadok"</string>
+    <string name="permgroupdesc_statusBar" msgid="6242593432226807171">"Zmena nastavení stavového riadka zariadenia."</string>
+    <string name="permgrouplab_syncSettings" msgid="3341990986147826541">"Nastavenia synchronizácie"</string>
+    <string name="permgroupdesc_syncSettings" msgid="7603195265129031797">"Prístup do nastavení synchronizácie."</string>
     <string name="permgrouplab_accounts" msgid="3359646291125325519">"Vaše účty"</string>
     <string name="permgroupdesc_accounts" msgid="4948732641827091312">"Prístup k dostupným účtom."</string>
     <string name="permgrouplab_hardwareControls" msgid="7998214968791599326">"Ovládanie hardvéru"</string>
@@ -184,9 +222,21 @@
     <string name="permgroupdesc_systemTools" msgid="8162102602190734305">"Nízkoúrovňový prístup a ovládanie systému."</string>
     <string name="permgrouplab_developmentTools" msgid="3446164584710596513">"Nástroje pre vývoj"</string>
     <string name="permgroupdesc_developmentTools" msgid="7058828032358142018">"Funkcie len pre vývojárov aplikácií."</string>
+    <string name="permgrouplab_display" msgid="4279909676036402636">"Používateľské rozhranie iných aplikácií"</string>
+    <string name="permgroupdesc_display" msgid="6051002031933013714">"Vplyv na používateľské rozhranie ďalších aplikácií."</string>
     <string name="permgrouplab_storage" msgid="1971118770546336966">"Ukladací priestor"</string>
     <string name="permgroupdesc_storage" product="nosdcard" msgid="7442318502446874999">"Prístup do ukl. priestoru USB."</string>
     <string name="permgroupdesc_storage" product="default" msgid="9203302214915355774">"Prístup na kartu SD."</string>
+    <string name="permgrouplab_accessibilityFeatures" msgid="7919025602283593907">"Funkcie zjednodušenia ovládania"</string>
+    <string name="permgroupdesc_accessibilityFeatures" msgid="4205196881678144335">"Funkcie, ktoré môže vyžadovať nápomocná technológia."</string>
+    <string name="capability_title_canRetrieveWindowContent" msgid="3901717936930170320">"Načítať obsah okna"</string>
+    <string name="capability_desc_canRetrieveWindowContent" msgid="3772225008605310672">"Preskúmať obsah okna s ktorým interagujete."</string>
+    <string name="capability_title_canRequestTouchExploration" msgid="3108723364676667320">"Zapnúť funkciu Preskúmanie dotykom"</string>
+    <string name="capability_desc_canRequestTouchExploration" msgid="5800552516779249356">"Po dotyku na položku sa vysloví jej názov a obrazovku je možné preskúmať pomocou gest."</string>
+    <string name="capability_title_canRequestEnhancedWebAccessibility" msgid="1739881766522594073">"Zapnúť vylepšenú dostupnosť na webe"</string>
+    <string name="capability_desc_canRequestEnhancedWebAccessibility" msgid="7881063961507511765">"Môže nainštalovať skripty na sprístupnenie obsahu aplikácie."</string>
+    <string name="capability_title_canRequestFilterKeyEvents" msgid="2103440391902412174">"Sledovať vami zadávaný text"</string>
+    <string name="capability_desc_canRequestFilterKeyEvents" msgid="7463135292204152818">"Obsahuje osobné údaje ako sú čísla kreditných kariet a heslá."</string>
     <string name="permlab_statusBar" msgid="7417192629601890791">"zakázanie alebo zmeny stavového riadka"</string>
     <string name="permdesc_statusBar" msgid="8434669549504290975">"Umožňuje aplikácii vypnúť stavový riadok alebo pridať a odstrániť systémové ikony."</string>
     <string name="permlab_statusBarService" msgid="7247281911387931485">"stavový riadok"</string>
@@ -205,8 +255,8 @@
     <string name="permdesc_readCellBroadcasts" msgid="6361972776080458979">"Umožňuje aplikácii čítať správy Cell Broadcast prijaté vaším zariadením. Upozornenia Cell Broadcast sú doručované na určitých miestach a upozorňujú na núdzové situácie. Škodlivé aplikácie môžu pri prijatí núdzovej správy Cell Broadcast narušiť výkonnosť alebo prevádzku vášho zariadenia."</string>
     <string name="permlab_sendSms" msgid="5600830612147671529">"odosielať správy SMS"</string>
     <string name="permdesc_sendSms" msgid="7094729298204937667">"Umožňuje aplikácii odosielať správy SMS. Môže to mať za následok účtovanie neočakávaných poplatkov. Škodlivé aplikácie vám môžu spôsobiť výdavky odosielaním správ bez vášho potvrdenia."</string>
-    <string name="permlab_sendSmsNoConfirmation" msgid="4781483105951730228">"posielať správy SMS bez potvrdenia"</string>
-    <string name="permdesc_sendSmsNoConfirmation" msgid="402569800862935907">"Umožňuje aplikácii odosielať správy SMS. Môže to mať za následok účtovanie neočakávaných poplatkov. Škodlivé aplikácie vám môžu spôsobiť výdavky odosielaním správ bez vášho potvrdenia."</string>
+    <string name="permlab_sendRespondViaMessageRequest" msgid="8713889105305943200">"odosielanie udalostí typu „odpovedzte správou“"</string>
+    <string name="permdesc_sendRespondViaMessageRequest" msgid="7107648548468778734">"Umožňuje aplikácii odosielať žiadosti ostatným aplikáciám na posielanie správ s cieľom spracovania udalostí typu „odpovedzte správou“ pre prichádzajúce hovory."</string>
     <string name="permlab_readSms" msgid="8745086572213270480">"čítať textové správy (SMS alebo MMS)"</string>
     <string name="permdesc_readSms" product="tablet" msgid="2467981548684735522">"Umožňuje aplikácii čítať správy SMS uložené v tablete alebo na karte SIM. Toto povolenie umožňuje aplikácii čítať správy SMS bez ohľadu na ich obsah alebo dôvernosť."</string>
     <string name="permdesc_readSms" product="default" msgid="3695967533457240550">"Umožňuje aplikácii čítať správy SMS uložené v telefóne alebo na karte SIM. Toto povolenie umožňuje aplikácii čítať správy SMS bez ohľadu na ich obsah alebo dôvernosť."</string>
@@ -217,6 +267,12 @@
     <string name="permdesc_receiveWapPush" msgid="748232190220583385">"Umožňuje aplikácii prijímať a spracovávať správy WAP. Toto povolenie zahŕňa možnosť sledovať vaše správy alebo ich odstrániť bez toho, aby sa vám zobrazili."</string>
     <string name="permlab_getTasks" msgid="6466095396623933906">"načítať spustené aplikácie"</string>
     <string name="permdesc_getTasks" msgid="7454215995847658102">"Umožňuje aplikácii načítať informácie o aktuálne či nedávno spustených úlohách. Toto povolenie môže aplikácii umožniť objaviť informácie o tom, ktoré aplikácie sa na zariadení používajú."</string>
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"interakcie naprieč používateľmi"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"Umožňuje aplikácii vykonávať akcie naprieč rôznymi používateľmi zariadenia. Škodlivé aplikácie môžu toto povolenie zneužiť na obídenie ochrany medzi používateľmi."</string>
+    <string name="permlab_interactAcrossUsersFull" msgid="2567734285545074105">"plná licencia na interakcie naprieč používateľmi"</string>
+    <string name="permdesc_interactAcrossUsersFull" msgid="376841368395502366">"Umožňuje všetky možné interakcie naprieč používateľmi."</string>
+    <string name="permlab_manageUsers" msgid="1676150911672282428">"správa používateľov"</string>
+    <string name="permdesc_manageUsers" msgid="8409306667645355638">"Umožňuje aplikáciám spravovať používateľov v zariadení, vrátane vyhľadávania dopytov, vytvorenia a odstránenia."</string>
     <string name="permlab_getDetailedTasks" msgid="6229468674753529501">"načítať podrobnosti o spustených aplikáciách"</string>
     <string name="permdesc_getDetailedTasks" msgid="153824741440717599">"Umožňuje aplikácii načítať podrobné informácie o aktuálnych a nedávno spustených úlohách. Škodlivé aplikácie môžu odhaliť súkromné informácie o iných aplikáciách."</string>
     <string name="permlab_reorderTasks" msgid="2018575526934422779">"zmeniť poradie spustených aplikácií"</string>
@@ -243,10 +299,20 @@
     <string name="permdesc_dump" msgid="1778299088692290329">"Umožňuje aplikácii načítať interný stav systému. Škodlivé aplikácie môžu načítať široký rozsah súkromných a zabezpečených informácií, ktoré by obvykle nemali nikdy potrebovať."</string>
     <string name="permlab_retrieve_window_content" msgid="8022588608994589938">"načítanie obsahu obrazovky"</string>
     <string name="permdesc_retrieve_window_content" msgid="3193269069469700265">"Umožňuje aplikácii načítať obsah aktívneho okna. Škodlivé aplikácie môžu získať celý obsah okna a preskúmať celý jeho text okrem hesiel."</string>
+    <string name="permlab_temporary_enable_accessibility" msgid="2312612135127310254">"dočasné povolenie zjednodušenia ovládania"</string>
+    <string name="permdesc_temporary_enable_accessibility" msgid="8079456293182975464">"Umožňuje aplikácii dočasne povoliť zjednodušenie ovládania v zariadení. Škodlivé aplikáciu môžu zjednodušenie ovládania povoliť bez súhlasu používateľa."</string>
+    <string name="permlab_retrieve_window_info" msgid="8532295199112519378">"načítanie informácií o oknách"</string>
+    <string name="permdesc_retrieve_window_info" msgid="4998836370424186849">"Umožňuje aplikácii načítať informácie o oknách zo správcu okien. Škodlivé aplikácie môžu načítať informácie, ktoré sú určené pre interné využitie systému."</string>
+    <string name="permlab_filter_events" msgid="8675535648807427389">"filtrovanie udalostí"</string>
+    <string name="permdesc_filter_events" msgid="8006236315888347680">"Umožňuje aplikácii zaregistrovať vstupný filter, ktorý filtruje stream všetkých prenosov používateľa pred ich odvysielaním. Škodlivá aplikácia môže bez zásahu používateľa ovládať používateľské rozhranie systému."</string>
+    <string name="permlab_magnify_display" msgid="5973626738170618775">"priblížiť zobrazenie"</string>
+    <string name="permdesc_magnify_display" msgid="7121235684515003792">"Umožňuje aplikácii priblížiť obsah displeja. Škodlivé aplikácie môžu zmeniť zobrazenie obsahu tak, že sa zariadenie stane nepoužiteľným."</string>
     <string name="permlab_shutdown" msgid="7185747824038909016">"Čiastočné vypnutie"</string>
     <string name="permdesc_shutdown" msgid="7046500838746291775">"Uvedie správcu činností do vypnutého stavu. Úplné vypnutie však nenastane."</string>
     <string name="permlab_stopAppSwitches" msgid="4138608610717425573">"zabrániť prepínaniu aplikácií"</string>
     <string name="permdesc_stopAppSwitches" msgid="8262195802582255021">"Zabráni používateľovi prepnúť na inú aplikáciu."</string>
+    <string name="permlab_getTopActivityInfo" msgid="2537922311411546016">"získať informácie o aktuálnej aplikácii"</string>
+    <string name="permdesc_getTopActivityInfo" msgid="2512448855496067131">"Umožňuje držiteľovi povolenia načítať súkromné ​​informácie o aktuálnej aplikácii v popredí obrazovky."</string>
     <string name="permlab_runSetActivityWatcher" msgid="892239094867182656">"sledovať a ovládať všetky spustenia aplikácií"</string>
     <string name="permdesc_runSetActivityWatcher" msgid="6003603162578577406">"Umožňuje aplikácii sledovať a ovládať spúšťanie aktivít systémom. Škodlivé aplikácie môžu systém úplne ovládnuť. Toto povolenie je potrebné len na účely vývoja, nikdy nie na bežné používanie."</string>
     <string name="permlab_broadcastPackageRemoved" msgid="2576333434893532475">"odoslanie vysielania o odstránení balíčka"</string>
@@ -259,8 +325,14 @@
     <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"Umožňuje aplikácii kontrolovať maximálny počet spustených procesov. Bežné aplikácie by toto nastavenie nemali nikdy potrebovať."</string>
     <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"vynútiť zavretie aplikácií na pozadí"</string>
     <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"Umožňuje aplikácii ovládať, či sa aktivity po presune na pozadie vždy ukončia. Bežné aplikácie by toto nastavenie nemali nikdy potrebovať."</string>
-    <string name="permlab_batteryStats" msgid="7863923071360031652">"zmena štatistických údajov o batérii"</string>
-    <string name="permdesc_batteryStats" msgid="6835186932305744068">"Umožňuje aplikácii zmeniť zhromaždené štatistické údaje o batérii. Bežné aplikácie toto nastavenie nepoužívajú."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"čítať štatistické údaje o batérii"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"Umožňuje aplikácii čítať aktuálne údaje nízkej úrovne o používaní batérie. Pomocou tejto funkcie môže aplikácia zistiť podrobnosti o tom, ktoré aplikácie používate."</string>
+    <string name="permlab_updateBatteryStats" msgid="3719689764536379557">"zmena štatistických údajov o batérii"</string>
+    <string name="permdesc_updateBatteryStats" msgid="6862817857178025002">"Umožňuje aplikácii zmeniť zhromaždené štatistické údaje o batérii. Bežné aplikácie toto nastavenie nepoužívajú."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"získať štatistické údaje o fungovaní aplikácií"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"Umožňuje aplikácii získať zhromaždené štatistické údaje o fungovaní aplikácií. Bežné aplikácie toto nastavenie nepoužívajú."</string>
+    <string name="permlab_updateAppOpsStats" msgid="8829097373851521505">"upraviť štatistické údaje o fungovaní aplikácií"</string>
+    <string name="permdesc_updateAppOpsStats" msgid="50784596594403483">"Umožňuje aplikácii zmeniť zhromaždené štatistické údaje o fungovaní aplikácií. Bežné aplikácie toto nastavenie nepoužívajú."</string>
     <string name="permlab_backup" msgid="470013022865453920">"Ovládať zálohovanie a obnovu systému"</string>
     <string name="permdesc_backup" msgid="6912230525140589891">"Umožňuje aplikácii ovládať mechanizmus na zálohovanie a obnovu údajov systému. Bežné aplikácie toto nastavenie nepoužívajú."</string>
     <string name="permlab_confirm_full_backup" msgid="5557071325804469102">"potvrdenie operácie úplnej zálohy alebo úplného obnovenia"</string>
@@ -268,11 +340,13 @@
     <string name="permlab_internalSystemWindow" msgid="2148563628140193231">"zobrazenie neoprávnených okien"</string>
     <string name="permdesc_internalSystemWindow" msgid="7458387759461466397">"Umožňuje aplikácii vytvárať okná, ktoré majú byť použité interným systémom používateľského rozhrania. Bežné aplikácie toto nastavenie nepoužívajú."</string>
     <string name="permlab_systemAlertWindow" msgid="3543347980839518613">"vykresliť cez ďalšie aplikácie"</string>
-    <string name="permdesc_systemAlertWindow" msgid="4460454022797261814">"Umožňuje aplikácii zobraziť okná s výstrahami systému. Niektoré okná s výstrahami môžu prevziať kontrolu nad celou obrazovkou."</string>
+    <string name="permdesc_systemAlertWindow" msgid="8584678381972820118">"Umožňuje aplikáciu vykresľovanie nad inými aplikáciami alebo súčasťami používateľského rozhrania. Táto funkcia môže zasahovať do vášho používania rozhrania inej aplikácie alebo meniť zobrazovaný obsah v iných aplikáciách."</string>
     <string name="permlab_setAnimationScale" msgid="2805103241153907174">"globálne zmeny rýchlosti animácie"</string>
     <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"Umožňuje aplikácii kedykoľvek globálne zmeniť rýchlosť animácie (rýchlejšia alebo pomalšia animácia)."</string>
     <string name="permlab_manageAppTokens" msgid="1286505717050121370">"spravovať tokeny aplikácií"</string>
     <string name="permdesc_manageAppTokens" msgid="8043431713014395671">"Umožňuje aplikácii vytvárať a spravovať svoje vlastné tokeny a obísť ich obvyklé Z-usporiadanie. Bežné aplikácie by toto nastavenie nemali nikdy potrebovať."</string>
+    <string name="permlab_freezeScreen" msgid="4708181184441880175">"zmraziť obrazovku"</string>
+    <string name="permdesc_freezeScreen" msgid="8558923789222670064">"Umožňuje aplikácii dočasne zmraziť obrazovku na prechod v režime celej obrazovky."</string>
     <string name="permlab_injectEvents" msgid="1378746584023586600">"používanie kláves a tlačidiel"</string>
     <string name="permdesc_injectEvents" product="tablet" msgid="206352565599968632">"Umožňuje aplikácii doručiť vlastné udalosti vstupu (stlačenie tlačidiel atď.) ďalším aplikáciám. Škodlivé aplikácie môžu pomocou toho prevziať kontrolu nad tabletom."</string>
     <string name="permdesc_injectEvents" product="default" msgid="653128057572326253">"Umožňuje aplikácii doručiť vlastné udalosti vstupu (stlačenie tlačidiel atď.) ďalším aplikáciám. Škodlivé aplikácie môžu pomocou tohto nastavenia prevziať kontrolu nad telefónom."</string>
@@ -314,8 +388,8 @@
     <string name="permlab_installPackages" msgid="2199128482820306924">"priamo inštalovať aplikácie"</string>
     <string name="permdesc_installPackages" msgid="5628530972548071284">"Umožňuje aplikácii nainštalovať nové alebo aktualizované balíky systému Android. Škodlivé aplikácie môžu použiť toto nastavenie na pridanie nových aplikácií s ľubovoľnými povoleniami."</string>
     <string name="permlab_clearAppCache" msgid="7487279391723526815">"odstrániť všetky údaje vyrovnávacej pamäte aplikácie"</string>
-    <string name="permdesc_clearAppCache" product="tablet" msgid="3523396284474042284">"Umožňuje aplikácii uvoľniť ukladací priestor v tablete odstránením súborov v adresári vyrovnávacej pamäte aplikácie. Prístup je veľmi obmedzený, väčšinou len pre systémový proces."</string>
-    <string name="permdesc_clearAppCache" product="default" msgid="5067988373366292186">"Umožňuje aplikácii uvoľniť ukladací priestor telefónu odstránením súborov v adresári vyrovnávacej pamäte aplikácie. Prístup je veľmi obmedzený, väčšinou len pre systémový proces."</string>
+    <string name="permdesc_clearAppCache" product="tablet" msgid="8974640871945434565">"Umožňuje aplikácii uvoľniť ukladací priestor v tablete odstránením súborov v adresároch iných aplikácií vo vyrovnávacej pamäti. To môže viesť k pomalšiemu spúšťaniu iných aplikácií, pretože musia znovu načítať svoje údaje."</string>
+    <string name="permdesc_clearAppCache" product="default" msgid="2459441021956436779">"Umožňuje aplikácii uvoľniť ukladací priestor v telefóne odstránením súborov v adresároch iných aplikácií vo vyrovnávacej pamäti. To môže viesť k pomalšiemu spúšťaniu iných aplikácií, pretože musia znovu načítať svoje údaje."</string>
     <string name="permlab_movePackage" msgid="3289890271645921411">"presúvať prostriedky aplikácií"</string>
     <string name="permdesc_movePackage" msgid="319562217778244524">"Umožňuje aplikácii presúvať prostriedky aplikácií medzi internými a externými médiami."</string>
     <string name="permlab_readLogs" msgid="6615778543198967614">"čítať citlivé údaje denníkov"</string>
@@ -376,21 +450,26 @@
     <string name="permdesc_accessLocationExtraCommands" msgid="5945166642335800763">"Umožňuje aplikácii pristupovať k ďalším príkazom poskytovateľa informácií o polohe. Aplikácii to môže umožniť zasahovať do činnosti systému GPS alebo iných zdrojov informácií o polohe."</string>
     <string name="permlab_installLocationProvider" msgid="6578101199825193873">"Oprávnenie na inštaláciu poskytovateľa polohy"</string>
     <string name="permdesc_installLocationProvider" msgid="9066146120470591509">"Vytváranie simulovaných zdrojov polohy na testovanie alebo inštalácia nového poskytovateľa informácií o polohe. Aplikácii to umožní nahradiť polohu a stav, ktoré vracajú iné zdroje informácií o polohe, ako sú napríklad systém GPS alebo poskytovatelia informácií o polohe."</string>
-    <string name="permlab_accessFineLocation" msgid="5885550969882561436">"presná poloha (pomocou GPS)"</string>
-    <string name="permdesc_accessFineLocation" product="tablet" msgid="8960597421469894181">"Prístup ku presným zdrojom informácií o polohe, ako je napríklad systém GPS, na tablete. Keď sú služby určovania polohy k dispozícii a sú zapnuté, toto povolenie umožňuje aplikácii určiť vašu približnú polohu."</string>
-    <string name="permdesc_accessFineLocation" product="default" msgid="239268765496141815">"Prístup ku presným zdrojom informácií o polohe, ako je napríklad systém GPS, na telefóne. Keď sú služby určovania polohy k dispozícii a sú zapnuté, toto povolenie umožňuje aplikácii určiť vašu približnú polohu."</string>
-    <string name="permlab_accessCoarseLocation" msgid="7422827215441638984">"približná poloha (pomocou siete)"</string>
-    <string name="permdesc_accessCoarseLocation" msgid="5383798877137640762">"Prístup ku približnej polohe určenej poskytovateľmi informácií o polohe prostredníctvom sieťových zdrojov, ako sú stanice BTS a siete Wi-Fi. Keď sú tieto služby určovania polohy k dispozícii a sú zapnuté, toto povolenie umožňuje aplikácii určiť vašu približnú polohu."</string>
+    <string name="permlab_accessFineLocation" msgid="1191898061965273372">"presná poloha (pomocou GPS a siete)"</string>
+    <string name="permdesc_accessFineLocation" msgid="5295047563564981250">"Umožňuje aplikácii získať vašu presnú polohu pomocou systému GPS (Global Positioning System) alebo zdrojov určenia polohy siete, napríklad mobilných veží a sietí Wi-Fi. Tieto služby využívajúce polohu musia byť na vašom zariadení zapnuté a dostupné, inak ich aplikácia nebude môcť využívať. Aplikácie môžu tieto služby využívať na určenie vašej polohy. Tieto služby môžu zvýšiť spotrebu batérie."</string>
+    <string name="permlab_accessCoarseLocation" msgid="4887895362354239628">"približná poloha (pomocou siete)"</string>
+    <string name="permdesc_accessCoarseLocation" msgid="2538200184373302295">"Umožňuje aplikácii získať vašu približnú polohu. Táto poloha je odvodená zo služieb využívajúcich polohu pomocou zdrojov určenia polohy siete, napríklad mobilných veží a sietí Wi-Fi. Tieto služby využívajúce polohu musia byť na vašom zariadení zapnuté a dostupné, inak ich aplikácia nebude môcť využívať. Aplikácie môžu tieto služby využívať na určenie vašej približnej polohy."</string>
     <string name="permlab_accessSurfaceFlinger" msgid="2363969641792388947">"prístup k službe SurfaceFlinger"</string>
     <string name="permdesc_accessSurfaceFlinger" msgid="1041619516733293551">"Umožňuje aplikácii používať funkcie nízkej úrovne aplikácie SurfaceFlinger."</string>
     <string name="permlab_readFrameBuffer" msgid="6690504248178498136">"čítanie vyrovnávacej pamäte snímok"</string>
     <string name="permdesc_readFrameBuffer" msgid="4937405521809454680">"Umožňuje aplikácii čítať obsah vyrovnávacej pamäte snímok."</string>
+    <string name="permlab_configureWifiDisplay" msgid="5595661694746742168">"konfigurovať displeje cez sieť Wi-Fi"</string>
+    <string name="permdesc_configureWifiDisplay" msgid="7916815158690218065">"Umožňuje aplikácii konfigurovať displeje a pripojiť sa k nim cez siete Wi-Fi."</string>
+    <string name="permlab_controlWifiDisplay" msgid="393641276723695496">"ovládať displeje cez sieť Wi-Fi"</string>
+    <string name="permdesc_controlWifiDisplay" msgid="4543912292681826986">"Umožňuje aplikácii ovládať základné funkcie displejov cez siete Wi-Fi."</string>
     <string name="permlab_modifyAudioSettings" msgid="6095859937069146086">"zmeny vašich nastavení zvuku"</string>
     <string name="permdesc_modifyAudioSettings" msgid="3522565366806248517">"Umožňuje aplikácii upraviť globálne nastavenia zvuku, ako je hlasitosť, alebo určiť, z ktorého reproduktora bude zvuk vychádzať."</string>
     <string name="permlab_recordAudio" msgid="3876049771427466323">"záznam zvuku"</string>
     <string name="permdesc_recordAudio" msgid="4906839301087980680">"Umožňuje aplikácii zaznamenávať zvuk pomocou mikrofónu. Toto povolenie umožňuje aplikácii zaznamenávať zvuk kedykoľvek bez vášho potvrdenia."</string>
     <string name="permlab_camera" msgid="3616391919559751192">"snímanie fotografií a natáčanie videí"</string>
     <string name="permdesc_camera" msgid="8497216524735535009">"Umožňuje aplikácii fotografovať a nahrávať videá pomocou fotoaparátu. Toto povolenie umožňuje aplikácii používať fotoaparát kedykoľvek a bez vášho potvrdenia."</string>
+    <string name="permlab_cameraDisableTransmitLed" msgid="2651072630501126222">"Zakázať indikátor LED prenosu pri používaní fotoaparátu"</string>
+    <string name="permdesc_cameraDisableTransmitLed" msgid="4764585465480295341">"Umožňuje v predinštalovanej systémovej aplikácii zakázať indikátor LED používania fotoaparátu."</string>
     <string name="permlab_brick" product="tablet" msgid="2961292205764488304">"trvalé zakázanie tabletu"</string>
     <string name="permlab_brick" product="default" msgid="8337817093326370537">"trvalé vypnutie telefónu"</string>
     <string name="permdesc_brick" product="tablet" msgid="4334818808001699530">"Umožňuje aplikácii natrvalo zakázať celý tablet. Toto je veľmi nebezpečné nastavenie."</string>
@@ -498,7 +577,7 @@
     <string name="permlab_bluetoothAdmin" msgid="6006967373935926659">"pristupovať k nastaveniam Bluetooth"</string>
     <string name="permdesc_bluetoothAdmin" product="tablet" msgid="6921177471748882137">"Umožňuje aplikácii konfigurovať miestny tablet s rozhraním Bluetooth a vyhľadávať a spárovať vzdialené zariadenia."</string>
     <string name="permdesc_bluetoothAdmin" product="default" msgid="8931682159331542137">"Umožňuje aplikácii konfigurovať miestny telefón s rozhraním Bluetooth, vyhľadávať a spárovať vzdialené zariadenia."</string>
-    <string name="permlab_accessWimaxState" msgid="7436749103151096452">"Zobraziť pripojenia siete WiMAX"</string>
+    <string name="permlab_accessWimaxState" msgid="4195907010610205703">"pripojiť a odpojiť od WiMAX"</string>
     <string name="permdesc_accessWimaxState" msgid="6360102877261978887">"Umožňuje aplikácii určiť, či je povolený štandard WiMAX, a tiež informácie o všetkých pripojených sieťach WiMAX."</string>
     <string name="permlab_changeWimaxState" msgid="2405042267131496579">"Zmeniť stav siete WiMAX"</string>
     <string name="permdesc_changeWimaxState" product="tablet" msgid="3156456504084201805">"Umožňuje aplikácii pripojiť tablet k sieťam WiMAX a odpojiť ho od nich."</string>
@@ -522,11 +601,11 @@
     <string name="permdesc_subscribedFeedsWrite" msgid="6928930188826089413">"Umožňuje aplikácii upraviť vaše aktuálne synchronizované informačné kanály. Škodlivé aplikácie môžu synchronizované informačné kanály zmeniť."</string>
     <string name="permlab_readDictionary" msgid="4107101525746035718">"čítať výrazy pridané do slovníka"</string>
     <string name="permdesc_readDictionary" msgid="659614600338904243">"Umožňuje aplikácii čítať všetky slová, názvy a frázy, ktoré mohol používateľ uložiť do svojho slovníka."</string>
-    <string name="permlab_writeDictionary" msgid="2296383164914812772">"zapisovať do slovníka definovaného používateľom"</string>
+    <string name="permlab_writeDictionary" msgid="2183110402314441106">"pridať slová do slovníka definovaného používateľom"</string>
     <string name="permdesc_writeDictionary" msgid="8185385716255065291">"Umožňuje aplikácii zapisovať nové slová do používateľského slovníka."</string>
     <string name="permlab_sdcardRead" product="nosdcard" msgid="8235341515605559677">"testovanie prístupu do chráneného ukladacieho priestoru"</string>
     <string name="permlab_sdcardRead" product="default" msgid="8235341515605559677">"testovanie prístupu do chráneného ukladacieho priestoru"</string>
-    <string name="permdesc_sdcardRead" product="nosdcard" msgid="5791957130190763289">"Umožňuje aplikácii testovať povolenie pre ukladací priestor USB, ktorý bude k dispozícii v budúcich zariadeniach."</string>
+    <string name="permdesc_sdcardRead" product="nosdcard" msgid="3642473292348132072">"Umožňuje aplikácii testovať povolenie pre úložisko USB, ktoré bude k dispozícii na zariadeniach."</string>
     <string name="permdesc_sdcardRead" product="default" msgid="5914402684685848828">"Umožňuje aplikácii testovať povolenie pre kartu SD, ktorá bude k dispozícii v budúcich zariadeniach."</string>
     <string name="permlab_sdcardWrite" product="nosdcard" msgid="8485979062254666748">"upraviť alebo odstrániť obsah úložiska USB"</string>
     <string name="permlab_sdcardWrite" product="default" msgid="8805693630050458763">"úprava alebo odstránenie obsahu na karte SD"</string>
@@ -534,6 +613,8 @@
     <string name="permdesc_sdcardWrite" product="default" msgid="4337417790936632090">"Umožňuje aplikácii zápis na kartu SD."</string>
     <string name="permlab_mediaStorageWrite" product="default" msgid="6859839199706879015">"úprava alebo odstránenie obsahu interného ukladacieho priestoru média"</string>
     <string name="permdesc_mediaStorageWrite" product="default" msgid="8189160597698529185">"Umožňuje aplikácii zmeniť obsah interného ukladacieho priestoru média."</string>
+    <string name="permlab_sdcardAccessAll" msgid="8150613823900460576">"pristupovať k externému ukladaciemu priestoru pre všetkých používateľov"</string>
+    <string name="permdesc_sdcardAccessAll" msgid="3215208357415891320">"Umožňuje aplikácii pristupovať k externému ukladaciemu priestoru pre všetkých používateľov."</string>
     <string name="permlab_cache_filesystem" msgid="5656487264819669824">"pristupovať do súborového systému vyrovnávacej pamäte"</string>
     <string name="permdesc_cache_filesystem" msgid="5578967642265550955">"Umožňuje aplikácii čítať a zapisovať do súborového systému vyrovnávacej pamäte."</string>
     <string name="permlab_use_sip" msgid="5986952362795870502">"uskutočňovať a prijímať internetové hovory"</string>
@@ -544,6 +625,10 @@
     <string name="permdesc_manageNetworkPolicy" msgid="7537586771559370668">"Umožňuje aplikácii spravovať pravidlá siete a definovať pravidlá pre konkrétnu aplikáciu."</string>
     <string name="permlab_modifyNetworkAccounting" msgid="5088217309088729650">"zmeniť kontrolu používania siete"</string>
     <string name="permdesc_modifyNetworkAccounting" msgid="5443412866746198123">"Umožňuje aplikácii upraviť používanie siete jednotlivými aplikáciami. Bežné aplikácie toto nastavenie nepoužívajú."</string>
+    <string name="permlab_accessNotifications" msgid="7673416487873432268">"prístup k upozorneniam"</string>
+    <string name="permdesc_accessNotifications" msgid="458457742683431387">"Umožňuje aplikácii načítať, zobrazovať a mazať upozornenia vrátane tých, ktoré boli uverejnené inými aplikáciami."</string>
+    <string name="permlab_bindNotificationListenerService" msgid="7057764742211656654">"naviazanie sa na službu na počúvanie upozornení"</string>
+    <string name="permdesc_bindNotificationListenerService" msgid="985697918576902986">"Umožňuje držiteľovi naviazať sa na najvyššiu úroveň služby na počúvanie upozornení. Bežné aplikácie by toto nastavenie nemali nikdy požadovať."</string>
     <string name="policylab_limitPassword" msgid="4497420728857585791">"Nastaviť pravidlá pre heslo"</string>
     <string name="policydesc_limitPassword" msgid="3252114203919510394">"Ovládanie dĺžky hesiel na odomknutie obrazovky a v nich používané znaky."</string>
     <string name="policylab_watchLogin" msgid="914130646942199503">"Sledovať pokusy o odomknutie obrazovky"</string>
@@ -564,8 +649,10 @@
     <string name="policydesc_encryptedStorage" msgid="2637732115325316992">"Vyžadovať šifrovanie uložených údajov aplikácií."</string>
     <string name="policylab_disableCamera" msgid="6395301023152297826">"Zakázať fotoaparáty"</string>
     <string name="policydesc_disableCamera" msgid="2306349042834754597">"Zakázať používanie všetkých fotoaparátov zariadenia."</string>
+    <string name="policylab_disableKeyguardFeatures" msgid="266329104542638802">"Zákaz funkcie v zámke kláves."</string>
+    <string name="policydesc_disableKeyguardFeatures" msgid="3467082272186534614">"Zabrániť používaniu niektorých funkcií v zámke klávesov."</string>
   <string-array name="phoneTypes">
-    <item msgid="8901098336658710359">"Domovská stránka"</item>
+    <item msgid="8901098336658710359">"Domov"</item>
     <item msgid="869923650527136615">"Mobil"</item>
     <item msgid="7897544654242874543">"Práca"</item>
     <item msgid="1103601433382158155">"Fax do práce"</item>
@@ -575,19 +662,19 @@
     <item msgid="9192514806975898961">"Vlastné"</item>
   </string-array>
   <string-array name="emailAddressTypes">
-    <item msgid="8073994352956129127">"Domovská stránka"</item>
+    <item msgid="8073994352956129127">"Domov"</item>
     <item msgid="7084237356602625604">"Práca"</item>
     <item msgid="1112044410659011023">"Iné"</item>
     <item msgid="2374913952870110618">"Vlastné"</item>
   </string-array>
   <string-array name="postalAddressTypes">
-    <item msgid="6880257626740047286">"Domovská stránka"</item>
+    <item msgid="6880257626740047286">"Domov"</item>
     <item msgid="5629153956045109251">"Práca"</item>
     <item msgid="4966604264500343469">"Iné"</item>
     <item msgid="4932682847595299369">"Vlastné"</item>
   </string-array>
   <string-array name="imAddressTypes">
-    <item msgid="1738585194601476694">"Domovská stránka"</item>
+    <item msgid="1738585194601476694">"Domov"</item>
     <item msgid="1359644565647383708">"Práca"</item>
     <item msgid="7868549401053615677">"Iné"</item>
     <item msgid="3145118944639869809">"Vlastné"</item>
@@ -608,7 +695,7 @@
     <item msgid="1648797903785279353">"Jabber"</item>
   </string-array>
     <string name="phoneTypeCustom" msgid="1644738059053355820">"Vlastné"</string>
-    <string name="phoneTypeHome" msgid="2570923463033985887">"Domovská stránka"</string>
+    <string name="phoneTypeHome" msgid="2570923463033985887">"Domov"</string>
     <string name="phoneTypeMobile" msgid="6501463557754751037">"Mobil"</string>
     <string name="phoneTypeWork" msgid="8863939667059911633">"Práca"</string>
     <string name="phoneTypeFaxWork" msgid="3517792160008890912">"Fax do práce"</string>
@@ -633,16 +720,16 @@
     <string name="eventTypeAnniversary" msgid="3876779744518284000">"Výročie"</string>
     <string name="eventTypeOther" msgid="7388178939010143077">"Iné"</string>
     <string name="emailTypeCustom" msgid="8525960257804213846">"Vlastné"</string>
-    <string name="emailTypeHome" msgid="449227236140433919">"Domovská stránka"</string>
+    <string name="emailTypeHome" msgid="449227236140433919">"Domov"</string>
     <string name="emailTypeWork" msgid="3548058059601149973">"Práca"</string>
     <string name="emailTypeOther" msgid="2923008695272639549">"Iné"</string>
     <string name="emailTypeMobile" msgid="119919005321166205">"Mobil"</string>
     <string name="postalTypeCustom" msgid="8903206903060479902">"Vlastné"</string>
-    <string name="postalTypeHome" msgid="8165756977184483097">"Domovská stránka"</string>
+    <string name="postalTypeHome" msgid="8165756977184483097">"Domov"</string>
     <string name="postalTypeWork" msgid="5268172772387694495">"Práca"</string>
     <string name="postalTypeOther" msgid="2726111966623584341">"Iné"</string>
     <string name="imTypeCustom" msgid="2074028755527826046">"Vlastné"</string>
-    <string name="imTypeHome" msgid="6241181032954263892">"Domovská stránka"</string>
+    <string name="imTypeHome" msgid="6241181032954263892">"Domov"</string>
     <string name="imTypeWork" msgid="1371489290242433090">"Práca"</string>
     <string name="imTypeOther" msgid="5377007495735915478">"Iné"</string>
     <string name="imProtocolCustom" msgid="6919453836618749992">"Vlastné"</string>
@@ -674,7 +761,7 @@
     <string name="relationTypeSister" msgid="1735983554479076481">"Sestra"</string>
     <string name="relationTypeSpouse" msgid="394136939428698117">"Manžel(-ka)"</string>
     <string name="sipAddressTypeCustom" msgid="2473580593111590945">"Vlastné"</string>
-    <string name="sipAddressTypeHome" msgid="6093598181069359295">"Domovská stránka"</string>
+    <string name="sipAddressTypeHome" msgid="6093598181069359295">"Domov"</string>
     <string name="sipAddressTypeWork" msgid="6920725730797099047">"Práca"</string>
     <string name="sipAddressTypeOther" msgid="4408436162950119849">"Iné"</string>
     <string name="keyguard_password_enter_pin_code" msgid="3037685796058495017">"Zadajte kód PIN"</string>
@@ -699,10 +786,10 @@
     <string name="lockscreen_password_wrong" msgid="5737815393253165301">"Skúsiť znova"</string>
     <string name="faceunlock_multiple_failures" msgid="754137583022792429">"Prekročili ste maximálny povolený počet pokusov o odomknutie tvárou"</string>
     <string name="lockscreen_plugged_in" msgid="8057762828355572315">"Prebieha nabíjanie, <xliff:g id="NUMBER">%d</xliff:g> <xliff:g id="PERCENT">%%</xliff:g>"</string>
-    <string name="lockscreen_charged" msgid="4938930459620989972">"Nabité."</string>
+    <string name="lockscreen_charged" msgid="321635745684060624">"Nabitá batéria"</string>
     <string name="lockscreen_battery_short" msgid="4477264849386850266">"<xliff:g id="NUMBER">%d</xliff:g> <xliff:g id="PERCENT">%%</xliff:g>"</string>
     <string name="lockscreen_low_battery" msgid="1482873981919249740">"Pripojte nabíjačku."</string>
-    <string name="lockscreen_missing_sim_message_short" msgid="7381499217732227295">"Nie je vložená karta SIM."</string>
+    <string name="lockscreen_missing_sim_message_short" msgid="5099439277819215399">"Nie je vložená karta SIM"</string>
     <string name="lockscreen_missing_sim_message" product="tablet" msgid="151659196095791474">"V tablete nie je žiadna karta SIM."</string>
     <string name="lockscreen_missing_sim_message" product="default" msgid="2186920585695169078">"V telefóne nie je žiadna karta SIM."</string>
     <string name="lockscreen_missing_sim_instructions" msgid="5372787138023272615">"Vložte kartu SIM."</string>
@@ -747,6 +834,27 @@
     <string name="lockscreen_access_pattern_cleared" msgid="5583479721001639579">"Bezpečnostný vzor bol vymazaný"</string>
     <string name="lockscreen_access_pattern_cell_added" msgid="6756031208359292487">"Bunka bola pridaná"</string>
     <string name="lockscreen_access_pattern_detected" msgid="4988730895554057058">"Bezpečnostný vzor bol dokončený"</string>
+    <string name="keyguard_accessibility_widget_changed" msgid="5678624624681400191">"%1$s. Miniaplikácia %2$d z %3$d."</string>
+    <string name="keyguard_accessibility_add_widget" msgid="8273277058724924654">"Pridať miniaplikáciu."</string>
+    <string name="keyguard_accessibility_widget_empty_slot" msgid="1281505703307930757">"Prázdne"</string>
+    <string name="keyguard_accessibility_unlock_area_expanded" msgid="2278106022311170299">"Oblasť na odomknutie bola rozšírená."</string>
+    <string name="keyguard_accessibility_unlock_area_collapsed" msgid="6366992066936076396">"Oblasť na odomknutie bola zúžená."</string>
+    <string name="keyguard_accessibility_widget" msgid="6527131039741808240">"Miniaplikácia <xliff:g id="WIDGET_INDEX">%1$s</xliff:g>."</string>
+    <string name="keyguard_accessibility_user_selector" msgid="1226798370913698896">"Výber používateľa"</string>
+    <string name="keyguard_accessibility_status" msgid="8008264603935930611">"Stav"</string>
+    <string name="keyguard_accessibility_camera" msgid="8904231194181114603">"Fotoaparát"</string>
+    <string name="keygaurd_accessibility_media_controls" msgid="262209654292161806">"Ovládacie prvky médií"</string>
+    <string name="keyguard_accessibility_widget_reorder_start" msgid="8736853615588828197">"Zmena usporiadania miniaplikácií sa začala."</string>
+    <string name="keyguard_accessibility_widget_reorder_end" msgid="7170190950870468320">"Zmena usporiadania miniaplikácií sa skončila."</string>
+    <string name="keyguard_accessibility_widget_deleted" msgid="4426204263929224434">"Miniaplikácia <xliff:g id="WIDGET_INDEX">%1$s</xliff:g> bola odstránená."</string>
+    <string name="keyguard_accessibility_expand_lock_area" msgid="519859720934178024">"Rozšíriť oblasť na odomknutie."</string>
+    <string name="keyguard_accessibility_slide_unlock" msgid="2959928478764697254">"Odomknutie prejdením prstom."</string>
+    <string name="keyguard_accessibility_pattern_unlock" msgid="1490840706075246612">"Odomknutie vzorom."</string>
+    <string name="keyguard_accessibility_face_unlock" msgid="4817282543351718535">"Odomknutie tvárou."</string>
+    <string name="keyguard_accessibility_pin_unlock" msgid="2469687111784035046">"Odomknutie kódom PIN."</string>
+    <string name="keyguard_accessibility_password_unlock" msgid="7675777623912155089">"Odomknutie heslom."</string>
+    <string name="keyguard_accessibility_pattern_area" msgid="7679891324509597904">"Oblasť na zadanie bezpečnostného vzoru."</string>
+    <string name="keyguard_accessibility_slide_area" msgid="6736064494019979544">"Oblasť na prejdenie prstom."</string>
     <string name="password_keyboard_label_symbol_key" msgid="992280756256536042">"?123"</string>
     <string name="password_keyboard_label_alpha_key" msgid="8001096175167485649">"ABC"</string>
     <string name="password_keyboard_label_alt_key" msgid="1284820942620288678">"ALT"</string>
@@ -762,7 +870,10 @@
     <string name="factorytest_reboot" msgid="6320168203050791643">"Reštartovať"</string>
     <string name="js_dialog_title" msgid="1987483977834603872">"Stránka „<xliff:g id="TITLE">%s</xliff:g>“ uvádza:"</string>
     <string name="js_dialog_title_default" msgid="6961903213729667573">"JavaScript"</string>
-    <string name="js_dialog_before_unload" msgid="730366588032430474">"Chcete opustiť túto stránku?"\n\n"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"Ak chcete pokračovať, dotknite sa tlačidla OK. Ak chcete zostať na stránke, dotknite sa tlačidla Zrušiť."</string>
+    <string name="js_dialog_before_unload_title" msgid="2619376555525116593">"Potvrďte prechod"</string>
+    <string name="js_dialog_before_unload_positive_button" msgid="3112752010600484130">"Opustiť stránku"</string>
+    <string name="js_dialog_before_unload_negative_button" msgid="5614861293026099715">"Zostať na tejto strane"</string>
+    <string name="js_dialog_before_unload" msgid="3468816357095378590">"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"Naozaj chcete túto stránku opustiť?"</string>
     <string name="save_password_label" msgid="6860261758665825069">"Potvrdiť"</string>
     <string name="double_tap_toast" msgid="4595046515400268881">"Tip: Dvojitým klepnutím môžete zobrazenie priblížiť alebo oddialiť."</string>
     <string name="autofill_this_form" msgid="4616758841157816676">"Aut.dop."</string>
@@ -910,6 +1021,18 @@
     <string name="weeks" msgid="6509623834583944518">"týždne"</string>
     <string name="year" msgid="4001118221013892076">"rok"</string>
     <string name="years" msgid="6881577717993213522">"roky"</string>
+  <plurals name="duration_seconds">
+    <item quantity="one" msgid="6962015528372969481">"1 s"</item>
+    <item quantity="other" msgid="1886107766577166786">"<xliff:g id="COUNT">%d</xliff:g> s"</item>
+  </plurals>
+  <plurals name="duration_minutes">
+    <item quantity="one" msgid="4915414002546085617">"1 min."</item>
+    <item quantity="other" msgid="3165187169224908775">"<xliff:g id="COUNT">%d</xliff:g> min."</item>
+  </plurals>
+  <plurals name="duration_hours">
+    <item quantity="one" msgid="8917467491248809972">"1 hod."</item>
+    <item quantity="other" msgid="3863962854246773930">"<xliff:g id="COUNT">%d</xliff:g> hod."</item>
+  </plurals>
     <string name="VideoView_error_title" msgid="3534509135438353077">"Problém s videom"</string>
     <string name="VideoView_error_text_invalid_progressive_playback" msgid="3186670335938670444">"Je nám ľúto, ale toto video sa nedá streamovať do tohto zariadenia."</string>
     <string name="VideoView_error_text_unknown" msgid="3450439155187810085">"Toto video nie je možné prehrať."</string>
@@ -930,20 +1053,22 @@
     <string name="copyUrl" msgid="2538211579596067402">"Skopírovať adresu URL"</string>
     <string name="selectTextMode" msgid="1018691815143165326">"Vybrať text"</string>
     <string name="textSelectionCABTitle" msgid="5236850394370820357">"Výber textu"</string>
-    <string name="addToDictionary" msgid="9090375111134433012">"pridať do slovníka"</string>
-    <string name="deleteText" msgid="7070985395199629156">"odstrániť"</string>
+    <string name="addToDictionary" msgid="4352161534510057874">"Pridať do slovníka"</string>
+    <string name="deleteText" msgid="6979668428458199034">"Odstrániť"</string>
     <string name="inputMethod" msgid="1653630062304567879">"Metóda vstupu"</string>
     <string name="editTextMenuTitle" msgid="4909135564941815494">"Operácie s textom"</string>
     <string name="low_internal_storage_view_title" msgid="5576272496365684834">"Nedostatok ukladacieho priestoru"</string>
     <string name="low_internal_storage_view_text" msgid="6640505817617414371">"Niektoré systémové funkcie nemusia fungovať"</string>
+    <string name="app_running_notification_title" msgid="8718335121060787914">"Aplikácia <xliff:g id="APP_NAME">%1$s</xliff:g> je spustená"</string>
+    <string name="app_running_notification_text" msgid="4653586947747330058">"Dotykom si zobrazíte viac informácií alebo zastavíte aplikáciu."</string>
     <string name="ok" msgid="5970060430562524910">"OK"</string>
     <string name="cancel" msgid="6442560571259935130">"Zrušiť"</string>
     <string name="yes" msgid="5362982303337969312">"OK"</string>
     <string name="no" msgid="5141531044935541497">"Zrušiť"</string>
     <string name="dialog_alert_title" msgid="2049658708609043103">"Pozor"</string>
     <string name="loading" msgid="7933681260296021180">"Prebieha načítavanie..."</string>
-    <string name="capital_on" msgid="1544682755514494298">"ZAPNUTÉ"</string>
-    <string name="capital_off" msgid="6815870386972805832">"VYPNUTÉ"</string>
+    <string name="capital_on" msgid="1544682755514494298">"I"</string>
+    <string name="capital_off" msgid="6815870386972805832">"O"</string>
     <string name="whichApplication" msgid="4533185947064773386">"Dokončiť akciu pomocou aplikácie"</string>
     <string name="alwaysUse" msgid="4583018368000610438">"Použiť ako predvolené nastavenie pre túto akciu."</string>
     <string name="clearDefaultHintMsg" msgid="3252584689512077257">"Vymazať predvolené nastavenia v sekcii Nastavenia systému &gt; Aplikácie &gt; Prevzaté položky."</string>
@@ -997,11 +1122,11 @@
     <string name="volume_icon_description_incall" msgid="8890073218154543397">"Hlasitosť hovoru"</string>
     <string name="volume_icon_description_media" msgid="4217311719665194215">"Hlasitosť médií"</string>
     <string name="volume_icon_description_notification" msgid="7044986546477282274">"Hlasitosť upozornení"</string>
-    <string name="ringtone_default" msgid="3789758980357696936">"Predvolený vyzváňací tón"</string>
-    <string name="ringtone_default_with_actual" msgid="8129563480895990372">"Predvolený vyzváňací tón (<xliff:g id="ACTUAL_RINGTONE">%1$s</xliff:g>)"</string>
-    <string name="ringtone_silent" msgid="4440324407807468713">"Tichý"</string>
+    <string name="ringtone_default" msgid="3789758980357696936">"Predvolený tón zvonenia"</string>
+    <string name="ringtone_default_with_actual" msgid="8129563480895990372">"Predvolený tón zvonenia (<xliff:g id="ACTUAL_RINGTONE">%1$s</xliff:g>)"</string>
+    <string name="ringtone_silent" msgid="7937634392408977062">"Žiadny"</string>
     <string name="ringtone_picker_title" msgid="3515143939175119094">"Vyzváňacie tóny"</string>
-    <string name="ringtone_unknown" msgid="5477919988701784788">"Neznámy vyzváňací tón"</string>
+    <string name="ringtone_unknown" msgid="5477919988701784788">"Neznámy tón zvonenia"</string>
   <plurals name="wifi_available">
     <item quantity="one" msgid="6654123987418168693">"K dispozícii je sieť Wi-Fi"</item>
     <item quantity="other" msgid="4192424489168397386">"K dispozícii sú siete Wi-Fi."</item>
@@ -1011,7 +1136,8 @@
     <item quantity="other" msgid="7915895323644292768">"K dispozícii sú verejné siete Wi-Fi"</item>
   </plurals>
     <string name="wifi_available_sign_in" msgid="4029489716605255386">"Prihlásenie sa do siete Wi-Fi"</string>
-    <!-- no translation found for wifi_available_sign_in_detailed (6797764740339907572) -->
+    <string name="network_available_sign_in" msgid="8495155593358054676">"Prihláste sa do siete"</string>
+    <!-- no translation found for network_available_sign_in_detailed (8000081941447976118) -->
     <skip />
     <string name="wifi_watchdog_network_disabled" msgid="7904214231651546347">"Nepodarilo sa pripojiť k sieti Wi-Fi"</string>
     <string name="wifi_watchdog_network_disabled_detailed" msgid="5548780776418332675">" má nekvalitné internetové pripojenie."</string>
@@ -1028,11 +1154,22 @@
     <string name="wifi_p2p_to_message" msgid="248968974522044099">"Komu:"</string>
     <string name="wifi_p2p_enter_pin_message" msgid="5920929550367828970">"Zadajte požadovaný kód PIN:"</string>
     <string name="wifi_p2p_show_pin_message" msgid="8530563323880921094">"PIN:"</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="tablet" msgid="8012981257742232475">"Tablet bude počas pripojenia k zariadeniu <xliff:g id="DEVICE_NAME">%1$s</xliff:g> od siete Wi-Fi dočasne odpojený."</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="default" msgid="7363907213787469151">"Telefón bude počas pripojenia k zariadeniu <xliff:g id="DEVICE_NAME">%1$s</xliff:g> od siete Wi-Fi dočasne odpojený."</string>
     <string name="select_character" msgid="3365550120617701745">"Vkladanie znakov"</string>
     <string name="sms_control_title" msgid="7296612781128917719">"Odosielanie správ SMS"</string>
     <string name="sms_control_message" msgid="3867899169651496433">"Aplikácia &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; posiela veľký počet správ SMS. Chcete tejto aplikácií povoliť, aby aj naďalej posielala správy?"</string>
     <string name="sms_control_yes" msgid="3663725993855816807">"Povoliť"</string>
     <string name="sms_control_no" msgid="625438561395534982">"Odmietnuť"</string>
+    <string name="sms_short_code_confirm_message" msgid="1645436466285310855">"&lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; chce odoslať správu na adresu &lt;b&gt;<xliff:g id="DEST_ADDRESS">%2$s</xliff:g>&lt;/b&gt;."</string>
+    <string name="sms_short_code_details" msgid="3492025719868078457"><font fgcolor="#ffffb060">"Môžu sa účtovať poplatky"</font>" na váš mobilný účet."</string>
+    <string name="sms_premium_short_code_details" msgid="5523826349105123687"><font fgcolor="#ffffb060">"Budú sa účtovať poplatky na váš mobilný účet."</font></string>
+    <string name="sms_short_code_confirm_allow" msgid="4458878637111023413">"Odoslať"</string>
+    <string name="sms_short_code_confirm_deny" msgid="2927389840209170706">"Zrušiť"</string>
+    <string name="sms_short_code_remember_choice" msgid="5289538592272218136">"Zapamätať si voľbu"</string>
+    <string name="sms_short_code_remember_undo_instruction" msgid="4960944133052287484">"Zmena v časti Nastavenia &gt; Aplikácie"</string>
+    <string name="sms_short_code_confirm_always_allow" msgid="3241181154869493368">"Vždy povoliť"</string>
+    <string name="sms_short_code_confirm_never_allow" msgid="446992765774269673">"Nikdy nepovoliť"</string>
     <string name="sim_removed_title" msgid="6227712319223226185">"Karta SIM bola odobraná"</string>
     <string name="sim_removed_message" msgid="2333164559970958645">"Mobilná sieť nebude k dispozícii, kým nevložíte platnú kartu SIM a zariadenie nereštartujete."</string>
     <string name="sim_done_button" msgid="827949989369963775">"Hotovo"</string>
@@ -1043,12 +1180,10 @@
     <string name="date_picker_dialog_title" msgid="5879450659453782278">"Nastaviť dátum"</string>
     <string name="date_time_set" msgid="5777075614321087758">"Nastaviť"</string>
     <string name="date_time_done" msgid="2507683751759308828">"Hotovo"</string>
-    <string name="default_permission_group" msgid="2690160991405646128">"Predvolené"</string>
-    <string name="no_permissions" msgid="7283357728219338112">"Nevyžadujú sa žiadne oprávnenia."</string>
-    <string name="perms_hide" msgid="7283915391320676226"><b>"Skryť"</b></string>
-    <string name="perms_show_all" msgid="2671791163933091180"><b>"Zobraziť všetky"</b></string>
-    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff900000">"NOVINKA: "</font></string>
+    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff33b5e5">"NOVINKA: "</font></string>
     <string name="perms_description_app" msgid="5139836143293299417">"Poskytuje aplikácia <xliff:g id="APP_NAME">%1$s</xliff:g>."</string>
+    <string name="no_permissions" msgid="7283357728219338112">"Nevyžadujú sa žiadne oprávnenia."</string>
+    <string name="perm_costs_money" msgid="4902470324142151116">"môžu sa vám účtovať poplatky"</string>
     <string name="usb_storage_activity_title" msgid="4465055157209648641">"Veľkokapacitné úložisko USB"</string>
     <string name="usb_storage_title" msgid="5901459041398751495">"Zariadenie USB pripojené"</string>
     <string name="usb_storage_message" product="nosdcard" msgid="3308538094316477839">"Zariadenie ste pripojili k počítaču pomocou portu USB. Ak chcete kopírovať súbory z počítača do ukladacieho priestoru USB v zariadení so systémom Android alebo naopak, dotknite sa tlačidla nižšie."</string>
@@ -1143,10 +1278,15 @@
     <string name="accessibility_binding_label" msgid="4148120742096474641">"Zjednodušenie"</string>
     <string name="wallpaper_binding_label" msgid="1240087844304687662">"Tapeta"</string>
     <string name="chooser_wallpaper" msgid="7873476199295190279">"Zmeniť tapetu"</string>
+    <string name="notification_listener_binding_label" msgid="2014162835481906429">"Aplikácia na počúvanie upozornení"</string>
     <string name="vpn_title" msgid="19615213552042827">"Sieť VPN je aktivovaná"</string>
     <string name="vpn_title_long" msgid="6400714798049252294">"Aplikáciu <xliff:g id="APP">%s</xliff:g> aktivovala sieť VPN"</string>
     <string name="vpn_text" msgid="3011306607126450322">"Dotykom môžete spravovať sieť."</string>
     <string name="vpn_text_long" msgid="6407351006249174473">"Pripojené k relácii <xliff:g id="SESSION">%s</xliff:g>. Po dotyku môžete sieť spravovať."</string>
+    <string name="vpn_lockdown_connecting" msgid="6443438964440960745">"Prebieha pripájanie k vždy zapnutej sieti VPN..."</string>
+    <string name="vpn_lockdown_connected" msgid="8202679674819213931">"Pripojenie k vždy zapnutej sieti VPN"</string>
+    <string name="vpn_lockdown_error" msgid="6009249814034708175">"Chyba vždy zapnutej siete VPN"</string>
+    <string name="vpn_lockdown_config" msgid="6415899150671537970">"Dotykom spustíte konfiguráciu"</string>
     <string name="upload_file" msgid="2897957172366730416">"Zvoliť súbor"</string>
     <string name="no_file_chosen" msgid="6363648562170759465">"Nie je vybratý žiadny súbor"</string>
     <string name="reset" msgid="2448168080964209908">"Obnoviť"</string>
@@ -1185,6 +1325,8 @@
     <string name="share" msgid="1778686618230011964">"Zdieľať"</string>
     <string name="find" msgid="4808270900322985960">"Nájsť"</string>
     <string name="websearch" msgid="4337157977400211589">"Hľadať na webe"</string>
+    <string name="find_next" msgid="5742124618942193978">"Nájsť ďalšiu"</string>
+    <string name="find_previous" msgid="2196723669388360506">"Nájsť predchádzajúcu"</string>
     <string name="gpsNotifTicker" msgid="5622683912616496172">"Žiadosť o informácie o polohe od používateľa <xliff:g id="NAME">%s</xliff:g>"</string>
     <string name="gpsNotifTitle" msgid="5446858717157416839">"Žiadosť o informácie o polohe"</string>
     <string name="gpsNotifMessage" msgid="1374718023224000702">"Žiadosť od používateľa <xliff:g id="NAME">%1$s</xliff:g> (<xliff:g id="SERVICE">%2$s</xliff:g>)"</string>
@@ -1240,6 +1382,8 @@
     <string name="action_bar_home_description" msgid="5293600496601490216">"Prejsť na plochu"</string>
     <string name="action_bar_up_description" msgid="2237496562952152589">"Prejsť na"</string>
     <string name="action_menu_overflow_description" msgid="2295659037509008453">"Viac možností"</string>
+    <string name="action_bar_home_description_format" msgid="7965984360903693903">"%1$s, %2$s"</string>
+    <string name="action_bar_home_subtitle_description_format" msgid="6985546530471780727">"%1$s, %2$s, %3$s"</string>
     <string name="storage_internal" msgid="4891916833657929263">"Interné úložisko"</string>
     <string name="storage_sd_card" msgid="3282948861378286745">"Karta SD"</string>
     <string name="storage_usb" msgid="3017954059538517278">"Ukladací priestor USB"</string>
@@ -1286,8 +1430,69 @@
     <string name="default_audio_route_name" product="default" msgid="4239291273420140123">"Telefón"</string>
     <string name="default_audio_route_name_headphones" msgid="8119971843803439110">"Slúchadlá"</string>
     <string name="default_audio_route_name_dock_speakers" msgid="6240602982276591864">"Reproduktory doku"</string>
-    <string name="default_audio_route_name_hdmi" msgid="7986404173839007682">"Zvuk HDMI"</string>
+    <string name="default_media_route_name_hdmi" msgid="2450970399023478055">"HDMI"</string>
     <string name="default_audio_route_category_name" msgid="3722811174003886946">"Systém"</string>
     <string name="bluetooth_a2dp_audio_route_name" msgid="8575624030406771015">"Bluetooth audio"</string>
+    <string name="wireless_display_route_description" msgid="9070346425023979651">"Bezdrôtový displej"</string>
     <string name="media_route_chooser_grouping_done" msgid="7966438307723317169">"Hotovo"</string>
+    <string name="media_route_button_content_description" msgid="5758553567065145276">"Výstup médií"</string>
+    <string name="media_route_status_scanning" msgid="7279908761758293783">"Prebieha vyhľadávanie..."</string>
+    <string name="media_route_status_connecting" msgid="6422571716007825440">"Prebieha pripájanie…"</string>
+    <string name="media_route_status_available" msgid="6983258067194649391">"K dispozícii"</string>
+    <string name="media_route_status_not_available" msgid="6739899962681886401">"Nie je k dispozícii"</string>
+    <string name="display_manager_built_in_display_name" msgid="2583134294292563941">"Vstavaná obrazovka"</string>
+    <string name="display_manager_hdmi_display_name" msgid="1555264559227470109">"Obrazovka HDMI"</string>
+    <string name="display_manager_overlay_display_name" msgid="5142365982271620716">"Prekrytie č. <xliff:g id="ID">%1$d</xliff:g>"</string>
+    <string name="display_manager_overlay_display_title" msgid="652124517672257172">"<xliff:g id="NAME">%1$s</xliff:g>: <xliff:g id="WIDTH">%2$d</xliff:g> x <xliff:g id="HEIGHT">%3$d</xliff:g>, <xliff:g id="DPI">%4$d</xliff:g> dpi"</string>
+    <string name="wifi_display_notification_title" msgid="2223050649240326557">"Bezdrôtový displej je pripojený"</string>
+    <string name="wifi_display_notification_message" msgid="4498802012464170685">"Táto obrazovka sa zobrazuje na inom zariadení"</string>
+    <string name="wifi_display_notification_disconnect" msgid="6183754463561153372">"Odpojiť"</string>
+    <string name="kg_emergency_call_label" msgid="684946192523830531">"Tiesňové volanie"</string>
+    <string name="kg_forgot_pattern_button_text" msgid="8852021467868220608">"Nepamätám si vzor"</string>
+    <string name="kg_wrong_pattern" msgid="1850806070801358830">"Nesprávny vzor"</string>
+    <string name="kg_wrong_password" msgid="2333281762128113157">"Nesprávne heslo"</string>
+    <string name="kg_wrong_pin" msgid="1131306510833563801">"Nesprávny kód PIN"</string>
+    <string name="kg_too_many_failed_attempts_countdown" msgid="6358110221603297548">"Skúste to znova o <xliff:g id="NUMBER">%d</xliff:g> s."</string>
+    <string name="kg_pattern_instructions" msgid="398978611683075868">"Nakreslite svoj vzor"</string>
+    <string name="kg_sim_pin_instructions" msgid="2319508550934557331">"Zadajte kód PIN karty SIM"</string>
+    <string name="kg_pin_instructions" msgid="2377242233495111557">"Zadajte kód PIN"</string>
+    <string name="kg_password_instructions" msgid="5753646556186936819">"Zadajte heslo"</string>
+    <string name="kg_puk_enter_puk_hint" msgid="453227143861735537">"Karta SIM je teraz zakázaná. Ak chcete pokračovať, zadajte kód PUK. Podrobné informácie získate od operátora."</string>
+    <string name="kg_puk_enter_pin_hint" msgid="7871604527429602024">"Zadajte požadovaný kód PIN"</string>
+    <string name="kg_enter_confirm_pin_hint" msgid="325676184762529976">"Potvrďte požadovaný kód PIN"</string>
+    <string name="kg_sim_unlock_progress_dialog_message" msgid="8950398016976865762">"Prebieha odomykanie karty SIM..."</string>
+    <string name="kg_password_wrong_pin_code" msgid="1139324887413846912">"Nesprávny kód PIN."</string>
+    <string name="kg_invalid_sim_pin_hint" msgid="8795159358110620001">"Zadajte kód PIN s dĺžkou 4 až 8 číslic."</string>
+    <string name="kg_invalid_sim_puk_hint" msgid="7553388325654369575">"Kód PUK musí obsahovať 8 alebo viac číslic."</string>
+    <string name="kg_invalid_puk" msgid="3638289409676051243">"Znova zadajte správny kód PUK. Opakované pokusy zakážu kartu SIM natrvalo."</string>
+    <string name="kg_invalid_confirm_pin_hint" product="default" msgid="7003469261464593516">"Kódy PIN sa nezhodujú"</string>
+    <string name="kg_login_too_many_attempts" msgid="6486842094005698475">"Príliš veľa pokusov o nakreslenie vzoru"</string>
+    <string name="kg_login_instructions" msgid="1100551261265506448">"Ak chcete telefón odomknúť, prihláste sa pomocou svojho účtu Google."</string>
+    <string name="kg_login_username_hint" msgid="5718534272070920364">"Používateľské meno (e-mail)"</string>
+    <string name="kg_login_password_hint" msgid="9057289103827298549">"Heslo"</string>
+    <string name="kg_login_submit_button" msgid="5355904582674054702">"Prihlásiť sa"</string>
+    <string name="kg_login_invalid_input" msgid="5754664119319872197">"Neplatné používateľské meno alebo heslo."</string>
+    <string name="kg_login_account_recovery_hint" msgid="5690709132841752974">"Zabudli ste svoje používateľské meno alebo heslo?"\n" Navštívte stránky "<b>"google.com/accounts/recovery"</b>"."</string>
+    <string name="kg_login_checking_password" msgid="1052685197710252395">"Prebieha kontrola účtu..."</string>
+    <string name="kg_too_many_failed_pin_attempts_dialog_message" msgid="8276745642049502550">"<xliff:g id="NUMBER_0">%d</xliff:g>-krát ste zadali nesprávny kód PIN. "\n\n"Skúste to znova o <xliff:g id="NUMBER_1">%d</xliff:g> s."</string>
+    <string name="kg_too_many_failed_password_attempts_dialog_message" msgid="7813713389422226531">"<xliff:g id="NUMBER_0">%d</xliff:g>-krát ste zadali nesprávne heslo. "\n\n"Skúste to znova o <xliff:g id="NUMBER_1">%d</xliff:g>."</string>
+    <string name="kg_too_many_failed_pattern_attempts_dialog_message" msgid="74089475965050805">"<xliff:g id="NUMBER_0">%d</xliff:g>-krát ste použili nesprávny bezpečnostný vzor. "\n\n"Skúste to znova o <xliff:g id="NUMBER_1">%d</xliff:g> s."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="tablet" msgid="1575557200627128949">"Tablet ste sa pokúsili odomknúť nesprávnym spôsobom <xliff:g id="NUMBER_0">%d</xliff:g>-krát. Po <xliff:g id="NUMBER_1">%d</xliff:g> ďalších neúspešných pokusoch sa v tablete obnovia predvolené továrenské nastavenia a všetky používateľské údaje budú stratené."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="default" msgid="4051015943038199910">"Telefón ste sa pokúsili odomknúť nesprávnym spôsobom <xliff:g id="NUMBER_0">%d</xliff:g>-krát. Po <xliff:g id="NUMBER_1">%d</xliff:g> ďalších neúspešných pokusoch sa v telefóne obnovia predvolené továrenské nastavenia a všetky používateľské údaje budú stratené."</string>
+    <string name="kg_failed_attempts_now_wiping" product="tablet" msgid="2072996269148483637">"Tablet ste sa pokúsili odomknúť nesprávnym spôsobom <xliff:g id="NUMBER">%d</xliff:g>-krát. V tablete sa teraz obnovia predvolené továrenské nastavenia."</string>
+    <string name="kg_failed_attempts_now_wiping" product="default" msgid="4817627474419471518">"Telefón ste sa pokúsili odomknúť nesprávnym spôsobom <xliff:g id="NUMBER">%d</xliff:g>-krát. V telefóne sa teraz obnovia predvolené továrenské nastavenia."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="tablet" msgid="3253575572118914370">"<xliff:g id="NUMBER_0">%d</xliff:g>-krát ste nesprávne nakreslili svoj bezpečnostný vzor. Po ďalších <xliff:g id="NUMBER_1">%d</xliff:g> neúspešných pokusoch sa zobrazí výzva na odomknutie tabletu pomocou e-mailového účtu."\n\n" Skúste to znova o <xliff:g id="NUMBER_2">%d</xliff:g> s."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="default" msgid="1437638152015574839">"<xliff:g id="NUMBER_0">%d</xliff:g>-krát ste nesprávne nakreslili svoj bezpečnostný vzor. Po <xliff:g id="NUMBER_1">%d</xliff:g> ďalších neúspešných pokusoch sa zobrazí výzva na odomknutie telefónu pomocou e-mailového účtu."\n\n" Skúste to znova o <xliff:g id="NUMBER_2">%d</xliff:g> s."</string>
+    <string name="kg_text_message_separator" product="default" msgid="4160700433287233771">" — "</string>
+    <string name="kg_reordering_delete_drop_target_text" msgid="7899202978204438708">"Odstrániť"</string>
+    <string name="safe_media_volume_warning" product="default" msgid="7324161939475478066">"Zvýšiť hlasitosť nad odporúčanú úroveň?"\n"Dlhodobé počúvanie pri vysokej hlasitosti môže poškodiť váš sluch."</string>
+    <string name="continue_to_enable_accessibility" msgid="1626427372316070258">"Zjednodušenie ovládania povolíte dlhým stlačením dvoma prstami."</string>
+    <string name="accessibility_enabled" msgid="1381972048564547685">"Zjednodušenie ovládania je povolené."</string>
+    <string name="enable_accessibility_canceled" msgid="3833923257966635673">"Zjednodušenie ovládania bolo zrušené."</string>
+    <string name="user_switched" msgid="3768006783166984410">"Aktuálny používateľ je <xliff:g id="NAME">%1$s</xliff:g>."</string>
+    <string name="owner_name" msgid="2716755460376028154">"Vlastník"</string>
+    <string name="error_message_title" msgid="4510373083082500195">"Chyba"</string>
+    <string name="app_no_restricted_accounts" msgid="4011285085817350390">"Táto aplikácia nepodporuje účty pre profily s obmedzením"</string>
+    <string name="app_not_found" msgid="3429141853498927379">"Aplikácia potrebná na spracovanie tejto akcie sa nenašla"</string>
+    <string name="revoke" msgid="5404479185228271586">"Odvolať"</string>
 </resources>

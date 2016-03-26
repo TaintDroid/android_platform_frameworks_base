@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2009-2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,23 +59,23 @@ public class Matrix3f {
     /**
     * Returns the value for a given row and column
     *
-    * @param i row of the value to return
-    * @param j column of the value to return
+    * @param x column of the value to return
+    * @param y row of the value to return
     *
-    * @return value in the ith row and jth column
+    * @return value in the yth row and xth column
     */
-    public float get(int i, int j) {
-        return mMat[i*3 + j];
+    public float get(int x, int y) {
+        return mMat[x*3 + y];
     }
 
     /**
     * Sets the value for a given row and column
     *
-    * @param i row of the value to set
-    * @param j column of the value to set
+    * @param x column of the value to set
+    * @param y row of the value to set
     */
-    public void set(int i, int j, float v) {
-        mMat[i*3 + j] = v;
+    public void set(int x, int y, float v) {
+        mMat[x*3 + y] = v;
     }
 
     /**
@@ -138,9 +138,9 @@ public class Matrix3f {
         mMat[6] =  zx*nc + ys;
         mMat[1] =  xy*nc + zs;
         mMat[4] = y*y*nc +  c;
-        mMat[9] =  yz*nc - xs;
+        mMat[7] =  yz*nc - xs;
         mMat[2] =  zx*nc - ys;
-        mMat[6] =  yz*nc + xs;
+        mMat[5] =  yz*nc + xs;
         mMat[8] = z*z*nc +  c;
     }
 

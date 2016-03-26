@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.IPackageDataObserver;
 import android.content.pm.IPackageManager;
+import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.FileObserver;
@@ -35,9 +36,17 @@ import android.os.ServiceManager;
 import android.os.StatFs;
 import android.os.SystemClock;
 import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.os.storage.StorageManager;
 import android.provider.Settings;
+import android.text.format.Formatter;
 import android.util.EventLog;
 import android.util.Slog;
+import android.util.TimeUtils;
+
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 
 /**
  * This class implements a service to monitor the amount of disk
@@ -59,31 +68,35 @@ import android.util.Slog;
  */
 public class DeviceStorageMonitorService extends Binder {
     private static final String TAG = "DeviceStorageMonitorService";
+
     private static final boolean DEBUG = false;
     private static final boolean localLOGV = false;
+
     private static final int DEVICE_MEMORY_WHAT = 1;
     private static final int MONITOR_INTERVAL = 1; //in minutes
     private static final int LOW_MEMORY_NOTIFICATION_ID = 1;
-    private static final int DEFAULT_THRESHOLD_PERCENTAGE = 10;
-    private static final int DEFAULT_THRESHOLD_MAX_BYTES = 500*1024*1024; // 500MB
+
     private static final int DEFAULT_FREE_STORAGE_LOG_INTERVAL_IN_MINUTES = 12*60; //in minutes
     private static final long DEFAULT_DISK_FREE_CHANGE_REPORTING_THRESHOLD = 2 * 1024 * 1024; // 2MB
     private static final long DEFAULT_CHECK_INTERVAL = MONITOR_INTERVAL*60*1000;
-    private static final int DEFAULT_FULL_THRESHOLD_BYTES = 1024*1024; // 1MB
+
     private long mFreeMem;  // on /data
+    private long mFreeMemAfterLastCacheClear;  // on /data
     private long mLastReportedFreeMem;
     private long mLastReportedFreeMemTime;
     private boolean mLowMemFlag=false;
     private boolean mMemFullFlag=false;
     private Context mContext;
-    private ContentResolver mContentResolver;
+    private ContentResolver mResolver;
     private long mTotalMemory;  // on /data
     private StatFs mDataFileStats;
     private StatFs mSystemFileStats;
     private StatFs mCacheFileStats;
-    private static final String DATA_PATH = "/data";
-    private static final String SYSTEM_PATH = "/system";
-    private static final String CACHE_PATH = "/cache";
+
+    private static final File DATA_PATH = Environment.getDataDirectory();
+    private static final File SYSTEM_PATH = Environment.getRootDirectory();
+    private static final File CACHE_PATH = Environment.getDownloadCacheDirectory();
+
     private long mThreadStartTime = -1;
     private boolean mClearSucceeded = false;
     private boolean mClearingCache;
@@ -95,8 +108,20 @@ public class DeviceStorageMonitorService extends Binder {
     private final CacheFileDeletedObserver mCacheFileDeletedObserver;
     private static final int _TRUE = 1;
     private static final int _FALSE = 0;
+    // This is the raw threshold that has been set at which we consider
+    // storage to be low.
     private long mMemLowThreshold;
-    private int mMemFullThreshold;
+    // This is the threshold at which we start trying to flush caches
+    // to get below the low threshold limit.  It is less than the low
+    // threshold; we will allow storage to get a bit beyond the limit
+    // before flushing and checking if we are actually low.
+    private long mMemCacheStartTrimThreshold;
+    // This is the threshold that we try to get to when deleting cache
+    // files.  This is greater than the low threshold so that we will flush
+    // more files than absolutely needed, to reduce the frequency that
+    // flushing takes place.
+    private long mMemCacheTrimToThreshold;
+    private long mMemFullThreshold;
 
     /**
      * This string is used for ServiceManager access to this class.
@@ -131,7 +156,7 @@ public class DeviceStorageMonitorService extends Binder {
 
     private final void restatDataDir() {
         try {
-            mDataFileStats.restat(DATA_PATH);
+            mDataFileStats.restat(DATA_PATH.getAbsolutePath());
             mFreeMem = (long) mDataFileStats.getAvailableBlocks() *
                 mDataFileStats.getBlockSize();
         } catch (IllegalArgumentException e) {
@@ -143,8 +168,8 @@ public class DeviceStorageMonitorService extends Binder {
             mFreeMem = Long.parseLong(debugFreeMem);
         }
         // Read the log interval from secure settings
-        long freeMemLogInterval = Settings.Secure.getLong(mContentResolver,
-                Settings.Secure.SYS_FREE_STORAGE_LOG_INTERVAL,
+        long freeMemLogInterval = Settings.Global.getLong(mResolver,
+                Settings.Global.SYS_FREE_STORAGE_LOG_INTERVAL,
                 DEFAULT_FREE_STORAGE_LOG_INTERVAL_IN_MINUTES)*60*1000;
         //log the amount of free memory in event log
         long currTime = SystemClock.elapsedRealtime();
@@ -153,14 +178,14 @@ public class DeviceStorageMonitorService extends Binder {
             mLastReportedFreeMemTime = currTime;
             long mFreeSystem = -1, mFreeCache = -1;
             try {
-                mSystemFileStats.restat(SYSTEM_PATH);
+                mSystemFileStats.restat(SYSTEM_PATH.getAbsolutePath());
                 mFreeSystem = (long) mSystemFileStats.getAvailableBlocks() *
                     mSystemFileStats.getBlockSize();
             } catch (IllegalArgumentException e) {
                 // ignore; report -1
             }
             try {
-                mCacheFileStats.restat(CACHE_PATH);
+                mCacheFileStats.restat(CACHE_PATH.getAbsolutePath());
                 mFreeCache = (long) mCacheFileStats.getAvailableBlocks() *
                     mCacheFileStats.getBlockSize();
             } catch (IllegalArgumentException e) {
@@ -170,8 +195,8 @@ public class DeviceStorageMonitorService extends Binder {
                                 mFreeMem, mFreeSystem, mFreeCache);
         }
         // Read the reporting threshold from secure settings
-        long threshold = Settings.Secure.getLong(mContentResolver,
-                Settings.Secure.DISK_FREE_CHANGE_REPORTING_THRESHOLD,
+        long threshold = Settings.Global.getLong(mResolver,
+                Settings.Global.DISK_FREE_CHANGE_REPORTING_THRESHOLD,
                 DEFAULT_DISK_FREE_CHANGE_REPORTING_THRESHOLD);
         // If mFree changed significantly log the new value
         long delta = mFreeMem - mLastReportedFreeMem;
@@ -190,7 +215,7 @@ public class DeviceStorageMonitorService extends Binder {
         try {
             if (localLOGV) Slog.i(TAG, "Clearing cache");
             IPackageManager.Stub.asInterface(ServiceManager.getService("package")).
-                    freeStorageAndNotify(mMemLowThreshold, mClearCacheObserver);
+                    freeStorageAndNotify(mMemCacheTrimToThreshold, mClearCacheObserver);
         } catch (RemoteException e) {
             Slog.w(TAG, "Failed to get handle for PackageManger Exception: "+e);
             mClearingCache = false;
@@ -216,24 +241,42 @@ public class DeviceStorageMonitorService extends Binder {
 
             //post intent to NotificationManager to display icon if necessary
             if (mFreeMem < mMemLowThreshold) {
-                if (!mLowMemFlag) {
-                    if (checkCache) {
-                        // See if clearing cache helps
-                        // Note that clearing cache is asynchronous and so we do a
-                        // memory check again once the cache has been cleared.
-                        mThreadStartTime = System.currentTimeMillis();
-                        mClearSucceeded = false;
-                        clearCache();
-                    } else {
+                if (checkCache) {
+                    // We are allowed to clear cache files at this point to
+                    // try to get down below the limit, because this is not
+                    // the initial call after a cache clear has been attempted.
+                    // In this case we will try a cache clear if our free
+                    // space has gone below the cache clear limit.
+                    if (mFreeMem < mMemCacheStartTrimThreshold) {
+                        // We only clear the cache if the free storage has changed
+                        // a significant amount since the last time.
+                        if ((mFreeMemAfterLastCacheClear-mFreeMem)
+                                >= ((mMemLowThreshold-mMemCacheStartTrimThreshold)/4)) {
+                            // See if clearing cache helps
+                            // Note that clearing cache is asynchronous and so we do a
+                            // memory check again once the cache has been cleared.
+                            mThreadStartTime = System.currentTimeMillis();
+                            mClearSucceeded = false;
+                            clearCache();
+                        }
+                    }
+                } else {
+                    // This is a call from after clearing the cache.  Note
+                    // the amount of free storage at this point.
+                    mFreeMemAfterLastCacheClear = mFreeMem;
+                    if (!mLowMemFlag) {
+                        // We tried to clear the cache, but that didn't get us
+                        // below the low storage limit.  Tell the user.
                         Slog.i(TAG, "Running low on memory. Sending notification");
                         sendNotification();
                         mLowMemFlag = true;
+                    } else {
+                        if (localLOGV) Slog.v(TAG, "Running low on memory " +
+                                "notification already sent. do nothing");
                     }
-                } else {
-                    if (localLOGV) Slog.v(TAG, "Running low on memory " +
-                            "notification already sent. do nothing");
                 }
             } else {
+                mFreeMemAfterLastCacheClear = mFreeMem;
                 if (mLowMemFlag) {
                     Slog.i(TAG, "Memory available. Cancelling notification");
                     cancelNotification();
@@ -265,40 +308,6 @@ public class DeviceStorageMonitorService extends Binder {
                 delay);
     }
 
-    /*
-     * just query settings to retrieve the memory threshold.
-     * Preferred this over using a ContentObserver since Settings.Secure caches the value
-     * any way
-     */
-    private long getMemThreshold() {
-        long value = Settings.Secure.getInt(
-                              mContentResolver,
-                              Settings.Secure.SYS_STORAGE_THRESHOLD_PERCENTAGE,
-                              DEFAULT_THRESHOLD_PERCENTAGE);
-        if(localLOGV) Slog.v(TAG, "Threshold Percentage="+value);
-        value *= mTotalMemory;
-        long maxValue = Settings.Secure.getInt(
-                mContentResolver,
-                Settings.Secure.SYS_STORAGE_THRESHOLD_MAX_BYTES,
-                DEFAULT_THRESHOLD_MAX_BYTES);
-        //evaluate threshold value
-        return value < maxValue ? value : maxValue;
-    }
-
-    /*
-     * just query settings to retrieve the memory full threshold.
-     * Preferred this over using a ContentObserver since Settings.Secure caches the value
-     * any way
-     */
-    private int getMemFullThreshold() {
-        int value = Settings.Secure.getInt(
-                              mContentResolver,
-                              Settings.Secure.SYS_STORAGE_FULL_THRESHOLD_BYTES,
-                              DEFAULT_FULL_THRESHOLD_BYTES);
-        if(localLOGV) Slog.v(TAG, "Full Threshold Bytes="+value);
-        return value;
-    }
-
     /**
     * Constructor to run service. initializes the disk space threshold value
     * and posts an empty message to kickstart the process.
@@ -306,14 +315,14 @@ public class DeviceStorageMonitorService extends Binder {
     public DeviceStorageMonitorService(Context context) {
         mLastReportedFreeMemTime = 0;
         mContext = context;
-        mContentResolver = mContext.getContentResolver();
+        mResolver = mContext.getContentResolver();
         //create StatFs object
-        mDataFileStats = new StatFs(DATA_PATH);
-        mSystemFileStats = new StatFs(SYSTEM_PATH);
-        mCacheFileStats = new StatFs(CACHE_PATH);
+        mDataFileStats = new StatFs(DATA_PATH.getAbsolutePath());
+        mSystemFileStats = new StatFs(SYSTEM_PATH.getAbsolutePath());
+        mCacheFileStats = new StatFs(CACHE_PATH.getAbsolutePath());
         //initialize total storage on device
-        mTotalMemory = ((long)mDataFileStats.getBlockCount() *
-                        mDataFileStats.getBlockSize())/100L;
+        mTotalMemory = (long)mDataFileStats.getBlockCount() *
+                        mDataFileStats.getBlockSize();
         mStorageLowIntent = new Intent(Intent.ACTION_DEVICE_STORAGE_LOW);
         mStorageLowIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         mStorageOkIntent = new Intent(Intent.ACTION_DEVICE_STORAGE_OK);
@@ -322,15 +331,21 @@ public class DeviceStorageMonitorService extends Binder {
         mStorageFullIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         mStorageNotFullIntent = new Intent(Intent.ACTION_DEVICE_STORAGE_NOT_FULL);
         mStorageNotFullIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+
         // cache storage thresholds
-        mMemLowThreshold = getMemThreshold();
-        mMemFullThreshold = getMemFullThreshold();
+        final StorageManager sm = StorageManager.from(context);
+        mMemLowThreshold = sm.getStorageLowBytes(DATA_PATH);
+        mMemFullThreshold = sm.getStorageFullBytes(DATA_PATH);
+
+        mMemCacheStartTrimThreshold = ((mMemLowThreshold*3)+mMemFullThreshold)/4;
+        mMemCacheTrimToThreshold = mMemLowThreshold
+                + ((mMemLowThreshold-mMemCacheStartTrimThreshold)*2);
+        mFreeMemAfterLastCacheClear = mTotalMemory;
         checkMemory(true);
 
         mCacheFileDeletedObserver = new CacheFileDeletedObserver();
         mCacheFileDeletedObserver.startWatching();
     }
-
 
     /**
     * This method sends a notification to NotificationManager to display
@@ -354,14 +369,16 @@ public class DeviceStorageMonitorService extends Binder {
                 com.android.internal.R.string.low_internal_storage_view_title);
         CharSequence details = mContext.getText(
                 com.android.internal.R.string.low_internal_storage_view_text);
-        PendingIntent intent = PendingIntent.getActivity(mContext, 0,  lowMemIntent, 0);
+        PendingIntent intent = PendingIntent.getActivityAsUser(mContext, 0,  lowMemIntent, 0,
+                null, UserHandle.CURRENT);
         Notification notification = new Notification();
         notification.icon = com.android.internal.R.drawable.stat_notify_disk_full;
         notification.tickerText = title;
         notification.flags |= Notification.FLAG_NO_CLEAR;
         notification.setLatestEventInfo(mContext, title, details, intent);
-        mNotificationMgr.notify(LOW_MEMORY_NOTIFICATION_ID, notification);
-        mContext.sendStickyBroadcast(mStorageLowIntent);
+        mNotificationMgr.notifyAsUser(null, LOW_MEMORY_NOTIFICATION_ID, notification,
+                UserHandle.ALL);
+        mContext.sendStickyBroadcastAsUser(mStorageLowIntent, UserHandle.ALL);
     }
 
     /**
@@ -373,10 +390,10 @@ public class DeviceStorageMonitorService extends Binder {
                 (NotificationManager)mContext.getSystemService(
                         Context.NOTIFICATION_SERVICE);
         //cancel notification since memory has been freed
-        mNotificationMgr.cancel(LOW_MEMORY_NOTIFICATION_ID);
+        mNotificationMgr.cancelAsUser(null, LOW_MEMORY_NOTIFICATION_ID, UserHandle.ALL);
 
-        mContext.removeStickyBroadcast(mStorageLowIntent);
-        mContext.sendBroadcast(mStorageOkIntent);
+        mContext.removeStickyBroadcastAsUser(mStorageLowIntent, UserHandle.ALL);
+        mContext.sendBroadcastAsUser(mStorageOkIntent, UserHandle.ALL);
     }
 
     /**
@@ -384,7 +401,7 @@ public class DeviceStorageMonitorService extends Binder {
      */
     private final void sendFullNotification() {
         if(localLOGV) Slog.i(TAG, "Sending memory full notification");
-        mContext.sendStickyBroadcast(mStorageFullIntent);
+        mContext.sendStickyBroadcastAsUser(mStorageFullIntent, UserHandle.ALL);
     }
 
     /**
@@ -392,8 +409,8 @@ public class DeviceStorageMonitorService extends Binder {
      */
     private final void cancelFullNotification() {
         if(localLOGV) Slog.i(TAG, "Canceling memory full notification");
-        mContext.removeStickyBroadcast(mStorageFullIntent);
-        mContext.sendBroadcast(mStorageNotFullIntent);
+        mContext.removeStickyBroadcastAsUser(mStorageFullIntent, UserHandle.ALL);
+        mContext.sendBroadcastAsUser(mStorageNotFullIntent, UserHandle.ALL);
     }
 
     public void updateMemory() {
@@ -434,5 +451,41 @@ public class DeviceStorageMonitorService extends Binder {
         public void onEvent(int event, String path) {
             EventLogTags.writeCacheFileDeleted(path);
         }
+    }
+
+    @Override
+    protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            pw.println("Permission Denial: can't dump " + SERVICE + " from from pid="
+                    + Binder.getCallingPid()
+                    + ", uid=" + Binder.getCallingUid());
+            return;
+        }
+
+        pw.println("Current DeviceStorageMonitor state:");
+        pw.print("  mFreeMem="); pw.print(Formatter.formatFileSize(mContext, mFreeMem));
+                pw.print(" mTotalMemory=");
+                pw.println(Formatter.formatFileSize(mContext, mTotalMemory));
+        pw.print("  mFreeMemAfterLastCacheClear=");
+                pw.println(Formatter.formatFileSize(mContext, mFreeMemAfterLastCacheClear));
+        pw.print("  mLastReportedFreeMem=");
+                pw.print(Formatter.formatFileSize(mContext, mLastReportedFreeMem));
+                pw.print(" mLastReportedFreeMemTime=");
+                TimeUtils.formatDuration(mLastReportedFreeMemTime, SystemClock.elapsedRealtime(), pw);
+                pw.println();
+        pw.print("  mLowMemFlag="); pw.print(mLowMemFlag);
+                pw.print(" mMemFullFlag="); pw.println(mMemFullFlag);
+        pw.print("  mClearSucceeded="); pw.print(mClearSucceeded);
+                pw.print(" mClearingCache="); pw.println(mClearingCache);
+        pw.print("  mMemLowThreshold=");
+                pw.print(Formatter.formatFileSize(mContext, mMemLowThreshold));
+                pw.print(" mMemFullThreshold=");
+                pw.println(Formatter.formatFileSize(mContext, mMemFullThreshold));
+        pw.print("  mMemCacheStartTrimThreshold=");
+                pw.print(Formatter.formatFileSize(mContext, mMemCacheStartTrimThreshold));
+                pw.print(" mMemCacheTrimToThreshold=");
+                pw.println(Formatter.formatFileSize(mContext, mMemCacheTrimToThreshold));
     }
 }

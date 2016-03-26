@@ -19,6 +19,7 @@ package android.widget;
 import android.app.INotificationManager;
 import android.app.ITransientNotification;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.os.Handler;
@@ -29,7 +30,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.WindowManagerImpl;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
@@ -305,12 +305,14 @@ public class Toast {
 
     private static class TN extends ITransientNotification.Stub {
         final Runnable mShow = new Runnable() {
+            @Override
             public void run() {
                 handleShow();
             }
         };
 
         final Runnable mHide = new Runnable() {
+            @Override
             public void run() {
                 handleHide();
                 // Don't do this in handleHide() because it is also invoked by handleShow()
@@ -329,8 +331,8 @@ public class Toast {
        
         View mView;
         View mNextView;
-        
-        WindowManagerImpl mWM;
+
+        WindowManager mWM;
 
         TN() {
             // XXX This should be changed to use a Dialog, with a Theme.Toast
@@ -350,6 +352,7 @@ public class Toast {
         /**
          * schedule handleShow into the right thread
          */
+        @Override
         public void show() {
             if (localLOGV) Log.v(TAG, "SHOW: " + this);
             mHandler.post(mShow);
@@ -358,6 +361,7 @@ public class Toast {
         /**
          * schedule handleHide into the right thread
          */
+        @Override
         public void hide() {
             if (localLOGV) Log.v(TAG, "HIDE: " + this);
             mHandler.post(mHide);
@@ -370,8 +374,15 @@ public class Toast {
                 // remove the old view if necessary
                 handleHide();
                 mView = mNextView;
-                mWM = WindowManagerImpl.getDefault();
-                final int gravity = mGravity;
+                Context context = mView.getContext().getApplicationContext();
+                if (context == null) {
+                    context = mView.getContext();
+                }
+                mWM = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+                // We can resolve the Gravity here by using the Locale for getting
+                // the layout direction
+                final Configuration config = mView.getContext().getResources().getConfiguration();
+                final int gravity = Gravity.getAbsoluteGravity(mGravity, config.getLayoutDirection());
                 mParams.gravity = gravity;
                 if ((gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.FILL_HORIZONTAL) {
                     mParams.horizontalWeight = 1.0f;

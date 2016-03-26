@@ -20,6 +20,7 @@ import android.graphics.*;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.view.ViewDebug;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -34,8 +35,10 @@ import java.io.IOException;
  * @attr ref android.R.styleable#ColorDrawable_color
  */
 public class ColorDrawable extends Drawable {
+    @ViewDebug.ExportedProperty(deepExport = true, prefix = "state_")
     private ColorState mState;
     private final Paint mPaint = new Paint();
+    private boolean mMutated;
 
     /**
      * Creates a new black ColorDrawable.
@@ -61,6 +64,21 @@ public class ColorDrawable extends Drawable {
     @Override
     public int getChangingConfigurations() {
         return super.getChangingConfigurations() | mState.mChangingConfigurations;
+    }
+
+    /**
+     * A mutable BitmapDrawable still shares its Bitmap with any other Drawable
+     * that comes from the same resource.
+     *
+     * @return This drawable.
+     */
+    @Override
+    public Drawable mutate() {
+        if (!mMutated && super.mutate() == this) {
+            mState = new ColorState(mState);
+            mMutated = true;
+        }
+        return this;
     }
 
     @Override
@@ -158,6 +176,7 @@ public class ColorDrawable extends Drawable {
 
     final static class ColorState extends ConstantState {
         int mBaseColor; // base color, independent of setAlpha()
+        @ViewDebug.ExportedProperty
         int mUseColor;  // basecolor modulated by setAlpha()
         int mChangingConfigurations;
 
@@ -165,6 +184,7 @@ public class ColorDrawable extends Drawable {
             if (state != null) {
                 mBaseColor = state.mBaseColor;
                 mUseColor = state.mUseColor;
+                mChangingConfigurations = state.mChangingConfigurations;
             }
         }
 

@@ -17,21 +17,19 @@
 package com.android.mediaframeworktest.stress;
 
 import com.android.mediaframeworktest.MediaFrameworkTest;
+import com.android.mediaframeworktest.CameraTestHelper;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.FileWriter;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import android.hardware.Camera;
-import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.ShutterCallback;
+import android.hardware.Camera.Parameters;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,27 +42,27 @@ import com.android.mediaframeworktest.CameraStressTestRunner;
 import junit.framework.Assert;
 
 /**
- * Junit / Instrumentation test case for the camera zoom api
+ * Junit / Instrumentation test case for the following camera APIs:
+ *  - camera zoom
+ *  - scene mode
  *
  * adb shell am instrument
  *  -e class com.android.mediaframeworktest.stress.CameraStressTest
  *  -w com.android.mediaframeworktest/.CameraStressTestRunner
  */
 public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFrameworkTest> {
-    private String TAG = "CameraStressTest";
-    private Camera mCamera;
 
+    private static final int NUMBER_OF_SCENE_MODE_LOOPS = 10;
     private static final int NUMBER_OF_ZOOM_LOOPS = 100;
-    private static final long WAIT_GENERIC = 3 * 1000; // 3 seconds
     private static final long WAIT_TIMEOUT = 10 * 1000; // 10 seconds
-    private static final long WAIT_ZOOM_ANIMATION = 5 * 1000; // 5 seconds
-    private static final String CAMERA_STRESS_OUTPUT =
-            "/sdcard/cameraStressOutput.txt";
-    private static final int CAMERA_ID = 0;
-    private final CameraErrorCallback mCameraErrorCallback = new CameraErrorCallback();
+    private static final String CAMERA_STRESS_OUTPUT = "cameraStressOutput.txt";
 
-    private Thread mLooperThread;
+    private CameraTestHelper mCameraTestHelper;
     private Handler mHandler;
+    private Thread mLooperThread;
+    private Writer mOutput;
+
+    private String TAG = "CameraStressTest";
 
     public CameraStressTest() {
         super("com.android.mediaframeworktest", MediaFrameworkTest.class);
@@ -89,6 +87,12 @@ public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFram
         }
         getActivity();
         super.setUp();
+
+        mCameraTestHelper = new CameraTestHelper();
+        File stressOutFile = new File(String.format("%s/%s",
+                Environment.getExternalStorageDirectory(), CAMERA_STRESS_OUTPUT));
+        mOutput = new BufferedWriter(new FileWriter(stressOutFile, true));
+        mOutput.write(this.getName() + "\n");
     }
 
     @Override
@@ -104,7 +108,8 @@ public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFram
             }
             mLooperThread = null;
         }
-
+        mOutput.write("\n\n");
+        mOutput.close();
         super.tearDown();
     }
 
@@ -125,105 +130,67 @@ public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFram
         }
     }
 
-    private final class CameraErrorCallback implements android.hardware.Camera.ErrorCallback {
-        public void onError(int error, android.hardware.Camera camera) {
-            if (error == android.hardware.Camera.CAMERA_ERROR_SERVER_DIED) {
-                assertTrue("Camera test mediaserver died", false);
-            }
-        }
-    }
+    /**
+     * Stress test iterating on the various scene modes (action, night, party, etc.)
+     */
+    @LargeTest
+    public void testStressCameraSceneModes() throws Exception {
+        try {
+            SurfaceHolder surfaceHolder = MediaFrameworkTest.mSurfaceView.getHolder();
+            Parameters params = mCameraTestHelper.getCameraParameters();
+            List<String> supportedSceneModes = params.getSupportedSceneModes();
+            assertNotNull("No scene modes supported", supportedSceneModes);
 
-    private ShutterCallback shutterCallback = new ShutterCallback() {
-        @Override
-        public void onShutter() {
-            Log.v(TAG, "Shutter");
-        }
-    };
+            mOutput.write("Total number of loops: " +
+                    (NUMBER_OF_SCENE_MODE_LOOPS * supportedSceneModes.size()) + "\n");
+            Log.v(TAG, "Start preview");
+            mOutput.write("No of loop: ");
 
-    private PictureCallback rawCallback = new PictureCallback() {
-        @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            Log.v(TAG, "Raw picture taken");
-        }
-    };
+            for (int i = 0; i < supportedSceneModes.size(); i++) {
+                for (int j = 0; j < NUMBER_OF_SCENE_MODE_LOOPS; j++) {
+                    runOnLooper(new Runnable() {
+                        @Override
+                        public void run() {
+                            mCameraTestHelper.setupCameraTest();
+                        }
+                    });
+                    Log.v(TAG, "Setting scene mode to " + supportedSceneModes.get(i));
+                    params.setSceneMode(supportedSceneModes.get(i));
+                    mCameraTestHelper.setParameters(params);
+                    mCameraTestHelper.startCameraPreview(surfaceHolder);
+                    mCameraTestHelper.capturePhoto();
 
-    private PictureCallback jpegCallback = new PictureCallback() {
-        @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            FileOutputStream fos = null;
-
-            try {
-                Log.v(TAG, "JPEG picture taken");
-                fos = new FileOutputStream(String.format("%s/zoom-test-%d.jpg",
-                        Environment.getExternalStorageDirectory(), System.currentTimeMillis()));
-                fos.write(data);
-            }
-            catch (FileNotFoundException e) {
-                Log.v(TAG, "File not found: " + e.toString());
-            }
-            catch (IOException e) {
-                Log.v(TAG, "Error accessing file: " + e.toString());
-            }
-            finally {
-                try {
-                    if (fos != null) {
-                        fos.close();
+                    if (i == 0 && j == 0) {
+                        mOutput.write(Integer.toString(j + i * NUMBER_OF_SCENE_MODE_LOOPS));
+                    } else {
+                        mOutput.write(", " + (j + i * NUMBER_OF_SCENE_MODE_LOOPS));
                     }
                 }
-                catch (IOException e) {
-                    Log.v(TAG, "Error closing file: " + e.toString());
-                }
             }
-        }
-    };
-
-    // Helper method for cleaning up pics taken during testStressCameraZoom
-    private void cleanupZoomImages() {
-        try {
-            File sdcard = Environment.getExternalStorageDirectory();
-            File[] zoomImages = null;
-
-            FilenameFilter filter = new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.startsWith("zoom-test-");
-                }
-            };
-
-            zoomImages = sdcard.listFiles(filter);
-
-            for (File f : zoomImages) {
-                f.delete();
-            }
-        }
-        catch (SecurityException e) {
-            Log.v(TAG, "Security manager access violation: " + e.toString());
+            mCameraTestHelper.cleanupTestImages();
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+            fail("Camera scene mode test Exception");
         }
     }
 
-    // Test case for stressing the camera zoom in/out feature
+    /**
+     * Stress test iterating on the range of supported camera zoom levels
+     */
     @LargeTest
     public void testStressCameraZoom() throws Exception {
-        SurfaceHolder mSurfaceHolder;
-        mSurfaceHolder = MediaFrameworkTest.mSurfaceView.getHolder();
-        File stressOutFile = new File(CAMERA_STRESS_OUTPUT);
-        Writer output = new BufferedWriter(new FileWriter(stressOutFile, true));
-        output.write("Camera zoom stress:\n");
-        output.write("Total number of loops: " +  NUMBER_OF_ZOOM_LOOPS + "\n");
-
         try {
-            Log.v(TAG, "Start preview");
-            output.write("No of loop: ");
-
-            mCamera = Camera.open(CAMERA_ID);
-            Camera.Parameters params = mCamera.getParameters();
-            mCamera.release();
+            SurfaceHolder surfaceHolder = MediaFrameworkTest.mSurfaceView.getHolder();
+            Parameters params = mCameraTestHelper.getCameraParameters();
 
             if (!params.isSmoothZoomSupported() && !params.isZoomSupported()) {
                 Log.v(TAG, "Device camera does not support zoom");
-                assertTrue("Camera zoom stress test", false);
-            }
-            else {
+                fail("Camera zoom stress test failed due to unsupported feature");
+            } else {
                 Log.v(TAG, "Device camera does support zoom");
+                Log.v(TAG, "Start preview");
+                mOutput.write("Total number of loops: " + NUMBER_OF_ZOOM_LOOPS + "\n");
+                mOutput.write("No of loops: ");
 
                 int nextZoomLevel = 0;
 
@@ -231,16 +198,12 @@ public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFram
                     runOnLooper(new Runnable() {
                         @Override
                         public void run() {
-                            mCamera = Camera.open(CAMERA_ID);
+                            mCameraTestHelper.setupCameraTest();
                         }
                     });
 
-                    mCamera.setErrorCallback(mCameraErrorCallback);
-                    mCamera.setPreviewDisplay(mSurfaceHolder);
-                    mCamera.startPreview();
-                    Thread.sleep(WAIT_GENERIC);
-
-                    params = mCamera.getParameters();
+                    mCameraTestHelper.startCameraPreview(surfaceHolder);
+                    params = mCameraTestHelper.mCamera.getParameters();
                     int currentZoomLevel = params.getZoom();
 
                     if (nextZoomLevel >= params.getMaxZoom()) {
@@ -249,33 +212,24 @@ public class CameraStressTest extends ActivityInstrumentationTestCase2<MediaFram
                     ++nextZoomLevel;
 
                     if (params.isSmoothZoomSupported()) {
-                        mCamera.startSmoothZoom(nextZoomLevel);
-                    }
-                    else {
+                        mCameraTestHelper.mCamera.startSmoothZoom(nextZoomLevel);
+                    } else {
                         params.setZoom(nextZoomLevel);
-                        mCamera.setParameters(params);
+                        mCameraTestHelper.setParameters(params);
                     }
-                    Log.v(TAG, "Zooming from " + currentZoomLevel + " to " + nextZoomLevel);
+                    mCameraTestHelper.capturePhoto();
 
-                    // sleep allows for zoom animation to finish
-                    Thread.sleep(WAIT_ZOOM_ANIMATION);
-
-                    // take picture
-                    mCamera.takePicture(shutterCallback, rawCallback, jpegCallback);
-                    Thread.sleep(WAIT_GENERIC);
-                    mCamera.stopPreview();
-                    mCamera.release();
-                    output.write(" ," + i);
+                    if (i == 0) {
+                        mOutput.write(Integer.toString(i));
+                    } else {
+                        mOutput.write(", " + i);
+                    }
                 }
             }
-
-            cleanupZoomImages();
+            mCameraTestHelper.cleanupTestImages();
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+            fail("Camera zoom stress test Exception");
         }
-        catch (Exception e) {
-            assertTrue("Camera zoom stress test Exception", false);
-            Log.v(TAG, e.toString());
-        }
-        output.write("\n\n");
-        output.close();
     }
 }

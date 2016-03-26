@@ -30,6 +30,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -207,8 +208,9 @@ public class PowerUI extends SystemUI {
             if (intent.resolveActivity(mContext.getPackageManager()) != null) {
                 b.setNegativeButton(R.string.battery_low_why,
                         new DialogInterface.OnClickListener() {
+                    @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mContext.startActivity(intent);
+                        mContext.startActivityAsUser(intent, UserHandle.CURRENT);
                         dismissLowBatteryWarning();
                     }
                 });
@@ -216,12 +218,15 @@ public class PowerUI extends SystemUI {
 
             AlertDialog d = b.create();
             d.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
                     public void onDismiss(DialogInterface dialog) {
                         mLowBatteryDialog = null;
                         mBatteryLevelTextView = null;
                     }
                 });
             d.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+            d.getWindow().getAttributes().privateFlags |=
+                    WindowManager.LayoutParams.PRIVATE_FLAG_SHOW_FOR_ALL_USERS;
             d.show();
             mLowBatteryDialog = d;
         }
@@ -233,9 +238,9 @@ public class PowerUI extends SystemUI {
         }
 
         final ContentResolver cr = mContext.getContentResolver();
-        if (Settings.System.getInt(cr, Settings.System.POWER_SOUNDS_ENABLED, 1) == 1) {
-            final String soundPath = Settings.System.getString(cr,
-                    Settings.System.LOW_BATTERY_SOUND);
+        if (Settings.Global.getInt(cr, Settings.Global.POWER_SOUNDS_ENABLED, 1) == 1) {
+            final String soundPath = Settings.Global.getString(cr,
+                    Settings.Global.LOW_BATTERY_SOUND);
             if (soundPath != null) {
                 final Uri soundUri = Uri.parse("file://" + soundPath);
                 if (soundUri != null) {

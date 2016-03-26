@@ -261,6 +261,16 @@ public class StateListDrawable extends DrawableContainer {
         return this;
     }
 
+    /** @hide */
+    @Override
+    public void setLayoutDirection(int layoutDirection) {
+        final int numStates = getStateCount();
+        for (int i = 0; i < numStates; i++) {
+            getStateDrawable(i).setLayoutDirection(layoutDirection);
+        }
+        super.setLayoutDirection(layoutDirection);
+    }
+
     static final class StateListState extends DrawableContainerState {
         int[][] mStateSets;
 

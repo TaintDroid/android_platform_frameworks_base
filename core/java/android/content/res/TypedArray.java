@@ -684,10 +684,10 @@ public class TypedArray {
     }
 
     /**
-     * Give back a previously retrieved StyledAttributes, for later re-use.
+     * Give back a previously retrieved array, for later re-use.
      */
     public void recycle() {
-        synchronized (mResources.mTmpValue) {
+        synchronized (mResources.mAccessLock) {
             TypedArray cached = mResources.mCachedStyledAttributes;
             if (cached == null || cached.mData.length < mData.length) {
                 mXml = null;

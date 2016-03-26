@@ -20,8 +20,9 @@
 
 #include <SkCanvas.h>
 
-#include <utils/threads.h>
+#include <utils/Mutex.h>
 
+#include "Caches.h"
 #include "TextureCache.h"
 #include "Properties.h"
 
@@ -33,7 +34,7 @@ namespace uirenderer {
 ///////////////////////////////////////////////////////////////////////////////
 
 TextureCache::TextureCache():
-        mCache(GenerationCache<SkBitmap*, Texture*>::kUnlimitedCapacity),
+        mCache(LruCache<SkBitmap*, Texture*>::kUnlimitedCapacity),
         mSize(0), mMaxSize(MB(DEFAULT_TEXTURE_CACHE_SIZE)),
         mFlushRate(DEFAULT_TEXTURE_CACHE_FLUSH_RATE) {
     char property[PROPERTY_VALUE_MAX];
@@ -57,7 +58,7 @@ TextureCache::TextureCache():
 }
 
 TextureCache::TextureCache(uint32_t maxByteSize):
-        mCache(GenerationCache<SkBitmap*, Texture*>::kUnlimitedCapacity),
+        mCache(LruCache<SkBitmap*, Texture*>::kUnlimitedCapacity),
         mSize(0), mMaxSize(maxByteSize) {
     init();
 }
@@ -216,8 +217,15 @@ void TextureCache::generateTexture(SkBitmap* bitmap, Texture* texture, bool rege
         return;
     }
 
+    // We could also enable mipmapping if both bitmap dimensions are powers
+    // of 2 but we'd have to deal with size changes. Let's keep this simple
+    const bool canMipMap = Extensions::getInstance().hasNPot();
+
+    // If the texture had mipmap enabled but not anymore,
+    // force a glTexImage2D to discard the mipmap levels
     const bool resize = !regenerate || bitmap->width() != int(texture->width) ||
-            bitmap->height() != int(texture->height);
+            bitmap->height() != int(texture->height) ||
+            (regenerate && canMipMap && texture->mipMap && !bitmap->hasHardwareMipMap());
 
     if (!regenerate) {
         glGenTextures(1, &texture->id);
@@ -228,25 +236,22 @@ void TextureCache::generateTexture(SkBitmap* bitmap, Texture* texture, bool rege
     texture->height = bitmap->height();
 
     glBindTexture(GL_TEXTURE_2D, texture->id);
-    if (!regenerate) {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, bitmap->bytesPerPixel());
-    }
 
     switch (bitmap->getConfig()) {
     case SkBitmap::kA8_Config:
-        if (!regenerate) {
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        }
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         uploadToTexture(resize, GL_ALPHA, bitmap->rowBytesAsPixels(), texture->height,
                 GL_UNSIGNED_BYTE, bitmap->getPixels());
         texture->blend = true;
         break;
     case SkBitmap::kRGB_565_Config:
+        glPixelStorei(GL_UNPACK_ALIGNMENT, bitmap->bytesPerPixel());
         uploadToTexture(resize, GL_RGB, bitmap->rowBytesAsPixels(), texture->height,
                 GL_UNSIGNED_SHORT_5_6_5, bitmap->getPixels());
         texture->blend = false;
         break;
     case SkBitmap::kARGB_8888_Config:
+        glPixelStorei(GL_UNPACK_ALIGNMENT, bitmap->bytesPerPixel());
         uploadToTexture(resize, GL_RGBA, bitmap->rowBytesAsPixels(), texture->height,
                 GL_UNSIGNED_BYTE, bitmap->getPixels());
         // Do this after calling getPixels() to make sure Skia's deferred
@@ -255,12 +260,20 @@ void TextureCache::generateTexture(SkBitmap* bitmap, Texture* texture, bool rege
         break;
     case SkBitmap::kARGB_4444_Config:
     case SkBitmap::kIndex8_Config:
+        glPixelStorei(GL_UNPACK_ALIGNMENT, bitmap->bytesPerPixel());
         uploadLoFiTexture(resize, bitmap, texture->width, texture->height);
         texture->blend = !bitmap->isOpaque();
         break;
     default:
         ALOGW("Unsupported bitmap config: %d", bitmap->getConfig());
         break;
+    }
+
+    if (canMipMap) {
+        texture->mipMap = bitmap->hasHardwareMipMap();
+        if (texture->mipMap) {
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
     }
 
     if (!regenerate) {

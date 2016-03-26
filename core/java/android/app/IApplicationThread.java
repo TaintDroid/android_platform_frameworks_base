@@ -65,7 +65,8 @@ public interface IApplicationThread extends IInterface {
     void scheduleDestroyActivity(IBinder token, boolean finished,
             int configChanges) throws RemoteException;
     void scheduleReceiver(Intent intent, ActivityInfo info, CompatibilityInfo compatInfo,
-            int resultCode, String data, Bundle extras, boolean sync) throws RemoteException;
+            int resultCode, String data, Bundle extras, boolean sync,
+            int sendingUser) throws RemoteException;
     static final int BACKUP_MODE_INCREMENTAL = 0;
     static final int BACKUP_MODE_FULL = 1;
     static final int BACKUP_MODE_RESTORE = 2;
@@ -89,7 +90,8 @@ public interface IApplicationThread extends IInterface {
     void bindApplication(String packageName, ApplicationInfo info, List<ProviderInfo> providers,
             ComponentName testName, String profileName, ParcelFileDescriptor profileFd,
             boolean autoStopProfiler, Bundle testArguments, IInstrumentationWatcher testWatcher,
-            int debugMode, boolean openGlTrace, boolean restrictedBackupMode, boolean persistent,
+            IUiAutomationConnection uiAutomationConnection, int debugMode,
+            boolean openGlTrace, boolean restrictedBackupMode, boolean persistent,
             Configuration config, CompatibilityInfo compatInfo, Map<String, IBinder> services,
             Bundle coreSettings) throws RemoteException;
     void scheduleExit() throws RemoteException;
@@ -105,8 +107,8 @@ public interface IApplicationThread extends IInterface {
     void dumpProvider(FileDescriptor fd, IBinder servicetoken, String[] args)
             throws RemoteException;
     void scheduleRegisteredReceiver(IIntentReceiver receiver, Intent intent,
-            int resultCode, String data, Bundle extras, boolean ordered, boolean sticky)
-            throws RemoteException;
+            int resultCode, String data, Bundle extras, boolean ordered,
+            boolean sticky, int sendingUser) throws RemoteException;
     void scheduleLowMemory() throws RemoteException;
     void scheduleActivityConfigurationChanged(IBinder token) throws RemoteException;
     void profilerControl(boolean start, String path, ParcelFileDescriptor fd, int profileType)
@@ -129,6 +131,8 @@ public interface IApplicationThread extends IInterface {
     void dumpGfxInfo(FileDescriptor fd, String[] args) throws RemoteException;
     void dumpDbInfo(FileDescriptor fd, String[] args) throws RemoteException;
     void unstableProviderDied(IBinder provider) throws RemoteException;
+    void requestActivityExtras(IBinder activityToken, IBinder requestToken, int requestType)
+            throws RemoteException;
 
     String descriptor = "android.app.IApplicationThread";
 
@@ -178,4 +182,5 @@ public interface IApplicationThread extends IInterface {
     int DUMP_PROVIDER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+44;
     int DUMP_DB_INFO_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+45;
     int UNSTABLE_PROVIDER_DIED_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+46;
+    int REQUEST_ACTIVITY_EXTRAS_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+47;
 }

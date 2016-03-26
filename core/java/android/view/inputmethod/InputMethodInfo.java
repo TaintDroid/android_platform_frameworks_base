@@ -34,6 +34,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Printer;
+import android.util.Slog;
 import android.util.Xml;
 
 import java.io.IOException;
@@ -80,6 +81,11 @@ public final class InputMethodInfo implements Parcelable {
     private boolean mIsAuxIme;
 
     /**
+     * Cavert: mForceDefault must be false for production. This flag is only for test.
+     */
+    private final boolean mForceDefault;
+
+    /**
      * Constructor.
      *
      * @param context The Context in which we are parsing the input method.
@@ -107,6 +113,7 @@ public final class InputMethodInfo implements Parcelable {
         ServiceInfo si = service.serviceInfo;
         mId = new ComponentName(si.packageName, si.name).flattenToShortString();
         mIsAuxIme = true;
+        mForceDefault = false;
 
         PackageManager pm = context.getPackageManager();
         String settingsActivityComponent = null;
@@ -169,7 +176,10 @@ public final class InputMethodInfo implements Parcelable {
                             a.getBoolean(com.android.internal.R.styleable
                                     .InputMethod_Subtype_isAuxiliary, false),
                             a.getBoolean(com.android.internal.R.styleable
-                                    .InputMethod_Subtype_overridesImplicitlyEnabledSubtype, false));
+                                    .InputMethod_Subtype_overridesImplicitlyEnabledSubtype, false),
+                            a.getInt(com.android.internal.R.styleable
+                                    .InputMethod_Subtype_subtypeId, 0 /* use Arrays.hashCode */)
+                            );
                     if (!subtype.isAuxiliary()) {
                         mIsAuxIme = false;
                     }
@@ -194,6 +204,9 @@ public final class InputMethodInfo implements Parcelable {
                 final InputMethodSubtype subtype = additionalSubtypes.get(i);
                 if (!mSubtypes.contains(subtype)) {
                     mSubtypes.add(subtype);
+                } else {
+                    Slog.w(TAG, "Duplicated subtype definition found: "
+                            + subtype.getLocale() + ", " + subtype.getMode());
                 }
             }
         }
@@ -208,13 +221,39 @@ public final class InputMethodInfo implements Parcelable {
         mIsAuxIme = source.readInt() == 1;
         mService = ResolveInfo.CREATOR.createFromParcel(source);
         source.readTypedList(mSubtypes, InputMethodSubtype.CREATOR);
+        mForceDefault = false;
     }
 
     /**
-     * Temporary API for creating a built-in input method.
+     * Temporary API for creating a built-in input method for test.
      */
     public InputMethodInfo(String packageName, String className,
             CharSequence label, String settingsActivity) {
+        this(buildDummyResolveInfo(packageName, className, label), false, settingsActivity, null,
+                0, false);
+    }
+
+    /**
+     * Temporary API for creating a built-in input method for test.
+     * @hide
+     */
+    public InputMethodInfo(ResolveInfo ri, boolean isAuxIme,
+            String settingsActivity, List<InputMethodSubtype> subtypes, int isDefaultResId,
+            boolean forceDefault) {
+        final ServiceInfo si = ri.serviceInfo;
+        mService = ri;
+        mId = new ComponentName(si.packageName, si.name).flattenToShortString();
+        mSettingsActivityName = settingsActivity;
+        mIsDefaultResId = isDefaultResId;
+        mIsAuxIme = isAuxIme;
+        if (subtypes != null) {
+            mSubtypes.addAll(subtypes);
+        }
+        mForceDefault = forceDefault;
+    }
+
+    private static ResolveInfo buildDummyResolveInfo(String packageName, String className,
+            CharSequence label) {
         ResolveInfo ri = new ResolveInfo();
         ServiceInfo si = new ServiceInfo();
         ApplicationInfo ai = new ApplicationInfo();
@@ -227,11 +266,7 @@ public final class InputMethodInfo implements Parcelable {
         si.exported = true;
         si.nonLocalizedLabel = label;
         ri.serviceInfo = si;
-        mService = ri;
-        mId = new ComponentName(si.packageName, si.name).flattenToShortString();
-        mSettingsActivityName = settingsActivity;
-        mIsDefaultResId = 0;
-        mIsAuxIme = false;
+        return ri;
     }
 
     /**
@@ -331,6 +366,22 @@ public final class InputMethodInfo implements Parcelable {
      */
     public int getIsDefaultResourceId() {
         return mIsDefaultResId;
+    }
+
+    /**
+     * Return whether or not this ime is a default ime or not.
+     * @hide
+     */
+    public boolean isDefault(Context context) {
+        if (mForceDefault) {
+            return true;
+        }
+        try {
+            final Resources res = context.createPackageContext(getPackageName(), 0).getResources();
+            return res.getBoolean(getIsDefaultResourceId());
+        } catch (NameNotFoundException e) {
+            return false;
+        }
     }
 
     public void dump(Printer pw, String prefix) {

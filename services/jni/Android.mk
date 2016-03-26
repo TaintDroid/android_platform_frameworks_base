@@ -8,7 +8,7 @@ LOCAL_SRC_FILES:= \
     com_android_server_input_InputManagerService.cpp \
     com_android_server_input_InputWindowHandle.cpp \
     com_android_server_LightsService.cpp \
-    com_android_server_PowerManagerService.cpp \
+    com_android_server_power_PowerManagerService.cpp \
     com_android_server_SerialService.cpp \
     com_android_server_SystemServer.cpp \
     com_android_server_UsbDeviceManager.cpp \
@@ -32,6 +32,7 @@ LOCAL_SHARED_LIBRARIES := \
     libandroid_runtime \
     libandroidfw \
     libcutils \
+    liblog \
     libhardware \
     libhardware_legacy \
     libnativehelper \

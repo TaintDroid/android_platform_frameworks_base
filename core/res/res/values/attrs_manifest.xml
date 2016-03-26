@@ -199,12 +199,20 @@
         <flag name="development" value="0x20" />
     </attr>
 
-    <!-- Flags indicating more context for a permission group. @hide -->
+    <!-- Flags indicating more context for a permission group. -->
     <attr name="permissionGroupFlags">
         <!-- Set to indicate that this permission group contains permissions
              protecting access to some information that is considered
              personal to the user (such as contacts, e-mails, etc). -->
         <flag name="personalInfo" value="0x0001" />
+    </attr>
+
+    <!-- Flags indicating more context for a permission. -->
+    <attr name="permissionFlags">
+        <!-- Set to indicate that this permission allows an operation that
+             may cost the user money.  Such permissions may be highlighted
+             when shown to the user with this additional information.  -->
+        <flag name="costsMoney" value="0x0001" />
     </attr>
 
     <!-- Specified the name of a group that this permission is associated
@@ -246,7 +254,11 @@
          not normally be used by applications; it requires that the system keep
          your application running at all times. -->
     <attr name="persistent" format="boolean" />
-    
+
+    <!-- Flag to specify if this application needs to be present for all users. Only pre-installed
+         applications can request this feature. Default value is false. -->
+    <attr name="requiredForAllUsers" format="boolean" />
+
     <!-- Flag indicating whether the application can be debugged, even when
          running on a device that is running in user mode. -->
     <attr name="debuggable" format="boolean" />
@@ -284,7 +296,20 @@
          who do not know their particular component name) and for all
          content providers. -->
     <attr name="exported" format="boolean" />
-    
+
+    <!-- If set to true, a single instance of this component will run for
+         all users.  That instance will run as user 0, the default/primary
+         user.  When the app running is in processes for other users and interacts
+         with this component (by binding to a service for example) those processes will
+         always interact with the instance running for user 0.  Enabling
+         single user mode forces "exported" of the component to be false, to
+         help avoid introducing multi-user security bugs.  This feature is only
+         available to applications built in to the system image; you must hold the
+         permission INTERACT_ACROSS_USERS in order
+         to use this feature.  This flag can only be used with services,
+         receivers, and providers; it can not be used with activities. -->
+    <attr name="singleUser" format="boolean" />
+
     <!-- Specify a specific process that the associated code is to run in.
          Use with the application tag (to supply a default process for all
          application components), or with the activity, receiver, service,
@@ -423,6 +448,10 @@
          recently launched activities. -->
     <attr name="excludeFromRecents" format="boolean" />
 
+    <!-- Specify that an Activity should be shown over the lock screen and,
+         in a multiuser environment, across all users' windows -->
+    <attr name="showOnLockScreen" format="boolean" />
+
     <!-- Specify the authorities under which this content provider can be
          found.  Multiple authorities may be supplied by separating them
          with a semicolon.  Authority names should use a Java-style naming
@@ -518,7 +547,10 @@
     
     <!-- Specify the orientation an activity should be run in.  If not
          specified, it will run in the current preferred orientation
-         of the screen. -->
+         of the screen.
+         <p>This attribute is supported by the <a
+            href="{@docRoot}guide/topics/manifest/activity-element.html">{@code &lt;activity>}</a>
+            element. -->
     <attr name="screenOrientation">
         <!-- No preference specified: let the system decide the best
              orientation.  This will either be the orientation selected
@@ -527,43 +559,92 @@
              explicitly turned off sensor based orientation through settings
              sensor based device rotation will be ignored. If not by default
              sensor based orientation will be taken into account and the 
-             orientation will changed based on how the user rotates the device -->
+             orientation will changed based on how the user rotates the device.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_UNSPECIFIED}. -->
         <enum name="unspecified" value="-1" />
         <!-- Would like to have the screen in a landscape orientation: that
-             is, with the display wider than it is tall, ignoring sensor data. -->
+             is, with the display wider than it is tall, ignoring sensor data.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_LANDSCAPE}. -->
         <enum name="landscape" value="0" />
         <!-- Would like to have the screen in a portrait orientation: that
-             is, with the display taller than it is wide, ignoring sensor data. -->
+             is, with the display taller than it is wide, ignoring sensor data.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_PORTRAIT}. -->
         <enum name="portrait" value="1" />
-        <!-- Use the user's current preferred orientation of the handset. -->
+        <!-- Use the user's current preferred orientation of the handset.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_USER}. -->
         <enum name="user" value="2" />
         <!-- Keep the screen in the same orientation as whatever is behind
-             this activity. -->
+             this activity.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_BEHIND}. -->
         <enum name="behind" value="3" />
         <!-- Orientation is determined by a physical orientation sensor:
-             the display will rotate based on how the user moves the device. -->
+             the display will rotate based on how the user moves the device.
+             Ignores user's setting to turn off sensor-based rotation.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_SENSOR}. -->
         <enum name="sensor" value="4" />
         <!-- Always ignore orientation determined by orientation sensor:
-             the display will not rotate when the user moves the device. -->
+             the display will not rotate when the user moves the device.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_NOSENSOR}. -->
         <enum name="nosensor" value="5" />
         <!-- Would like to have the screen in landscape orientation, but can
-             use the sensor to change which direction the screen is facing. -->
+             use the sensor to change which direction the screen is facing.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_SENSOR_LANDSCAPE}. -->
         <enum name="sensorLandscape" value="6" />
         <!-- Would like to have the screen in portrait orientation, but can
-             use the sensor to change which direction the screen is facing. -->
+             use the sensor to change which direction the screen is facing.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_SENSOR_PORTRAIT}. -->
         <enum name="sensorPortrait" value="7" />
         <!-- Would like to have the screen in landscape orientation, turned in
-             the opposite direction from normal landscape. -->
+             the opposite direction from normal landscape.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_REVERSE_LANDSCAPE}. -->
         <enum name="reverseLandscape" value="8" />
         <!-- Would like to have the screen in portrait orientation, turned in
-             the opposite direction from normal portrait. -->
+             the opposite direction from normal portrait.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_REVERSE_PORTRAIT}. -->
         <enum name="reversePortrait" value="9" />
         <!-- Orientation is determined by a physical orientation sensor:
              the display will rotate based on how the user moves the device.
              This allows any of the 4 possible rotations, regardless of what
              the device will normally do (for example some devices won't
-             normally use 180 degree rotation). -->
+             normally use 180 degree rotation).
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_FULL_SENSOR}. -->
         <enum name="fullSensor" value="10" />
+        <!-- Would like to have the screen in landscape orientation, but if
+             the user has enabled sensor-based rotation then we can use the
+             sensor to change which direction the screen is facing.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_USER_LANDSCAPE}. -->
+        <enum name="userLandscape" value="11" />
+        <!-- Would like to have the screen in portrait orientation, but if
+             the user has enabled sensor-based rotation then we can use the
+             sensor to change which direction the screen is facing.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_USER_PORTRAIT}. -->
+        <enum name="userPortrait" value="12" />
+        <!-- Respect the user's sensor-based rotation preference, but if
+             sensor-based rotation is enabled then allow the screen to rotate
+             in all 4 possible directions regardless of what
+             the device will normally do (for example some devices won't
+             normally use 180 degree rotation).
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_FULL_USER}. -->
+        <enum name="fullUser" value="13" />
+        <!-- Screen is locked to its current rotation, whatever that is.
+             Corresponds to
+             {@link android.content.pm.ActivityInfo#SCREEN_ORIENTATION_LOCKED}. -->
+        <enum name="locked" value="14" />
     </attr>
     
     <!-- Specify one or more configuration changes that the activity will
@@ -627,6 +708,8 @@
              physical screen size has changed such as switching to an external
              display. -->
         <flag name="smallestScreenSize" value="0x0800" />
+        <!-- The layout direction has changed. For example going from LTR to RTL. -->
+        <flag name="layoutDirection" value="0x2000" />
         <!-- The font scaling factor has changed, that is the user has
              selected a new global font size. -->
         <flag name="fontScale" value="0x40000000" />
@@ -685,11 +768,11 @@
          backup and restore of the application's data on external storage. -->
     <attr name="backupAgent" format="string" />
 
-    <!-- Whether to allow the application to participate in backup
-         infrastructure.  If this attribute is set to <code>false</code>, no backup
-         of the application will ever be performed, even by a full-system backup that
-         would otherwise cause all application data to be saved via adb.  The
-         default value of this attribute is <code>true</code>. -->
+    <!-- Whether to allow the application to participate in the backup
+         and restore infrastructure.  If this attribute is set to <code>false</code>,
+         no backup or restore of the application will ever be performed, even by a
+         full-system backup that would otherwise cause all application data to be saved
+         via adb.  The default value of this attribute is <code>true</code>. -->
     <attr name="allowBackup" format="boolean" />
 
     <!-- Whether the application in question should be terminated after its
@@ -817,6 +900,7 @@
              for normal behavior. -->
         <attr name="hasCode" format="boolean" />
         <attr name="persistent" />
+        <attr name="requiredForAllUsers" />
         <!-- Specify whether the components in this application are enabled or not (that is, can be
              instantiated by the system).
              If "false", it overrides any component specific values (a value of "true" will not
@@ -857,6 +941,16 @@
         <!-- Declare that your application will be able to deal with RTL (right to left) layouts.
              If set to  false (default value), your application will not care about RTL layouts. -->
         <attr name="supportsRtl" format="boolean" />
+        <!-- Declare that this application requires access to restricted accounts of a certain
+             type. The default value is null and restricted accounts won\'t be visible to this
+             application. The type should correspond to the account authenticator type, such as
+             "com.google". -->
+        <attr name="restrictedAccountType" format="string"/>
+        <!-- Declare that this application requires an account of a certain
+             type. The default value is null and indicates that the application can work without
+             any accounts. The type should correspond to the account authenticator type, such as
+             "com.google". -->
+        <attr name="requiredAccountType" format="string"/>
     </declare-styleable>
     
     <!-- The <code>permission</code> tag declares a security permission that can be
@@ -880,6 +974,7 @@
         <attr name="permissionGroup" />
         <attr name="description" />
         <attr name="protectionLevel" />
+        <attr name="permissionFlags" />
     </declare-styleable>
     
     <!-- The <code>permission-group</code> tag declares a logical grouping of
@@ -903,6 +998,7 @@
         <attr name="icon" />
         <attr name="logo" />
         <attr name="description" />
+        <attr name="permissionGroupFlags" />
         <attr name="priority" />
     </declare-styleable>
     
@@ -1036,6 +1132,21 @@
         <attr name="maxSdkVersion" format="integer" />
     </declare-styleable>
     
+    <!-- The <code>library</code> tag declares that this apk is providing itself
+         as a shared library for other applications to use.  It can only be used
+         with apks that are built in to the system image.  Other apks can link to
+         it with the {@link #AndroidManifestUsesLibrary uses-library} tag.
+
+         <p>This appears as a child tag of the
+         {@link #AndroidManifestApplication application} tag. -->
+    <declare-styleable name="AndroidManifestLibrary" parent="AndroidManifest">
+        <!-- Required public name of the library, which other components and
+        packages will use when referring to this library.  This is a string using
+        Java-style scoping to ensure it is unique.  The name should typically
+        be the same as the apk's package name. -->
+        <attr name="name" />
+    </declare-styleable>
+
     <!-- The <code>uses-libraries</code> specifies a shared library that this
          package requires to be linked against.  Specifying this flag tells the
          system to include this library's code in your class loader.
@@ -1194,6 +1305,7 @@
              component specific values). -->
         <attr name="enabled" />
         <attr name="exported" />
+        <attr name="singleUser" />
     </declare-styleable>
     
     <!-- Attributes that can be supplied in an AndroidManifest.xml
@@ -1275,6 +1387,7 @@
              that is isolated from the rest of the system.  The only communication
              with it is through the Service API (binding and starting). -->
         <attr name="isolatedProcess" format="boolean" />
+        <attr name="singleUser" />
     </declare-styleable>
     
     <!-- The <code>receiver</code> tag declares an
@@ -1308,8 +1421,9 @@
              component specific values). -->
         <attr name="enabled" />
         <attr name="exported" />
+        <attr name="singleUser" />
     </declare-styleable>
-    
+
     <!-- The <code>activity</code> tag declares an
          {@link android.app.Activity} class that is available
          as part of the package's application components, implementing
@@ -1348,6 +1462,7 @@
         <attr name="alwaysRetainTaskState" />
         <attr name="stateNotNeeded" />
         <attr name="excludeFromRecents" />
+        <attr name="showOnLockScreen" />
         <!-- Specify whether the activity is enabled or not (that is, can be instantiated by the system).
              It can also be specified for an application as a whole, in which case a value of "false"
              will override any component specific values (a value of "true" will not override the
@@ -1362,6 +1477,10 @@
         <attr name="hardwareAccelerated" />
         <attr name="uiOptions" />
         <attr name="parentActivityName" />
+        <attr name="singleUser" />
+        <!-- @hide This broacast receiver will only receive broadcasts for the
+             primary user.  Can only be used with receivers. -->
+        <attr name="primaryUserOnly" format="boolean" />
     </declare-styleable>
     
     <!-- The <code>activity-alias</code> tag declares a new

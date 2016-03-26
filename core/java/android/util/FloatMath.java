@@ -17,12 +17,10 @@
 package android.util;
 
 /**
- * Math routines similar to those found in {@link java.lang.Math}. Performs
- * computations on {@code float} values directly without incurring the overhead
- * of conversions to and from {@code double}.
- *
- * <p>On one platform, {@code FloatMath.sqrt(100)} executes in one third of the
- * time required by {@code java.lang.Math.sqrt(100)}.</p>
+ * Math routines similar to those found in {@link java.lang.Math}. On
+ * versions of Android with a JIT, these are significantly slower than
+ * the equivalent {@code Math} functions, which should be used in preference
+ * to these.
  */
 public class FloatMath {
 
@@ -71,4 +69,33 @@ public class FloatMath {
      * @return the square root of value
      */
     public static native float sqrt(float value);
+
+    /**
+     * Returns the closest float approximation of the raising "e" to the power
+     * of the argument.
+     *
+     * @param value to compute the exponential of
+     * @return the exponential of value
+     */
+    public static native float exp(float value);
+
+    /**
+     * Returns the closest float approximation of the result of raising {@code
+     * x} to the power of {@code y}.
+     *
+     * @param x the base of the operation.
+     * @param y the exponent of the operation.
+     * @return {@code x} to the power of {@code y}.
+     */
+    public static native float pow(float x, float y);
+
+    /**
+     * Returns {@code sqrt(}<i>{@code x}</i><sup>{@code 2}</sup>{@code +} <i>
+     * {@code y}</i><sup>{@code 2}</sup>{@code )}.
+     *
+     * @param x a float number
+     * @param y a float number
+     * @return the hypotenuse
+     */
+    public static native float hypot(float x, float y);
 }

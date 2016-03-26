@@ -31,7 +31,9 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -39,7 +41,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
 import com.android.internal.R;
@@ -112,9 +113,13 @@ public class GlowPadView extends View {
     private float mWaveCenterY;
     private int mMaxTargetHeight;
     private int mMaxTargetWidth;
+    private float mRingScaleFactor = 1f;
+    private boolean mAllowScaling;
 
     private float mOuterRadius = 0.0f;
     private float mSnapMargin = 0.0f;
+    private float mFirstItemOffset = 0.0f;
+    private boolean mMagneticTargets = false;
     private boolean mDragging;
     private int mNewTargetResources;
 
@@ -197,6 +202,7 @@ public class GlowPadView extends View {
     private Tweener mBackgroundAnimator;
     private PointCloud mPointCloud;
     private float mInnerRadius;
+    private int mPointerId;
 
     public GlowPadView(Context context) {
         this(context, null);
@@ -210,17 +216,22 @@ public class GlowPadView extends View {
         mInnerRadius = a.getDimension(R.styleable.GlowPadView_innerRadius, mInnerRadius);
         mOuterRadius = a.getDimension(R.styleable.GlowPadView_outerRadius, mOuterRadius);
         mSnapMargin = a.getDimension(R.styleable.GlowPadView_snapMargin, mSnapMargin);
+        mFirstItemOffset = (float) Math.toRadians(
+                a.getFloat(R.styleable.GlowPadView_firstItemOffset,
+                        (float) Math.toDegrees(mFirstItemOffset)));
         mVibrationDuration = a.getInt(R.styleable.GlowPadView_vibrationDuration,
                 mVibrationDuration);
         mFeedbackCount = a.getInt(R.styleable.GlowPadView_feedbackCount,
                 mFeedbackCount);
-        mHandleDrawable = new TargetDrawable(res,
-                a.peekValue(R.styleable.GlowPadView_handleDrawable).resourceId);
+        mAllowScaling = a.getBoolean(R.styleable.GlowPadView_allowScaling, false);
+        TypedValue handle = a.peekValue(R.styleable.GlowPadView_handleDrawable);
+        mHandleDrawable = new TargetDrawable(res, handle != null ? handle.resourceId : 0);
         mHandleDrawable.setState(TargetDrawable.STATE_INACTIVE);
         mOuterRing = new TargetDrawable(res,
                 getResourceId(a, R.styleable.GlowPadView_outerRingDrawable));
 
         mAlwaysTrackFinger = a.getBoolean(R.styleable.GlowPadView_alwaysTrackFinger, false);
+        mMagneticTargets = a.getBoolean(R.styleable.GlowPadView_magneticTargets, mMagneticTargets);
 
         int pointId = getResourceId(a, R.styleable.GlowPadView_pointDrawable);
         Drawable pointDrawable = pointId != 0 ? res.getDrawable(pointId) : null;
@@ -254,11 +265,8 @@ public class GlowPadView extends View {
             setDirectionDescriptionsResourceId(resourceId);
         }
 
-        a.recycle();
+        mGravity = a.getInt(R.styleable.GlowPadView_gravity, Gravity.TOP);
 
-        // Use gravity attribute from LinearLayout
-        a = context.obtainStyledAttributes(attrs, android.R.styleable.LinearLayout);
-        mGravity = a.getInt(android.R.styleable.LinearLayout_gravity, Gravity.TOP);
         a.recycle();
 
         setVibrateEnabled(mVibrationDuration > 0);
@@ -314,6 +322,22 @@ public class GlowPadView extends View {
         return (int) (Math.max(mOuterRing.getHeight(), 2 * mOuterRadius) + mMaxTargetHeight);
     }
 
+    /**
+     * This gets the suggested width accounting for the ring's scale factor.
+     */
+    protected int getScaledSuggestedMinimumWidth() {
+        return (int) (mRingScaleFactor * Math.max(mOuterRing.getWidth(), 2 * mOuterRadius)
+                + mMaxTargetWidth);
+    }
+
+    /**
+     * This gets the suggested height accounting for the ring's scale factor.
+     */
+    protected int getScaledSuggestedMinimumHeight() {
+        return (int) (mRingScaleFactor * Math.max(mOuterRing.getHeight(), 2 * mOuterRadius)
+                + mMaxTargetHeight);
+    }
+
     private int resolveMeasured(int measureSpec, int desired)
     {
         int result = 0;
@@ -330,16 +354,6 @@ public class GlowPadView extends View {
                 result = specSize;
         }
         return result;
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        final int minimumWidth = getSuggestedMinimumWidth();
-        final int minimumHeight = getSuggestedMinimumHeight();
-        int computedWidth = resolveMeasured(widthMeasureSpec, minimumWidth);
-        int computedHeight = resolveMeasured(heightMeasureSpec, minimumHeight);
-        computeInsets((computedWidth - minimumWidth), (computedHeight - minimumHeight));
-        setMeasuredDimension(computedWidth, computedHeight);
     }
 
     private void switchToState(int state, float x, float y) {
@@ -499,8 +513,9 @@ public class GlowPadView extends View {
                     "onUpdate", mUpdateListener));
         }
 
-        final float ringScaleTarget = expanded ?
+        float ringScaleTarget = expanded ?
                 RING_SCALE_EXPANDED : RING_SCALE_COLLAPSED;
+        ringScaleTarget *= mRingScaleFactor;
         mTargetAnimations.add(Tweener.to(mOuterRing, duration,
                 "ease", interpolator,
                 "alpha", 0.0f,
@@ -530,11 +545,13 @@ public class GlowPadView extends View {
                     "delay", delay,
                     "onUpdate", mUpdateListener));
         }
+
+        float ringScale = mRingScaleFactor * RING_SCALE_EXPANDED;
         mTargetAnimations.add(Tweener.to(mOuterRing, duration,
                 "ease", Ease.Cubic.easeOut,
                 "alpha", 1.0f,
-                "scaleX", 1.0f,
-                "scaleY", 1.0f,
+                "scaleX", ringScale,
+                "scaleY", ringScale,
                 "delay", delay,
                 "onUpdate", mUpdateListener,
                 "onComplete", mTargetUpdateListener));
@@ -543,7 +560,10 @@ public class GlowPadView extends View {
     }
 
     private void vibrate() {
-        if (mVibrator != null) {
+        final boolean hapticEnabled = Settings.System.getIntForUser(
+                mContext.getContentResolver(), Settings.System.HAPTIC_FEEDBACK_ENABLED, 1,
+                UserHandle.USER_CURRENT) != 0;
+        if (mVibrator != null && hapticEnabled) {
             mVibrator.vibrate(mVibrationDuration);
         }
     }
@@ -717,7 +737,7 @@ public class GlowPadView extends View {
         startBackgroundAnimation(0, 0.0f);
         stopAndHideWaveAnimation();
         hideTargets(animate, false);
-        hideGlow(0, 0, 1.0f, null);
+        hideGlow(0, 0, 0.0f, null);
         Tweener.reset();
     }
 
@@ -737,9 +757,10 @@ public class GlowPadView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        final int action = event.getAction();
+        final int action = event.getActionMasked();
         boolean handled = false;
         switch (action) {
+            case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_DOWN:
                 if (DEBUG) Log.v(TAG, "*** DOWN ***");
                 handleDown(event);
@@ -753,6 +774,7 @@ public class GlowPadView extends View {
                 handled = true;
                 break;
 
+            case MotionEvent.ACTION_POINTER_UP:
             case MotionEvent.ACTION_UP:
                 if (DEBUG) Log.v(TAG, "*** UP ***");
                 handleMove(event);
@@ -766,43 +788,51 @@ public class GlowPadView extends View {
                 handleCancel(event);
                 handled = true;
                 break;
+
         }
         invalidate();
         return handled ? true : super.onTouchEvent(event);
     }
 
     private void updateGlowPosition(float x, float y) {
-        mPointCloud.glowManager.setX(x);
-        mPointCloud.glowManager.setY(y);
+        float dx = x - mOuterRing.getX();
+        float dy = y - mOuterRing.getY();
+        dx *= 1f / mRingScaleFactor;
+        dy *= 1f / mRingScaleFactor;
+        mPointCloud.glowManager.setX(mOuterRing.getX() + dx);
+        mPointCloud.glowManager.setY(mOuterRing.getY() + dy);
     }
 
     private void handleDown(MotionEvent event) {
-        float eventX = event.getX();
-        float eventY = event.getY();
+        int actionIndex = event.getActionIndex();
+        float eventX = event.getX(actionIndex);
+        float eventY = event.getY(actionIndex);
         switchToState(STATE_START, eventX, eventY);
         if (!trySwitchToFirstTouchState(eventX, eventY)) {
             mDragging = false;
         } else {
+            mPointerId = event.getPointerId(actionIndex);
             updateGlowPosition(eventX, eventY);
         }
     }
 
     private void handleUp(MotionEvent event) {
         if (DEBUG && mDragging) Log.v(TAG, "** Handle RELEASE");
-        switchToState(STATE_FINISH, event.getX(), event.getY());
+        int actionIndex = event.getActionIndex();
+        if (event.getPointerId(actionIndex) == mPointerId) {
+            switchToState(STATE_FINISH, event.getX(actionIndex), event.getY(actionIndex));
+        }
     }
 
     private void handleCancel(MotionEvent event) {
         if (DEBUG && mDragging) Log.v(TAG, "** Handle CANCEL");
 
-        // We should drop the active target here but it interferes with
-        // moving off the screen in the direction of the navigation bar. At some point we may
-        // want to revisit how we handle this. For now we'll allow a canceled event to
-        // activate the current target.
+        // Drop the active target if canceled.
+        mActiveTarget = -1; 
 
-        // mActiveTarget = -1; // Drop the active target if canceled.
-
-        switchToState(STATE_FINISH, event.getX(), event.getY());
+        int actionIndex = event.findPointerIndex(mPointerId);
+        actionIndex = actionIndex == -1 ? 0 : actionIndex;
+        switchToState(STATE_FINISH, event.getX(actionIndex), event.getY(actionIndex));
     }
 
     private void handleMove(MotionEvent event) {
@@ -812,9 +842,18 @@ public class GlowPadView extends View {
         int ntargets = targets.size();
         float x = 0.0f;
         float y = 0.0f;
+        float activeAngle = 0.0f;
+        int actionIndex = event.findPointerIndex(mPointerId);
+
+        if (actionIndex == -1) {
+            return;  // no data for this pointer
+        }
+
         for (int k = 0; k < historySize + 1; k++) {
-            float eventX = k < historySize ? event.getHistoricalX(k) : event.getX();
-            float eventY = k < historySize ? event.getHistoricalY(k) : event.getY();
+            float eventX = k < historySize ? event.getHistoricalX(actionIndex, k)
+                    : event.getX(actionIndex);
+            float eventY = k < historySize ? event.getHistoricalY(actionIndex, k)
+                    : event.getY(actionIndex);
             // tx and ty are relative to wave center
             float tx = eventX - mWaveCenterX;
             float ty = eventY - mWaveCenterY;
@@ -830,21 +869,24 @@ public class GlowPadView extends View {
 
             if (mDragging) {
                 // For multiple targets, snap to the one that matches
-                final float snapRadius = mOuterRadius - mSnapMargin;
+                final float snapRadius = mRingScaleFactor * mOuterRadius - mSnapMargin;
                 final float snapDistance2 = snapRadius * snapRadius;
                 // Find first target in range
                 for (int i = 0; i < ntargets; i++) {
                     TargetDrawable target = targets.get(i);
 
-                    double targetMinRad = (i - 0.5) * 2 * Math.PI / ntargets;
-                    double targetMaxRad = (i + 0.5) * 2 * Math.PI / ntargets;
+                    double targetMinRad = mFirstItemOffset + (i - 0.5) * 2 * Math.PI / ntargets;
+                    double targetMaxRad = mFirstItemOffset + (i + 0.5) * 2 * Math.PI / ntargets;
                     if (target.isEnabled()) {
                         boolean angleMatches =
                             (angleRad > targetMinRad && angleRad <= targetMaxRad) ||
                             (angleRad + 2 * Math.PI > targetMinRad &&
-                             angleRad + 2 * Math.PI <= targetMaxRad);
+                             angleRad + 2 * Math.PI <= targetMaxRad) ||
+                            (angleRad - 2 * Math.PI > targetMinRad &&
+                             angleRad - 2 * Math.PI <= targetMaxRad);
                         if (angleMatches && (dist2(tx, ty) > snapDistance2)) {
                             activeTarget = i;
+                            activeAngle = (float) -angleRad;
                         }
                     }
                 }
@@ -872,12 +914,18 @@ public class GlowPadView extends View {
                 if (target.hasState(TargetDrawable.STATE_FOCUSED)) {
                     target.setState(TargetDrawable.STATE_INACTIVE);
                 }
+                if (mMagneticTargets) {
+                    updateTargetPosition(mActiveTarget, mWaveCenterX, mWaveCenterY);
+                }
             }
             // Focus the new target
             if (activeTarget != -1) {
                 TargetDrawable target = targets.get(activeTarget);
                 if (target.hasState(TargetDrawable.STATE_FOCUSED)) {
                     target.setState(TargetDrawable.STATE_FOCUSED);
+                }
+                if (mMagneticTargets) {
+                    updateTargetPosition(activeTarget, mWaveCenterX, mWaveCenterY, activeAngle);
                 }
                 if (AccessibilityManager.getInstance(mContext).isEnabled()) {
                     String targetContentDescription = getTargetDescription(activeTarget);
@@ -906,7 +954,8 @@ public class GlowPadView extends View {
             onTouchEvent(event);
             event.setAction(action);
         }
-        return super.onHoverEvent(event);
+        super.onHoverEvent(event);
+        return true;
     }
 
     /**
@@ -957,7 +1006,7 @@ public class GlowPadView extends View {
     }
 
     private void computeInsets(int dx, int dy) {
-        final int layoutDirection = getResolvedLayoutDirection();
+        final int layoutDirection = getLayoutDirection();
         final int absoluteGravity = Gravity.getAbsoluteGravity(mGravity, layoutDirection);
 
         switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
@@ -986,6 +1035,78 @@ public class GlowPadView extends View {
         }
     }
 
+    /**
+     * Given the desired width and height of the ring and the allocated width and height, compute
+     * how much we need to scale the ring.
+     */
+    private float computeScaleFactor(int desiredWidth, int desiredHeight,
+            int actualWidth, int actualHeight) {
+
+        // Return unity if scaling is not allowed.
+        if (!mAllowScaling) return 1f;
+
+        final int layoutDirection = getLayoutDirection();
+        final int absoluteGravity = Gravity.getAbsoluteGravity(mGravity, layoutDirection);
+
+        float scaleX = 1f;
+        float scaleY = 1f;
+
+        // We use the gravity as a cue for whether we want to scale on a particular axis.
+        // We only scale to fit horizontally if we're not pinned to the left or right. Likewise,
+        // we only scale to fit vertically if we're not pinned to the top or bottom. In these
+        // cases, we want the ring to hang off the side or top/bottom, respectively.
+        switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+            case Gravity.LEFT:
+            case Gravity.RIGHT:
+                break;
+            case Gravity.CENTER_HORIZONTAL:
+            default:
+                if (desiredWidth > actualWidth) {
+                    scaleX = (1f * actualWidth - mMaxTargetWidth) /
+                            (desiredWidth - mMaxTargetWidth);
+                }
+                break;
+        }
+        switch (absoluteGravity & Gravity.VERTICAL_GRAVITY_MASK) {
+            case Gravity.TOP:
+            case Gravity.BOTTOM:
+                break;
+            case Gravity.CENTER_VERTICAL:
+            default:
+                if (desiredHeight > actualHeight) {
+                    scaleY = (1f * actualHeight - mMaxTargetHeight) /
+                            (desiredHeight - mMaxTargetHeight);
+                }
+                break;
+        }
+        return Math.min(scaleX, scaleY);
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        final int minimumWidth = getSuggestedMinimumWidth();
+        final int minimumHeight = getSuggestedMinimumHeight();
+        int computedWidth = resolveMeasured(widthMeasureSpec, minimumWidth);
+        int computedHeight = resolveMeasured(heightMeasureSpec, minimumHeight);
+
+        mRingScaleFactor = computeScaleFactor(minimumWidth, minimumHeight,
+                computedWidth, computedHeight);
+
+        int scaledWidth = getScaledSuggestedMinimumWidth();
+        int scaledHeight = getScaledSuggestedMinimumHeight();
+
+        computeInsets(computedWidth - scaledWidth, computedHeight - scaledHeight);
+        setMeasuredDimension(computedWidth, computedHeight);
+    }
+
+    private float getRingWidth() {
+        return mRingScaleFactor * Math.max(mOuterRing.getWidth(), 2 * mOuterRadius);
+    }
+
+    private float getRingHeight() {
+        return mRingScaleFactor * Math.max(mOuterRing.getHeight(), 2 * mOuterRadius);
+    }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
@@ -994,8 +1115,8 @@ public class GlowPadView extends View {
 
         // Target placement width/height. This puts the targets on the greater of the ring
         // width or the specified outer radius.
-        final float placementWidth = Math.max(mOuterRing.getWidth(), 2 * mOuterRadius);
-        final float placementHeight = Math.max(mOuterRing.getHeight(), 2 * mOuterRadius);
+        final float placementWidth = getRingWidth();
+        final float placementHeight = getRingHeight();
         float newWaveCenterX = mHorizontalInset
                 + Math.max(width, mMaxTargetWidth + placementWidth) / 2;
         float newWaveCenterY = mVerticalInset
@@ -1010,6 +1131,8 @@ public class GlowPadView extends View {
         mOuterRing.setPositionX(newWaveCenterX);
         mOuterRing.setPositionY(newWaveCenterY);
 
+        mPointCloud.setScale(mRingScaleFactor);
+
         mHandleDrawable.setPositionX(newWaveCenterX);
         mHandleDrawable.setPositionY(newWaveCenterY);
 
@@ -1023,19 +1146,45 @@ public class GlowPadView extends View {
         if (DEBUG) dump();
     }
 
-    private void updateTargetPositions(float centerX, float centerY) {
-        // Reposition the target drawables if the view changed.
-        ArrayList<TargetDrawable> targets = mTargetDrawables;
-        final int size = targets.size();
-        final float alpha = (float) (-2.0f * Math.PI / size);
-        for (int i = 0; i < size; i++) {
+    private void updateTargetPosition(int i, float centerX, float centerY) {
+        final float angle = getAngle(getSliceAngle(), i);
+        updateTargetPosition(i, centerX, centerY, angle);
+    }
+
+    private void updateTargetPosition(int i, float centerX, float centerY, float angle) {
+        final float placementRadiusX = getRingWidth() / 2;
+        final float placementRadiusY = getRingHeight() / 2;
+        if (i >= 0) {
+            ArrayList<TargetDrawable> targets = mTargetDrawables;
             final TargetDrawable targetIcon = targets.get(i);
-            final float angle = alpha * i;
             targetIcon.setPositionX(centerX);
             targetIcon.setPositionY(centerY);
-            targetIcon.setX(mOuterRadius * (float) Math.cos(angle));
-            targetIcon.setY(mOuterRadius * (float) Math.sin(angle));
+            targetIcon.setX(placementRadiusX * (float) Math.cos(angle));
+            targetIcon.setY(placementRadiusY * (float) Math.sin(angle));
         }
+    }
+
+    private void updateTargetPositions(float centerX, float centerY) {
+        updateTargetPositions(centerX, centerY, false);
+    }
+
+    private void updateTargetPositions(float centerX, float centerY, boolean skipActive) {
+        final int size = mTargetDrawables.size();
+        final float alpha = getSliceAngle();
+        // Reposition the target drawables if the view changed.
+        for (int i = 0; i < size; i++) {
+            if (!skipActive || i != mActiveTarget) {
+                updateTargetPosition(i, centerX, centerY, getAngle(alpha, i));
+            }
+        }
+    }
+
+    private float getAngle(float alpha, int i) {
+        return mFirstItemOffset + alpha * i;
+    }
+
+    private float getSliceAngle() {
+        return (float) (-2.0f * Math.PI / mTargetDrawables.size());
     }
 
     private void updatePointCloudPosition(float centerX, float centerY) {

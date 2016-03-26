@@ -23,17 +23,22 @@ import java.util.Map;
  * {@link WebView}. It manages the Application Cache API, the Web SQL Database
  * API and the HTML5 Web Storage API.
  *
- * The Web SQL Database API provides storage which is private to a given
- * origin, where an origin comprises the host, scheme and port of a URI.
- * Similarly, use of the Application Cache API can be attributed to an origin.
- * This class provides access to the storage use and quotas for these APIs for
- * a given origin. Origins are represented using {@link WebStorage.Origin}.
+ * The Application Cache API provides a mechanism to create and maintain an
+ * application cache to power offline Web applications. Use of the Application
+ * Cache API can be attributed to an origin {@link WebStorage.Origin}, however
+ * it is not possible to set per-origin quotas. Note that there can be only
+ * one application cache per application.
+ *
+ * The Web SQL Database API provides storage which is private to a given origin.
+ * Similar to the Application Cache, use of the Web SQL Database can be attributed
+ * to an origin. It is also possible to set per-origin quotas.
  */
 public class WebStorage {
 
     /**
      * Encapsulates a callback function which is used to provide a new quota
-     * for a JavaScript storage API. See
+     * for a JavaScript storage API.
+     * See
      * {@link WebChromeClient#onExceededDatabaseQuota} and
      * {@link WebChromeClient#onReachedMaxAppCacheSize}.
      */
@@ -54,6 +59,7 @@ public class WebStorage {
     /**
      * This class encapsulates information about the amount of storage
      * currently used by an origin for the JavaScript storage APIs.
+     * An origin comprises the host, scheme and port of a URI.
      * See {@link WebStorage} for details.
      */
     public static class Origin {
@@ -165,7 +171,9 @@ public class WebStorage {
      * The quota is specified in bytes and the origin is specified using its string
      * representation. Note that a quota is not enforced on a per-origin basis
      * for the Application Cache API.
+     * @deprecated Controlling quota per-origin will not be supported in future.
      */
+    @Deprecated
     public void setQuotaForOrigin(String origin, long quota) {
         // Must be a no-op for backward compatibility: see the hidden constructor for reason.
     }

@@ -42,7 +42,7 @@ import java.lang.ref.WeakReference;
 
 /**
  * <p>A popup window that can be used to display an arbitrary view. The popup
- * windows is a floating container that appears on top of the current
+ * window is a floating container that appears on top of the current
  * activity.</p>
  * 
  * @see android.widget.AutoCompleteTextView
@@ -141,6 +141,8 @@ public class PopupWindow {
             }
         };
     private int mAnchorXoff, mAnchorYoff;
+
+    private boolean mPopupViewInitialLayoutDirectionInherited;
 
     /**
      * <p>Create a new empty, non focusable popup window of dimension (0,0).</p>
@@ -835,7 +837,7 @@ public class PopupWindow {
        
         preparePopup(p);
         if (gravity == Gravity.NO_GRAVITY) {
-            gravity = Gravity.TOP | Gravity.LEFT;
+            gravity = Gravity.TOP | Gravity.START;
         }
         p.gravity = gravity;
         p.x = x;
@@ -968,6 +970,8 @@ public class PopupWindow {
         } else {
             mPopupView = mContentView;
         }
+        mPopupViewInitialLayoutDirectionInherited =
+                (mPopupView.getRawLayoutDirection() == View.LAYOUT_DIRECTION_INHERIT);
         mPopupWidth = p.width;
         mPopupHeight = p.height;
     }
@@ -985,7 +989,17 @@ public class PopupWindow {
             p.packageName = mContext.getPackageName();
         }
         mPopupView.setFitsSystemWindows(mLayoutInsetDecor);
+        setLayoutDirectionFromAnchor();
         mWindowManager.addView(mPopupView, p);
+    }
+
+    private void setLayoutDirectionFromAnchor() {
+        if (mAnchor != null) {
+            View anchor = mAnchor.get();
+            if (anchor != null && mPopupViewInitialLayoutDirectionInherited) {
+                mPopupView.setLayoutDirection(anchor.getLayoutDirection());
+            }
+        }
     }
 
     /**
@@ -1003,7 +1017,7 @@ public class PopupWindow {
         // screen. The view is then positioned to the appropriate location
         // by setting the x and y offsets to match the anchor's bottom
         // left corner
-        p.gravity = Gravity.LEFT | Gravity.TOP;
+        p.gravity = Gravity.START | Gravity.TOP;
         p.width = mLastWidth = mWidth;
         p.height = mLastHeight = mHeight;
         if (mBackground != null) {
@@ -1100,7 +1114,7 @@ public class PopupWindow {
         
         boolean onTop = false;
 
-        p.gravity = Gravity.LEFT | Gravity.TOP;
+        p.gravity = Gravity.START | Gravity.TOP;
         
         anchor.getLocationOnScreen(mScreenLocation);
         final Rect displayFrame = new Rect();
@@ -1134,7 +1148,7 @@ public class PopupWindow {
             onTop = (displayFrame.bottom - mScreenLocation[1] - anchor.getHeight() - yoff) <
                     (mScreenLocation[1] - yoff - displayFrame.top);
             if (onTop) {
-                p.gravity = Gravity.LEFT | Gravity.BOTTOM;
+                p.gravity = Gravity.START | Gravity.BOTTOM;
                 p.y = root.getHeight() - mDrawingLocation[1] + yoff;
             } else {
                 p.y = mDrawingLocation[1] + anchor.getHeight() + yoff;
@@ -1304,8 +1318,9 @@ public class PopupWindow {
             p.flags = newFlags;
             update = true;
         }
-        
+
         if (update) {
+            setLayoutDirectionFromAnchor();
             mWindowManager.updateViewLayout(mPopupView, p);
         }
     }
@@ -1406,6 +1421,7 @@ public class PopupWindow {
         }
 
         if (update) {
+            setLayoutDirectionFromAnchor();
             mWindowManager.updateViewLayout(mPopupView, p);
         }
     }
@@ -1482,7 +1498,7 @@ public class PopupWindow {
         } else {
             updateAboveAnchor(findDropDownPosition(anchor, p, mAnchorXoff, mAnchorYoff));            
         }
-        
+
         update(p.x, p.y, width, height, x != p.x || y != p.y);
     }
 

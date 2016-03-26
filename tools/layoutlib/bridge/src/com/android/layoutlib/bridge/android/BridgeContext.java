@@ -25,6 +25,7 @@ import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.ide.common.rendering.api.StyleResourceValue;
 import com.android.layoutlib.bridge.Bridge;
 import com.android.layoutlib.bridge.BridgeConstants;
+import com.android.layoutlib.bridge.android.view.WindowManagerImpl;
 import com.android.layoutlib.bridge.impl.ParserFactory;
 import com.android.layoutlib.bridge.impl.Stack;
 import com.android.resources.ResourceType;
@@ -61,13 +62,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.UserHandle;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.BridgeInflater;
-import android.view.Surface;
+import android.view.CompatibilityInfoHolder;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.textservice.TextServicesManager;
 
 import java.io.File;
@@ -95,7 +99,7 @@ public final class BridgeContext extends Context {
     private final Configuration mConfig;
     private final ApplicationInfo mApplicationInfo;
     private final IProjectCallback mProjectCallback;
-    private final BridgeWindowManager mIWindowManager;
+    private final WindowManager mWindowManager;
 
     private Resources.Theme mTheme;
 
@@ -136,10 +140,10 @@ public final class BridgeContext extends Context {
         mRenderResources = renderResources;
         mConfig = config;
 
-        mIWindowManager = new BridgeWindowManager(mConfig, metrics, Surface.ROTATION_0);
-
         mApplicationInfo = new ApplicationInfo();
         mApplicationInfo.targetSdkVersion = targetSdkVersion;
+
+        mWindowManager = new WindowManagerImpl(mMetrics);
     }
 
     /**
@@ -195,12 +199,12 @@ public final class BridgeContext extends Context {
         return mRenderResources;
     }
 
-    public BridgeWindowManager getIWindowManager() {
-        return mIWindowManager;
-    }
-
     public Map<String, String> getDefaultPropMap(Object key) {
         return mDefaultPropMaps.get(key);
+    }
+
+    public Configuration getConfiguration() {
+        return mConfig;
     }
 
     /**
@@ -428,10 +432,8 @@ public final class BridgeContext extends Context {
             return TextServicesManager.getInstance();
         }
 
-        // AutoCompleteTextView and MultiAutoCompleteTextView want a window
-        // service. We don't have any but it's not worth an exception.
         if (WINDOW_SERVICE.equals(service)) {
-            return null;
+            return mWindowManager;
         }
 
         // needed by SearchView
@@ -440,7 +442,7 @@ public final class BridgeContext extends Context {
         }
 
         if (POWER_SERVICE.equals(service)) {
-            return new PowerManager(new BridgePowerManager(), new Handler());
+            return new PowerManager(this, new BridgePowerManager(), new Handler());
         }
 
         throw new UnsupportedOperationException("Unsupported Service: " + service);
@@ -732,14 +734,16 @@ public final class BridgeContext extends Context {
         for (int i = 0 ; i < attrs.length ; i++) {
             Pair<String, Boolean> attribute = attributes.get(i);
 
-            // look for the value in the given style
-            ResourceValue resValue = mRenderResources.findItemInStyle(style, attribute.getFirst(),
-                    attribute.getSecond());
+            if (attribute != null) {
+                // look for the value in the given style
+                ResourceValue resValue = mRenderResources.findItemInStyle(style,
+                        attribute.getFirst(), attribute.getSecond());
 
-            if (resValue != null) {
-                // resolve it to make sure there are no references left.
-                ta.bridgeSetValue(i, attribute.getFirst(), attribute.getSecond(),
-                        mRenderResources.resolveResValue(resValue));
+                if (resValue != null) {
+                    // resolve it to make sure there are no references left.
+                    ta.bridgeSetValue(i, attribute.getFirst(), attribute.getSecond(),
+                            mRenderResources.resolveResValue(resValue));
+                }
             }
         }
 
@@ -915,6 +919,24 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public Context createPackageContextAsUser(String arg0, int arg1, UserHandle user) {
+        // pass
+        return null;
+    }
+
+    @Override
+    public Context createConfigurationContext(Configuration overrideConfiguration) {
+        // pass
+        return null;
+    }
+
+    @Override
+    public Context createDisplayContext(Display display) {
+        // pass
+        return null;
+    }
+
+    @Override
     public String[] databaseList() {
         // pass
         return null;
@@ -1058,6 +1080,12 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public String getBasePackageName() {
+        // pass
+        return null;
+    }
+
+    @Override
     public ApplicationInfo getApplicationInfo() {
         return mApplicationInfo;
     }
@@ -1147,6 +1175,13 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public Intent registerReceiverAsUser(BroadcastReceiver arg0, UserHandle arg0p5,
+            IntentFilter arg1, String arg2, Handler arg3) {
+        // pass
+        return null;
+    }
+
+    @Override
     public void removeStickyBroadcast(Intent arg0) {
         // pass
 
@@ -1171,6 +1206,11 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public void sendBroadcast(Intent intent, String receiverPermission, int appOp) {
+        // pass
+    }
+
+    @Override
     public void sendOrderedBroadcast(Intent arg0, String arg1) {
         // pass
 
@@ -1185,6 +1225,31 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public void sendOrderedBroadcast(Intent intent, String receiverPermission, int appOp,
+            BroadcastReceiver resultReceiver, Handler scheduler, int initialCode,
+            String initialData, Bundle initialExtras) {
+        // pass
+    }
+
+    @Override
+    public void sendBroadcastAsUser(Intent intent, UserHandle user) {
+        // pass
+    }
+
+    @Override
+    public void sendBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission) {
+        // pass
+    }
+
+    @Override
+    public void sendOrderedBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission, BroadcastReceiver resultReceiver, Handler scheduler,
+            int initialCode, String initialData, Bundle initialExtras) {
+        // pass
+    }
+
+    @Override
     public void sendStickyBroadcast(Intent arg0) {
         // pass
 
@@ -1194,6 +1259,24 @@ public final class BridgeContext extends Context {
     public void sendStickyOrderedBroadcast(Intent intent,
             BroadcastReceiver resultReceiver, Handler scheduler, int initialCode, String initialData,
            Bundle initialExtras) {
+        // pass
+    }
+
+    @Override
+    public void sendStickyBroadcastAsUser(Intent intent, UserHandle user) {
+        // pass
+    }
+
+    @Override
+    public void sendStickyOrderedBroadcastAsUser(Intent intent,
+            UserHandle user, BroadcastReceiver resultReceiver,
+            Handler scheduler, int initialCode, String initialData,
+            Bundle initialExtras) {
+        // pass
+    }
+
+    @Override
+    public void removeStickyBroadcastAsUser(Intent intent, UserHandle user) {
         // pass
     }
 
@@ -1259,6 +1342,18 @@ public final class BridgeContext extends Context {
     }
 
     @Override
+    public ComponentName startServiceAsUser(Intent arg0, UserHandle arg1) {
+        // pass
+        return null;
+    }
+
+    @Override
+    public boolean stopServiceAsUser(Intent arg0, UserHandle arg1) {
+        // pass
+        return false;
+    }
+
+    @Override
     public void unbindService(ServiceConnection arg0) {
         // pass
 
@@ -1296,5 +1391,19 @@ public final class BridgeContext extends Context {
     public File getObbDir() {
         Bridge.getLog().error(LayoutLog.TAG_UNSUPPORTED, "OBB not supported", null);
         return null;
+    }
+
+    @Override
+    public CompatibilityInfoHolder getCompatibilityInfo(int displayId) {
+        // pass
+        return null;
+    }
+
+    /**
+     * @hide
+     */
+    @Override
+    public int getUserId() {
+        return 0; // not used
     }
 }

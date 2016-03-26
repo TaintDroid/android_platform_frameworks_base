@@ -95,8 +95,8 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
      * @hide
      */
     @Override
-    public Insets getLayoutInsets() {
-        return (mCurrDrawable == null) ? Insets.NONE : mCurrDrawable.getLayoutInsets();
+    public Insets getOpticalInsets() {
+        return (mCurrDrawable == null) ? Insets.NONE : mCurrDrawable.getOpticalInsets();
     }
 
     @Override
@@ -105,7 +105,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
             mAlpha = alpha;
             if (mCurrDrawable != null) {
                 if (mEnterAnimationEnd == 0) {
-                    mCurrDrawable.setAlpha(alpha);
+                    mCurrDrawable.mutate().setAlpha(alpha);
                 } else {
                     animate(false);
                 }
@@ -118,7 +118,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         if (mDrawableContainerState.mDither != dither) {
             mDrawableContainerState.mDither = dither;
             if (mCurrDrawable != null) {
-                mCurrDrawable.setDither(mDrawableContainerState.mDither);
+                mCurrDrawable.mutate().setDither(mDrawableContainerState.mDither);
             }
         }
     }
@@ -128,7 +128,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         if (mColorFilter != cf) {
             mColorFilter = cf;
             if (mCurrDrawable != null) {
-                mCurrDrawable.setColorFilter(cf);
+                mCurrDrawable.mutate().setColorFilter(cf);
             }
         }
     }
@@ -176,7 +176,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         }
         if (mCurrDrawable != null) {
             mCurrDrawable.jumpToCurrentState();
-            mCurrDrawable.setAlpha(mAlpha);
+            mCurrDrawable.mutate().setAlpha(mAlpha);
         }
         if (mExitAnimationEnd != 0) {
             mExitAnimationEnd = 0;
@@ -312,6 +312,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
             mCurrDrawable = d;
             mCurIndex = idx;
             if (d != null) {
+                d.mutate();
                 if (mDrawableContainerState.mEnterFadeDuration > 0) {
                     mEnterAnimationEnd = now + mDrawableContainerState.mEnterFadeDuration;
                 } else {
@@ -323,6 +324,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
                 d.setState(getState());
                 d.setLevel(getLevel());
                 d.setBounds(getBounds());
+                d.setLayoutDirection(getLayoutDirection());
             }
         } else {
             mCurrDrawable = null;
@@ -355,13 +357,13 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         if (mCurrDrawable != null) {
             if (mEnterAnimationEnd != 0) {
                 if (mEnterAnimationEnd <= now) {
-                    mCurrDrawable.setAlpha(mAlpha);
+                    mCurrDrawable.mutate().setAlpha(mAlpha);
                     mEnterAnimationEnd = 0;
                 } else {
                     int animAlpha = (int)((mEnterAnimationEnd-now)*255)
                             / mDrawableContainerState.mEnterFadeDuration;
                     if (DEBUG) android.util.Log.i(TAG, toString() + " cur alpha " + animAlpha);
-                    mCurrDrawable.setAlpha(((255-animAlpha)*mAlpha)/255);
+                    mCurrDrawable.mutate().setAlpha(((255-animAlpha)*mAlpha)/255);
                     animating = true;
                 }
             }
@@ -378,7 +380,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
                     int animAlpha = (int)((mExitAnimationEnd-now)*255)
                             / mDrawableContainerState.mExitFadeDuration;
                     if (DEBUG) android.util.Log.i(TAG, toString() + " last alpha " + animAlpha);
-                    mLastDrawable.setAlpha((animAlpha*mAlpha)/255);
+                    mLastDrawable.mutate().setAlpha((animAlpha*mAlpha)/255);
                     animating = true;
                 }
             }
@@ -443,7 +445,6 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         int         mConstantMinimumWidth;
         int         mConstantMinimumHeight;
 
-        boolean     mHaveOpacity = false;
         int         mOpacity;
 
         boolean     mHaveStateful = false;
@@ -480,6 +481,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
                         mDrawables[i] = origDr[i].getConstantState().newDrawable();
                     }
                     mDrawables[i].setCallback(owner);
+                    mDrawables[i].setLayoutDirection(origDr[i].getLayoutDirection());
                 }
 
                 mCheckedConstantState = mCanConstantState = true;
@@ -491,8 +493,9 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
                 mComputedConstantSize = orig.mComputedConstantSize;
                 mConstantWidth = orig.mConstantWidth;
                 mConstantHeight = orig.mConstantHeight;
+                mConstantMinimumWidth = orig.mConstantMinimumWidth;
+                mConstantMinimumHeight = orig.mConstantMinimumHeight;
                 
-                mHaveOpacity = orig.mHaveOpacity;
                 mOpacity = orig.mOpacity;
                 mHaveStateful = orig.mHaveStateful;
                 mStateful = orig.mStateful;
@@ -511,7 +514,7 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         
         @Override
         public int getChangingConfigurations() {
-            return mChangingConfigurations;
+            return mChangingConfigurations | mChildrenChangingConfigurations;
         }
 
         public final int addChild(Drawable dr) {
@@ -527,7 +530,6 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
             mDrawables[pos] = dr;
             mNumChildren++;
             mChildrenChangingConfigurations |= dr.getChangingConfigurations();
-            mHaveOpacity = false;
             mHaveStateful = false;
 
             mConstantPadding = null;
@@ -655,10 +657,6 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
         }
 
         public final int getOpacity() {
-            if (mHaveOpacity) {
-                return mOpacity;
-            }
-
             final int N = getChildCount();
             final Drawable[] drawables = mDrawables;
             int op = N > 0 ? drawables[0].getOpacity() : PixelFormat.TRANSPARENT;
@@ -666,7 +664,6 @@ public class DrawableContainer extends Drawable implements Drawable.Callback {
                 op = Drawable.resolveOpacity(op, drawables[i].getOpacity());
             }
             mOpacity = op;
-            mHaveOpacity = true;
             return op;
         }
 

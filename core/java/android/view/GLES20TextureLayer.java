@@ -39,13 +39,7 @@ class GLES20TextureLayer extends GLES20Layer {
             mFinalizer = new Finalizer(mLayer);
         } else {
             mFinalizer = null;
-        }        
-    }
-
-    GLES20TextureLayer(SurfaceTexture surface, boolean isOpaque) {
-        this(isOpaque);
-        mSurface = surface;
-        mSurface.attachToGLContext(mTexture);
+        }
     }
 
     @Override
@@ -54,7 +48,8 @@ class GLES20TextureLayer extends GLES20Layer {
     }
 
     @Override
-    void resize(int width, int height) {
+    boolean resize(int width, int height) {
+        return isValid();
     }
 
     @Override
@@ -93,11 +88,16 @@ class GLES20TextureLayer extends GLES20Layer {
     }
 
     @Override
+    void setOpaque(boolean isOpaque) {
+        throw new UnsupportedOperationException("Use update(int, int, boolean) instead");
+    }
+
+    @Override
     void setTransform(Matrix matrix) {
         GLES20Canvas.nSetTextureLayerTransform(mLayer, matrix.native_instance);
     }
 
     @Override
-    void redraw(DisplayList displayList, Rect dirtyRect) {
+    void redrawLater(DisplayList displayList, Rect dirtyRect) {
     }
 }

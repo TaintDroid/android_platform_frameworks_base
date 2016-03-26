@@ -506,10 +506,6 @@ status_t ResStringPool::getError() const
 void ResStringPool::uninit()
 {
     mError = NO_INIT;
-    if (mOwnedData) {
-        free(mOwnedData);
-        mOwnedData = NULL;
-    }
     if (mHeader != NULL && mCache != NULL) {
         for (size_t x = 0; x < mHeader->stringCount; x++) {
             if (mCache[x] != NULL) {
@@ -519,6 +515,10 @@ void ResStringPool::uninit()
         }
         free(mCache);
         mCache = NULL;
+    }
+    if (mOwnedData) {
+        free(mOwnedData);
+        mOwnedData = NULL;
     }
 }
 
@@ -1209,6 +1209,10 @@ status_t ResXMLTree::setTo(const void* data, size_t size, bool copyData)
     uninit();
     mEventCode = START_DOCUMENT;
 
+    if (!data || !size) {
+        return (mError=BAD_TYPE);
+    }
+
     if (copyData) {
         mOwnedData = malloc(size);
         if (mOwnedData == NULL) {
@@ -1470,6 +1474,9 @@ int ResTable_config::compareLogical(const ResTable_config& o) const {
     if (country[1] != o.country[1]) {
         return country[1] < o.country[1] ? -1 : 1;
     }
+    if ((screenLayout & MASK_LAYOUTDIR) != (o.screenLayout & MASK_LAYOUTDIR)) {
+        return (screenLayout & MASK_LAYOUTDIR) < (o.screenLayout & MASK_LAYOUTDIR) ? -1 : 1;
+    }
     if (smallestScreenWidthDp != o.smallestScreenWidthDp) {
         return smallestScreenWidthDp < o.smallestScreenWidthDp ? -1 : 1;
     }
@@ -1523,7 +1530,8 @@ int ResTable_config::diff(const ResTable_config& o) const {
     if (navigation != o.navigation) diffs |= CONFIG_NAVIGATION;
     if (screenSize != o.screenSize) diffs |= CONFIG_SCREEN_SIZE;
     if (version != o.version) diffs |= CONFIG_VERSION;
-    if (screenLayout != o.screenLayout) diffs |= CONFIG_SCREEN_LAYOUT;
+    if ((screenLayout & MASK_LAYOUTDIR) != (o.screenLayout & MASK_LAYOUTDIR)) diffs |= CONFIG_LAYOUTDIR;
+    if ((screenLayout & ~MASK_LAYOUTDIR) != (o.screenLayout & ~MASK_LAYOUTDIR)) diffs |= CONFIG_SCREEN_LAYOUT;
     if (uiMode != o.uiMode) diffs |= CONFIG_UI_MODE;
     if (smallestScreenWidthDp != o.smallestScreenWidthDp) diffs |= CONFIG_SMALLEST_SCREEN_SIZE;
     if (screenSizeDp != o.screenSizeDp) diffs |= CONFIG_SCREEN_SIZE;
@@ -1555,6 +1563,13 @@ bool ResTable_config::isMoreSpecificThan(const ResTable_config& o) const {
         if (country[0] != o.country[0]) {
             if (!country[0]) return false;
             if (!o.country[0]) return true;
+        }
+    }
+
+    if (screenLayout || o.screenLayout) {
+        if (((screenLayout^o.screenLayout) & MASK_LAYOUTDIR) != 0) {
+            if (!(screenLayout & MASK_LAYOUTDIR)) return false;
+            if (!(o.screenLayout & MASK_LAYOUTDIR)) return true;
         }
     }
 
@@ -1680,6 +1695,15 @@ bool ResTable_config::isBetterThan(const ResTable_config& o,
 
             if ((country[0] != o.country[0]) && requested->country[0]) {
                 return (country[0]);
+            }
+        }
+
+        if (screenLayout || o.screenLayout) {
+            if (((screenLayout^o.screenLayout) & MASK_LAYOUTDIR) != 0
+                    && (requested->screenLayout & MASK_LAYOUTDIR)) {
+                int myLayoutDir = screenLayout & MASK_LAYOUTDIR;
+                int oLayoutDir = o.screenLayout & MASK_LAYOUTDIR;
+                return (myLayoutDir > oLayoutDir);
             }
         }
 
@@ -1906,6 +1930,12 @@ bool ResTable_config::match(const ResTable_config& settings) const {
         }
     }
     if (screenConfig != 0) {
+        const int layoutDir = screenLayout&MASK_LAYOUTDIR;
+        const int setLayoutDir = settings.screenLayout&MASK_LAYOUTDIR;
+        if (layoutDir != 0 && layoutDir != setLayoutDir) {
+            return false;
+        }
+
         const int screenSize = screenLayout&MASK_SCREENSIZE;
         const int setScreenSize = settings.screenLayout&MASK_SCREENSIZE;
         // Any screen sizes for larger screens than the setting do not
@@ -2031,6 +2061,21 @@ String8 ResTable_config::toString() const {
     if (country[0] != 0) {
         if (res.size() > 0) res.append("-");
         res.append(country, 2);
+    }
+    if ((screenLayout&MASK_LAYOUTDIR) != 0) {
+        if (res.size() > 0) res.append("-");
+        switch (screenLayout&ResTable_config::MASK_LAYOUTDIR) {
+            case ResTable_config::LAYOUTDIR_LTR:
+                res.append("ldltr");
+                break;
+            case ResTable_config::LAYOUTDIR_RTL:
+                res.append("ldrtl");
+                break;
+            default:
+                res.appendFormat("layoutDir=%d",
+                        dtohs(screenLayout&ResTable_config::MASK_LAYOUTDIR));
+                break;
+        }
     }
     if (smallestScreenWidthDp != 0) {
         if (res.size() > 0) res.append("-");

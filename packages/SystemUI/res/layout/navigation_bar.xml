@@ -111,7 +111,7 @@
             <ImageView
                 android:layout_width="80dp"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="40dp"
+                android:layout_marginStart="40dp"
                 android:src="@drawable/ic_sysbar_lights_out_dot_small"
                 android:scaleType="center"
                 android:layout_weight="0"
@@ -137,7 +137,7 @@
                 />
             <ImageView
                 android:layout_width="80dp"
-                android:layout_marginRight="40dp"
+                android:layout_marginEnd="40dp"
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_sysbar_lights_out_dot_small"
                 android:scaleType="center"
@@ -145,10 +145,25 @@
                 />
         </LinearLayout>
 
+        <com.android.systemui.statusbar.policy.KeyButtonView
+            android:layout_width="80dp"
+            android:id="@+id/search_light"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/search_light"
+            android:scaleType="center"
+            android:visibility="gone"
+            />
+
         <com.android.systemui.statusbar.policy.DeadZone
             android:id="@+id/deadzone"
-            android:layout_height="@dimen/navigation_bar_deadzone_size"
+            android:layout_height="match_parent"
             android:layout_width="match_parent"
+            systemui:minSize="@dimen/navigation_bar_deadzone_size"
+            systemui:maxSize="@dimen/navigation_bar_deadzone_size_max"
+            systemui:holdTime="@integer/navigation_bar_deadzone_hold"
+            systemui:decayTime="@integer/navigation_bar_deadzone_decay"
+            systemui:orientation="horizontal"
             android:layout_gravity="top"
             />
     </FrameLayout>
@@ -274,11 +289,26 @@
                 />
         </LinearLayout>
 
+        <com.android.systemui.statusbar.policy.KeyButtonView
+            android:id="@+id/search_light"
+            android:layout_height="80dp"
+            android:layout_width="match_parent"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/search_light"
+            android:scaleType="center"
+            android:visibility="gone"
+            />
+
         <com.android.systemui.statusbar.policy.DeadZone
             android:id="@+id/deadzone"
-            android:layout_width="@dimen/navigation_bar_deadzone_size"
             android:layout_height="match_parent"
-            android:layout_gravity="left"
+            android:layout_width="match_parent"
+            systemui:minSize="@dimen/navigation_bar_deadzone_size"
+            systemui:maxSize="@dimen/navigation_bar_deadzone_size_max"
+            systemui:holdTime="@integer/navigation_bar_deadzone_hold"
+            systemui:decayTime="@integer/navigation_bar_deadzone_decay"
+            systemui:orientation="vertical"
+            android:layout_gravity="top"
             />
     </FrameLayout>
 

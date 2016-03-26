@@ -29,6 +29,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 /**
+ * @hide
  * @deprecated in API 16
  * The Graphics derivitive of Renderscript.  Extends the basic context to add a
  * root script which is the display window for graphical output.  When the
@@ -39,7 +40,7 @@ import android.view.SurfaceView;
  * <div class="special reference">
  * <h3>Developer Guides</h3>
  * <p>For more information about creating an application that uses Renderscript, read the
- * <a href="{@docRoot}guide/topics/graphics/renderscript.html">Renderscript</a> developer guide.</p>
+ * <a href="{@docRoot}guide/topics/renderscript/index.html">Renderscript</a> developer guide.</p>
  * </div>
  **/
 public class RenderScriptGL extends RenderScript {

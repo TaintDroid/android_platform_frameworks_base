@@ -178,6 +178,7 @@ public class WifiMonitor {
 
     private static final String P2P_GO_NEG_SUCCESS_STR = "P2P-GO-NEG-SUCCESS";
 
+    /* P2P-GO-NEG-FAILURE status=x */
     private static final String P2P_GO_NEG_FAILURE_STR = "P2P-GO-NEG-FAILURE";
 
     private static final String P2P_GROUP_FORMATION_SUCCESS_STR =
@@ -217,6 +218,8 @@ public class WifiMonitor {
        pri_dev_type=1-0050F204-1 name='p2p-TEST2' config_methods=0x188 dev_capab=0x27
        group_capab=0x0 */
     private static final String P2P_PROV_DISC_SHOW_PIN_STR = "P2P-PROV-DISC-SHOW-PIN";
+    /* P2P-PROV-DISC-FAILURE p2p_dev_addr=42:fc:89:e1:e2:27 */
+    private static final String P2P_PROV_DISC_FAILURE_STR = "P2P-PROV-DISC-FAILURE";
 
     /*
      * Protocol format is as follows.<br>
@@ -319,6 +322,7 @@ public class WifiMonitor {
     public static final int P2P_PROV_DISC_SHOW_PIN_EVENT         = BASE + 36;
     public static final int P2P_FIND_STOPPED_EVENT               = BASE + 37;
     public static final int P2P_SERV_DISC_RESP_EVENT             = BASE + 38;
+    public static final int P2P_PROV_DISC_FAILURE_EVENT          = BASE + 39;
 
     /* hostap events */
     public static final int AP_STA_DISCONNECTED_EVENT            = BASE + 41;
@@ -563,6 +567,26 @@ public class WifiMonitor {
                     WifiManager.ERROR, 0));
         }
 
+        /* <event> status=<err> and the special case of <event> reason=FREQ_CONFLICT */
+        private P2pStatus p2pError(String dataString) {
+            P2pStatus err = P2pStatus.UNKNOWN;
+            String[] tokens = dataString.split(" ");
+            if (tokens.length < 2) return err;
+            String[] nameValue = tokens[1].split("=");
+            if (nameValue.length != 2) return err;
+
+            /* Handle the special case of reason=FREQ+CONFLICT */
+            if (nameValue[1].equals("FREQ_CONFLICT")) {
+                return P2pStatus.NO_COMMON_CHANNEL;
+            }
+            try {
+                err = P2pStatus.valueOf(Integer.parseInt(nameValue[1]));
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+            return err;
+        }
+
         /**
          * Handle p2p events
          */
@@ -579,11 +603,11 @@ public class WifiMonitor {
             } else if (dataString.startsWith(P2P_GO_NEG_SUCCESS_STR)) {
                 mStateMachine.sendMessage(P2P_GO_NEGOTIATION_SUCCESS_EVENT);
             } else if (dataString.startsWith(P2P_GO_NEG_FAILURE_STR)) {
-                mStateMachine.sendMessage(P2P_GO_NEGOTIATION_FAILURE_EVENT);
+                mStateMachine.sendMessage(P2P_GO_NEGOTIATION_FAILURE_EVENT, p2pError(dataString));
             } else if (dataString.startsWith(P2P_GROUP_FORMATION_SUCCESS_STR)) {
                 mStateMachine.sendMessage(P2P_GROUP_FORMATION_SUCCESS_EVENT);
             } else if (dataString.startsWith(P2P_GROUP_FORMATION_FAILURE_STR)) {
-                mStateMachine.sendMessage(P2P_GROUP_FORMATION_FAILURE_EVENT);
+                mStateMachine.sendMessage(P2P_GROUP_FORMATION_FAILURE_EVENT, p2pError(dataString));
             } else if (dataString.startsWith(P2P_GROUP_STARTED_STR)) {
                 mStateMachine.sendMessage(P2P_GROUP_STARTED_EVENT, new WifiP2pGroup(dataString));
             } else if (dataString.startsWith(P2P_GROUP_REMOVED_STR)) {
@@ -592,17 +616,7 @@ public class WifiMonitor {
                 mStateMachine.sendMessage(P2P_INVITATION_RECEIVED_EVENT,
                         new WifiP2pGroup(dataString));
             } else if (dataString.startsWith(P2P_INVITATION_RESULT_STR)) {
-                String[] tokens = dataString.split(" ");
-                if (tokens.length != 2) return;
-                String[] nameValue = tokens[1].split("=");
-                if (nameValue.length != 2) return;
-                P2pStatus err = P2pStatus.UNKNOWN;
-                try {
-                    err = P2pStatus.valueOf(Integer.parseInt(nameValue[1]));
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-                mStateMachine.sendMessage(P2P_INVITATION_RESULT_EVENT, err);
+                mStateMachine.sendMessage(P2P_INVITATION_RESULT_EVENT, p2pError(dataString));
             } else if (dataString.startsWith(P2P_PROV_DISC_PBC_REQ_STR)) {
                 mStateMachine.sendMessage(P2P_PROV_DISC_PBC_REQ_EVENT,
                         new WifiP2pProvDiscEvent(dataString));
@@ -615,6 +629,8 @@ public class WifiMonitor {
             } else if (dataString.startsWith(P2P_PROV_DISC_SHOW_PIN_STR)) {
                 mStateMachine.sendMessage(P2P_PROV_DISC_SHOW_PIN_EVENT,
                         new WifiP2pProvDiscEvent(dataString));
+            } else if (dataString.startsWith(P2P_PROV_DISC_FAILURE_STR)) {
+                mStateMachine.sendMessage(P2P_PROV_DISC_FAILURE_EVENT);
             } else if (dataString.startsWith(P2P_SERV_DISC_RESP_STR)) {
                 List<WifiP2pServiceResponse> list = WifiP2pServiceResponse.newInstance(dataString);
                 if (list != null) {
@@ -645,9 +661,12 @@ public class WifiMonitor {
          * id=network-id state=new-state
          */
         private void handleSupplicantStateChange(String dataString) {
-            String SSID = null;
+            WifiSsid wifiSsid = null;
             int index = dataString.lastIndexOf("SSID=");
-            if (index != -1) SSID = dataString.substring(index + 5);
+            if (index != -1) {
+                wifiSsid = WifiSsid.createFromAsciiEncoded(
+                        dataString.substring(index + 5));
+            }
             String[] dataTokens = dataString.split(" ");
 
             String BSSID = null;
@@ -690,7 +709,7 @@ public class WifiMonitor {
             if (newSupplicantState == SupplicantState.INVALID) {
                 Log.w(TAG, "Invalid supplicant state: " + newState);
             }
-            notifySupplicantStateChange(networkId, SSID, BSSID, newSupplicantState);
+            notifySupplicantStateChange(networkId, wifiSsid, BSSID, newSupplicantState);
         }
     }
 
@@ -739,13 +758,14 @@ public class WifiMonitor {
      * Send the state machine a notification that the state of the supplicant
      * has changed.
      * @param networkId the configured network on which the state change occurred
-     * @param SSID network name
+     * @param wifiSsid network name
      * @param BSSID network address
      * @param newState the new {@code SupplicantState}
      */
-    void notifySupplicantStateChange(int networkId, String SSID, String BSSID, SupplicantState newState) {
+    void notifySupplicantStateChange(int networkId, WifiSsid wifiSsid, String BSSID,
+            SupplicantState newState) {
         mStateMachine.sendMessage(mStateMachine.obtainMessage(SUPPLICANT_STATE_CHANGE_EVENT,
-                new StateChangeResult(networkId, SSID, BSSID, newState)));
+                new StateChangeResult(networkId, wifiSsid, BSSID, newState)));
     }
 
     /**

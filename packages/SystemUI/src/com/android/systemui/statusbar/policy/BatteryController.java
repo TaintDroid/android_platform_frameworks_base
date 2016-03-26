@@ -18,6 +18,7 @@ package com.android.systemui.statusbar.policy;
 
 import java.util.ArrayList;
 
+import android.bluetooth.BluetoothAdapter.BluetoothStateChangeCallback;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +37,13 @@ public class BatteryController extends BroadcastReceiver {
     private ArrayList<ImageView> mIconViews = new ArrayList<ImageView>();
     private ArrayList<TextView> mLabelViews = new ArrayList<TextView>();
 
+    private ArrayList<BatteryStateChangeCallback> mChangeCallbacks =
+            new ArrayList<BatteryStateChangeCallback>();
+
+    public interface BatteryStateChangeCallback {
+        public void onBatteryLevelChanged(int level, boolean pluggedIn);
+    }
+
     public BatteryController(Context context) {
         mContext = context;
 
@@ -52,13 +60,28 @@ public class BatteryController extends BroadcastReceiver {
         mLabelViews.add(v);
     }
 
+    public void addStateChangedCallback(BatteryStateChangeCallback cb) {
+        mChangeCallbacks.add(cb);
+    }
+
     public void onReceive(Context context, Intent intent) {
         final String action = intent.getAction();
         if (action.equals(Intent.ACTION_BATTERY_CHANGED)) {
             final int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            final boolean plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0;
-            final int icon = plugged ? R.drawable.stat_sys_battery_charge 
+            final int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS,
+                    BatteryManager.BATTERY_STATUS_UNKNOWN);
+
+            boolean plugged = false;
+            switch (status) {
+                case BatteryManager.BATTERY_STATUS_CHARGING: 
+                case BatteryManager.BATTERY_STATUS_FULL:
+                    plugged = true;
+                    break;
+            }
+
+            final int icon = plugged ? R.drawable.stat_sys_battery_charge
                                      : R.drawable.stat_sys_battery;
+
             int N = mIconViews.size();
             for (int i=0; i<N; i++) {
                 ImageView v = mIconViews.get(i);
@@ -72,6 +95,10 @@ public class BatteryController extends BroadcastReceiver {
                 TextView v = mLabelViews.get(i);
                 v.setText(mContext.getString(R.string.status_bar_settings_battery_meter_format,
                         level));
+            }
+
+            for (BatteryStateChangeCallback cb : mChangeCallbacks) {
+                cb.onBatteryLevelChanged(level, plugged);
             }
         }
     }

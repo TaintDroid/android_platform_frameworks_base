@@ -22,6 +22,7 @@ import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.IApplicationThread;
 import android.app.IInstrumentationWatcher;
+import android.app.IUiAutomationConnection;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -30,7 +31,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
-import android.os.UserId;
+import android.os.UserHandle;
 import android.util.PrintWriterPrinter;
 import android.util.TimeUtils;
 
@@ -61,6 +62,8 @@ class ProcessRecord {
     long lruWeight;             // Weight for ordering in LRU list
     int maxAdj;                 // Maximum OOM adjustment for this process
     int hiddenAdj;              // If hidden, this is the adjustment to use
+    int clientHiddenAdj;        // If empty but hidden client, this is the adjustment to use
+    int emptyAdj;               // If empty, this is the adjustment to use
     int curRawAdj;              // Current OOM unlimited adjustment for this process
     int setRawAdj;              // Last set OOM unlimited adjustment for this process
     int nonStoppingAdj;         // Adjustment not counting any stopping activities
@@ -73,6 +76,8 @@ class ProcessRecord {
     boolean serviceb;           // Process currently is on the service B list
     boolean keeping;            // Actively running code so don't kill due to that?
     boolean setIsForeground;    // Running foreground UI when last set?
+    boolean hasActivities;      // Are there any activities running in this process?
+    boolean hasClientActivities;  // Are there any client services with activities?
     boolean foregroundServices; // Running any services that are foreground?
     boolean foregroundActivities; // Running any activities that are foreground?
     boolean systemNoUi;         // This is a system process, but not currently showing UI.
@@ -91,6 +96,7 @@ class ProcessRecord {
     ApplicationInfo instrumentationInfo; // the application being instrumented
     String instrumentationProfileFile; // where to save profiling
     IInstrumentationWatcher instrumentationWatcher; // who is waiting
+    IUiAutomationConnection instrumentationUiAutomationConnection; // Connection to use the UI introspection APIs.
     Bundle instrumentationArguments;// as given to us
     ComponentName instrumentationResultClass;// copy of instrumentationClass
     boolean usingWrapper;       // Set to true when process was launched with a wrapper attached
@@ -132,6 +138,7 @@ class ProcessRecord {
     boolean persistent;         // always keep this application running?
     boolean crashing;           // are we in the process of crashing?
     Dialog crashDialog;         // dialog being displayed due to crash.
+    boolean forceCrashReport;   // suppress normal auto-dismiss of crash dialog & report UI?
     boolean notResponding;      // does the app have a not responding dialog?
     Dialog anrDialog;           // dialog being displayed due to app not resp.
     boolean removed;            // has app package been removed from device?
@@ -186,8 +193,7 @@ class ProcessRecord {
                 instrumentationInfo.dump(new PrintWriterPrinter(pw), prefix + "  ");
             }
         }
-        pw.print(prefix); pw.print("thread="); pw.print(thread);
-                pw.print(" curReceiver="); pw.println(curReceiver);
+        pw.print(prefix); pw.print("thread="); pw.println(thread);
         pw.print(prefix); pw.print("pid="); pw.print(pid); pw.print(" starting=");
                 pw.print(starting); pw.print(" lastPss="); pw.println(lastPss);
         pw.print(prefix); pw.print("lastActivityTime=");
@@ -199,6 +205,8 @@ class ProcessRecord {
                 pw.print(" empty="); pw.println(empty);
         pw.print(prefix); pw.print("oom: max="); pw.print(maxAdj);
                 pw.print(" hidden="); pw.print(hiddenAdj);
+                pw.print(" client="); pw.print(clientHiddenAdj);
+                pw.print(" empty="); pw.print(emptyAdj);
                 pw.print(" curRaw="); pw.print(curRawAdj);
                 pw.print(" setRaw="); pw.print(setRawAdj);
                 pw.print(" nonStopping="); pw.print(nonStoppingAdj);
@@ -208,16 +216,27 @@ class ProcessRecord {
                 pw.print(" setSchedGroup="); pw.print(setSchedGroup);
                 pw.print(" systemNoUi="); pw.print(systemNoUi);
                 pw.print(" trimMemoryLevel="); pw.println(trimMemoryLevel);
-        pw.print(prefix); pw.print("hasShownUi="); pw.print(hasShownUi);
-                pw.print(" pendingUiClean="); pw.print(pendingUiClean);
-                pw.print(" hasAboveClient="); pw.println(hasAboveClient);
-        pw.print(prefix); pw.print("setIsForeground="); pw.print(setIsForeground);
-                pw.print(" foregroundServices="); pw.print(foregroundServices);
-                pw.print(" forcingToForeground="); pw.println(forcingToForeground);
-        pw.print(prefix); pw.print("persistent="); pw.print(persistent);
-                pw.print(" removed="); pw.println(removed);
         pw.print(prefix); pw.print("adjSeq="); pw.print(adjSeq);
                 pw.print(" lruSeq="); pw.println(lruSeq);
+        if (hasShownUi || pendingUiClean || hasAboveClient) {
+            pw.print(prefix); pw.print("hasShownUi="); pw.print(hasShownUi);
+                    pw.print(" pendingUiClean="); pw.print(pendingUiClean);
+                    pw.print(" hasAboveClient="); pw.println(hasAboveClient);
+        }
+        if (setIsForeground || foregroundServices || forcingToForeground != null) {
+            pw.print(prefix); pw.print("setIsForeground="); pw.print(setIsForeground);
+                    pw.print(" foregroundServices="); pw.print(foregroundServices);
+                    pw.print(" forcingToForeground="); pw.println(forcingToForeground);
+        }
+        if (persistent || removed) {
+            pw.print(prefix); pw.print("persistent="); pw.print(persistent);
+                    pw.print(" removed="); pw.println(removed);
+        }
+        if (hasActivities || hasClientActivities || foregroundActivities) {
+            pw.print(prefix); pw.print("hasActivities="); pw.print(hasActivities);
+                    pw.print(" hasClientActivities="); pw.print(hasClientActivities);
+                    pw.print(" foregroundActivities="); pw.println(foregroundActivities);
+        }
         if (!keeping) {
             long wtime;
             synchronized (batteryStats.getBatteryStats()) {
@@ -226,10 +245,10 @@ class ProcessRecord {
             }
             long timeUsed = wtime - lastWakeTime;
             pw.print(prefix); pw.print("lastWakeTime="); pw.print(lastWakeTime);
-                    pw.print(" time used=");
+                    pw.print(" timeUsed=");
                     TimeUtils.formatDuration(timeUsed, pw); pw.println("");
             pw.print(prefix); pw.print("lastCpuTime="); pw.print(lastCpuTime);
-                    pw.print(" time used=");
+                    pw.print(" timeUsed=");
                     TimeUtils.formatDuration(curCpuTime-lastCpuTime, pw); pw.println("");
         }
         pw.print(prefix); pw.print("lastRequestedGc=");
@@ -294,6 +313,9 @@ class ProcessRecord {
                 pw.print(prefix); pw.print("  - "); pw.println(conProviders.get(i).toShortString());
             }
         }
+        if (curReceiver != null) {
+            pw.print(prefix); pw.print("curReceiver="); pw.println(curReceiver);
+        }
         if (receivers.size() > 0) {
             pw.print(prefix); pw.println("Receivers:");
             for (ReceiverList rl : receivers) {
@@ -308,12 +330,12 @@ class ProcessRecord {
         info = _info;
         isolated = _info.uid != _uid;
         uid = _uid;
-        userId = UserId.getUserId(_uid);
+        userId = UserHandle.getUserId(_uid);
         processName = _processName;
         pkgList.add(_info.packageName);
         thread = _thread;
         maxAdj = ProcessList.HIDDEN_APP_MAX_ADJ;
-        hiddenAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
+        hiddenAdj = clientHiddenAdj = emptyAdj = ProcessList.HIDDEN_APP_MIN_ADJ;
         curRawAdj = setRawAdj = -100;
         curAdj = setAdj = -100;
         persistent = false;
@@ -388,10 +410,10 @@ class ProcessRecord {
             sb.append('u');
             sb.append(userId);
             sb.append('a');
-            sb.append(info.uid%Process.FIRST_APPLICATION_UID);
+            sb.append(UserHandle.getAppId(info.uid));
             if (uid != info.uid) {
                 sb.append('i');
-                sb.append(UserId.getAppId(uid) - Process.FIRST_ISOLATED_UID);
+                sb.append(UserHandle.getAppId(uid) - Process.FIRST_ISOLATED_UID);
             }
         }
     }

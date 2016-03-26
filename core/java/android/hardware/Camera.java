@@ -16,15 +16,21 @@
 
 package android.hardware;
 
+import android.app.ActivityThread;
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.media.IAudioService;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.util.Log;
 import android.text.TextUtils;
 import android.view.Surface;
@@ -36,6 +42,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
+
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
 
 /**
  * The Camera class is used to set image capture settings, start/stop preview,
@@ -192,7 +202,21 @@ public class Camera {
      * Returns the information about a particular camera.
      * If {@link #getNumberOfCameras()} returns N, the valid id is 0 to N-1.
      */
-    public native static void getCameraInfo(int cameraId, CameraInfo cameraInfo);
+    public static void getCameraInfo(int cameraId, CameraInfo cameraInfo) {
+        _getCameraInfo(cameraId, cameraInfo);
+        IBinder b = ServiceManager.getService(Context.AUDIO_SERVICE);
+        IAudioService audioService = IAudioService.Stub.asInterface(b);
+        try {
+            if (audioService.isCameraSoundForced()) {
+                // Only set this when sound is forced; otherwise let native code
+                // decide.
+                cameraInfo.canDisableShutterSound = false;
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "Audio service is unavailable for queries");
+        }
+    }
+    private native static void _getCameraInfo(int cameraId, CameraInfo cameraInfo);
 
     /**
      * Information about a camera
@@ -233,6 +257,21 @@ public class Camera {
          * @see Parameters#setJpegThumbnailSize(int, int)
          */
         public int orientation;
+
+        /**
+         * <p>Whether the shutter sound can be disabled.</p>
+         *
+         * <p>On some devices, the camera shutter sound cannot be turned off
+         * through {@link #enableShutterSound enableShutterSound}. This field
+         * can be used to determine whether a call to disable the shutter sound
+         * will succeed.</p>
+         *
+         * <p>If this field is set to true, then a call of
+         * {@code enableShutterSound(false)} will be successful. If set to
+         * false, then that call will fail, and the shutter sound will be played
+         * when {@link Camera#takePicture takePicture} is called.</p>
+         */
+        public boolean canDisableShutterSound;
     };
 
     /**
@@ -303,7 +342,9 @@ public class Camera {
             mEventHandler = null;
         }
 
-        native_setup(new WeakReference<Camera>(this), cameraId);
+        String packageName = ActivityThread.currentPackageName();
+
+        native_setup(new WeakReference<Camera>(this), cameraId, packageName);
     }
 
     /**
@@ -316,7 +357,9 @@ public class Camera {
         release();
     }
 
-    private native final void native_setup(Object camera_this, int cameraId);
+    private native final void native_setup(Object camera_this, int cameraId,
+                                           String packageName);
+
     private native final void native_release();
 
 
@@ -725,13 +768,23 @@ public class Camera {
 
             case CAMERA_MSG_RAW_IMAGE:
                 if (mRawImageCallback != null) {
-                    mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
+// begin WITH_TAINT_TRACKING
+                    //mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    byte[] data = (byte[])msg.obj;
+                    Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                    mRawImageCallback.onPictureTaken(data, mCamera);
+// end WITH_TAINT_TRACKING
                 }
                 return;
 
             case CAMERA_MSG_COMPRESSED_IMAGE:
                 if (mJpegCallback != null) {
-                    mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
+// begin WITH_TAINT_TRACKING
+                    //mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    byte[] data = (byte[])msg.obj;
+                    Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                    mJpegCallback.onPictureTaken(data, mCamera);
+// end WITH_TAINT_TRACKING
                 }
                 return;
 
@@ -749,13 +802,23 @@ public class Camera {
                         // Set to oneshot mode again.
                         setHasPreviewCallback(true, false);
                     }
-                    pCb.onPreviewFrame((byte[])msg.obj, mCamera);
+// begin WITH_TAINT_TRACKING
+                    //pCb.onPreviewFrame((byte[])msg.obj, mCamera);
+                    byte[] data = (byte[])msg.obj;
+                    Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                    pCb.onPreviewFrame(data, mCamera);
+// end WITH_TAINT_TRACKING
                 }
                 return;
 
             case CAMERA_MSG_POSTVIEW_FRAME:
                 if (mPostviewCallback != null) {
-                    mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
+// begin WITH_TAINT_TRACKING
+                    //mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    byte[] data = (byte[])msg.obj;
+                    Taint.addTaintByteArray(data, Taint.TAINT_CAMERA);
+                    mPostviewCallback.onPictureTaken(data, mCamera);
+// end WITH_TAINT_TRACKING
                 }
                 return;
 
@@ -1146,6 +1209,46 @@ public class Camera {
     public native final void setDisplayOrientation(int degrees);
 
     /**
+     * <p>Enable or disable the default shutter sound when taking a picture.</p>
+     *
+     * <p>By default, the camera plays the system-defined camera shutter sound
+     * when {@link #takePicture} is called. Using this method, the shutter sound
+     * can be disabled. It is strongly recommended that an alternative shutter
+     * sound is played in the {@link ShutterCallback} when the system shutter
+     * sound is disabled.</p>
+     *
+     * <p>Note that devices may not always allow disabling the camera shutter
+     * sound. If the shutter sound state cannot be set to the desired value,
+     * this method will return false. {@link CameraInfo#canDisableShutterSound}
+     * can be used to determine whether the device will allow the shutter sound
+     * to be disabled.</p>
+     *
+     * @param enabled whether the camera should play the system shutter sound
+     *                when {@link #takePicture takePicture} is called.
+     * @return {@code true} if the shutter sound state was successfully
+     *         changed. {@code false} if the shutter sound state could not be
+     *         changed. {@code true} is also returned if shutter sound playback
+     *         is already set to the requested state.
+     * @see #takePicture
+     * @see CameraInfo#canDisableShutterSound
+     * @see ShutterCallback
+     */
+    public final boolean enableShutterSound(boolean enabled) {
+        if (!enabled) {
+            IBinder b = ServiceManager.getService(Context.AUDIO_SERVICE);
+            IAudioService audioService = IAudioService.Stub.asInterface(b);
+            try {
+                if (audioService.isCameraSoundForced()) return false;
+            } catch (RemoteException e) {
+                Log.e(TAG, "Audio service is unavailable for queries");
+            }
+        }
+        return _enableShutterSound(enabled);
+    }
+
+    private native final boolean _enableShutterSound(boolean enabled);
+
+    /**
      * Callback interface for zoom changes during a smooth zoom operation.
      *
      * @see #setZoomChangeListener(OnZoomChangeListener)
@@ -1308,8 +1411,14 @@ public class Camera {
         public Rect rect;
 
         /**
-         * The confidence level for the detection of the face. The range is 1 to 100. 100 is the
-         * highest confidence.
+         * <p>The confidence level for the detection of the face. The range is 1 to
+         * 100. 100 is the highest confidence.</p>
+         *
+         * <p>Depending on the device, even very low-confidence faces may be
+         * listed, so applications should filter out faces with low confidence,
+         * depending on the use case. For a typical point-and-shoot camera
+         * application that wishes to display rectangles around detected faces,
+         * filtering out faces with confidence less than 50 is recommended.</p>
          *
          * @see #startFaceDetection()
          */
@@ -1782,6 +1891,14 @@ public class Camera {
         public static final String SCENE_MODE_BARCODE = "barcode";
 
         /**
+         * Capture a scene using high dynamic range imaging techniques. The
+         * camera will return an image that has an extended dynamic range
+         * compared to a regular capture. Capturing such an image may take
+         * longer than a regular capture.
+         */
+        public static final String SCENE_MODE_HDR = "hdr";
+
+        /**
          * Auto-focus mode. Applications should call {@link
          * #autoFocus(AutoFocusCallback)} to start the focus in this mode.
          */
@@ -2250,7 +2367,7 @@ public class Camera {
         }
 
         /**
-         * Sets the maximum and maximum preview fps. This controls the rate of
+         * Sets the minimum and maximum preview fps. This controls the rate of
          * preview frames received in {@link PreviewCallback}. The minimum and
          * maximum preview fps must be one of the elements from {@link
          * #getSupportedPreviewFpsRange}.
@@ -2784,6 +2901,7 @@ public class Camera {
          * @see #SCENE_MODE_SPORTS
          * @see #SCENE_MODE_PARTY
          * @see #SCENE_MODE_CANDLELIGHT
+         * @see #SCENE_MODE_BARCODE
          */
         public String getSceneMode() {
             return get(KEY_SCENE_MODE);
@@ -3406,25 +3524,29 @@ public class Camera {
         }
 
         /**
-         * Returns true if video snapshot is supported. That is, applications
+         * <p>Returns true if video snapshot is supported. That is, applications
          * can call {@link #takePicture(Camera.ShutterCallback,
-         * Camera.PictureCallback, Camera.PictureCallback, Camera.PictureCallback)}
-         * during recording. Applications do not need to call {@link
-         * #startPreview()} after taking a picture. The preview will be still
-         * active. Other than that, taking a picture during recording is
-         * identical to taking a picture normally. All settings and methods
-         * related to takePicture work identically. Ex: {@link
-         * #getPictureSize()}, {@link #getSupportedPictureSizes()}, {@link
-         * #setJpegQuality(int)}, {@link #setRotation(int)}, and etc. The
-         * picture will have an EXIF header. {@link #FLASH_MODE_AUTO} and {@link
-         * #FLASH_MODE_ON} also still work, but the video will record the flash.
+         * Camera.PictureCallback, Camera.PictureCallback,
+         * Camera.PictureCallback)} during recording. Applications do not need
+         * to call {@link #startPreview()} after taking a picture. The preview
+         * will be still active. Other than that, taking a picture during
+         * recording is identical to taking a picture normally. All settings and
+         * methods related to takePicture work identically. Ex:
+         * {@link #getPictureSize()}, {@link #getSupportedPictureSizes()},
+         * {@link #setJpegQuality(int)}, {@link #setRotation(int)}, and etc. The
+         * picture will have an EXIF header. {@link #FLASH_MODE_AUTO} and
+         * {@link #FLASH_MODE_ON} also still work, but the video will record the
+         * flash.</p>
          *
-         * Applications can set shutter callback as null to avoid the shutter
+         * <p>Applications can set shutter callback as null to avoid the shutter
          * sound. It is also recommended to set raw picture and post view
-         * callbacks to null to avoid the interrupt of preview display.
+         * callbacks to null to avoid the interrupt of preview display.</p>
          *
-         * Field-of-view of the recorded video may be different from that of the
-         * captured pictures.
+         * <p>Field-of-view of the recorded video may be different from that of the
+         * captured pictures. The maximum size of a video snapshot may be
+         * smaller than that for regular still captures. If the current picture
+         * size is set higher than can be supported by video snapshot, the
+         * picture will be captured at the maximum supported size instead.</p>
          *
          * @return true if video snapshot is supported.
          */

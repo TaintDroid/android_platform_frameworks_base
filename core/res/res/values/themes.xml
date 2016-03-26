@@ -128,6 +128,8 @@ please see themes_device_defaults.xml.
         <item name="textAppearanceListItemSmall">?android:attr/textAppearanceLarge</item>
         <item name="listPreferredItemPaddingLeft">6dip</item>
         <item name="listPreferredItemPaddingRight">6dip</item>
+        <item name="listPreferredItemPaddingStart">6dip</item>
+        <item name="listPreferredItemPaddingEnd">6dip</item>
 
         <!-- @hide -->
         <item name="searchResultListItemHeight">58dip</item>
@@ -164,6 +166,7 @@ please see themes_device_defaults.xml.
         <item name="windowFrame">@null</item>
         <item name="windowNoTitle">false</item>
         <item name="windowFullscreen">false</item>
+        <item name="windowOverscan">false</item>
         <item name="windowIsFloating">false</item>
         <item name="windowContentOverlay">@null</item>
         <item name="windowShowWallpaper">false</item>
@@ -184,17 +187,24 @@ please see themes_device_defaults.xml.
         <item name="windowFixedHeightMinor">0dp</item>
 
         <!-- Dialog attributes -->
-        <item name="alertDialogStyle">@android:style/AlertDialog</item>
         <item name="dialogTheme">@android:style/Theme.Dialog</item>
         <item name="dialogTitleIconsDecorLayout">@layout/dialog_title_icons</item>
         <item name="dialogCustomTitleDecorLayout">@layout/dialog_custom_title</item>
         <item name="dialogTitleDecorLayout">@layout/dialog_title</item>
+
+        <!-- AlertDialog attributes -->
         <item name="alertDialogTheme">@android:style/Theme.Dialog.Alert</item>
+        <item name="alertDialogStyle">@android:style/AlertDialog</item>
         <item name="alertDialogCenterButtons">true</item>
         <item name="alertDialogIcon">@android:drawable/ic_dialog_alert</item>
 
+        <!-- Presentation attributes (introduced after API level 10 so does not
+             have a special old-style theme. -->
+        <item name="presentationTheme">@android:style/Theme.DeviceDefault.Dialog.Presentation</item>
+
+        <!-- Toast attributes -->
         <item name="toastFrameBackground">@android:drawable/toast_frame</item>
-        
+
         <!-- Panel attributes -->
         <item name="panelBackground">@android:drawable/menu_background</item>
         <item name="panelFullBackground">@android:drawable/menu_background_fill_parent_width</item>
@@ -232,6 +242,7 @@ please see themes_device_defaults.xml.
         <item name="absListViewStyle">@android:style/Widget.AbsListView</item>
         <item name="autoCompleteTextViewStyle">@android:style/Widget.AutoCompleteTextView</item>        
         <item name="checkboxStyle">@android:style/Widget.CompoundButton.CheckBox</item>
+        <item name="checkedTextViewStyle">@android:style/Widget.CheckedTextView</item>
         <item name="dropDownListViewStyle">@android:style/Widget.ListView.DropDown</item>
         <item name="editTextStyle">@android:style/Widget.EditText</item>
         <item name="expandableListViewStyle">@android:style/Widget.ExpandableListView</item>
@@ -387,7 +398,8 @@ please see themes_device_defaults.xml.
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- Variant of {@link #Theme} that has no title bar and no status bar -->
+    <!-- Variant of {@link #Theme} that has no title bar and no status bar.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.NoTitleBar.Fullscreen">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -479,7 +491,8 @@ please see themes_device_defaults.xml.
     </style>
 
     <!-- Variant of {@link #Theme_Light} that has no title bar and
-         no status bar -->
+         no status bar.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true. -->
     <style name="Theme.Light.NoTitleBar.Fullscreen">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -500,12 +513,13 @@ please see themes_device_defaults.xml.
     </style>
 
     <!-- Variant of {@link #Theme_Black} that has no title bar and
-         no status bar -->
+         no status bar.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.Black.NoTitleBar.Fullscreen">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
-    
+
     <!-- Theme for windows that want to have the user's selected
          wallpaper appear behind them (for API level 10 and lower).  -->
     <style name="Theme.Wallpaper">
@@ -637,6 +651,10 @@ please see themes_device_defaults.xml.
 
         <item name="listPreferredItemPaddingLeft">10dip</item>
         <item name="listPreferredItemPaddingRight">10dip</item>
+        <item name="listPreferredItemPaddingStart">10dip</item>
+        <item name="listPreferredItemPaddingEnd">10dip</item>
+
+        <item name="preferencePanelStyle">@style/PreferencePanel.Dialog</item>
     </style>
 
     <!-- Variant of {@link Theme_Dialog} that does not include a frame (or background).
@@ -863,12 +881,12 @@ please see themes_device_defaults.xml.
          <p>This is the default system theme for apps that target API level 11 - 13. Starting
          with API level 14, the default system theme is supplied by {@link #Theme_DeviceDefault},
          which might apply a different style on different devices. If you want to ensure that your
-         app consistenly uses the Holo theme at all times, you must explicitly declare it in your
+         app consistently uses the Holo theme at all times, you must explicitly declare it in your
          manifest. For example, {@code &lt;application android:theme="@android:style/Theme.Holo"&gt;}.
          For more information, read <a
          href="http://android-developers.blogspot.com/2012/01/holo-everywhere.html">Holo
          Everywhere</a>.</p>
-         <p>The widgets in the holographic theme are translucent on their brackground, so
+         <p>The widgets in the holographic theme are translucent on their background, so
          applications must ensure that any background they use with this theme is itself
          dark; otherwise, it will be difficult to see the widgets. This UI style also includes a
          full action bar by default.</p>
@@ -962,6 +980,8 @@ please see themes_device_defaults.xml.
         <item name="textAppearanceListItemSmall">?android:attr/textAppearanceMedium</item>
         <item name="listPreferredItemPaddingLeft">8dip</item>
         <item name="listPreferredItemPaddingRight">8dip</item>
+        <item name="listPreferredItemPaddingStart">8dip</item>
+        <item name="listPreferredItemPaddingEnd">8dip</item>
 
         <!-- @hide -->
         <item name="searchResultListItemHeight">58dip</item>
@@ -994,6 +1014,7 @@ please see themes_device_defaults.xml.
         <item name="windowFrame">@null</item>
         <item name="windowNoTitle">false</item>
         <item name="windowFullscreen">false</item>
+        <item name="windowOverscan">false</item>
         <item name="windowIsFloating">false</item>
         <item name="windowContentOverlay">@null</item>
         <item name="windowShowWallpaper">false</item>
@@ -1006,17 +1027,23 @@ please see themes_device_defaults.xml.
         <item name="windowActionModeOverlay">false</item>
 
         <!-- Dialog attributes -->
-        <item name="alertDialogStyle">@android:style/AlertDialog.Holo</item>
         <item name="dialogTheme">@android:style/Theme.Holo.Dialog</item>
         <item name="dialogTitleIconsDecorLayout">@layout/dialog_title_icons_holo</item>
         <item name="dialogCustomTitleDecorLayout">@layout/dialog_custom_title_holo</item>
         <item name="dialogTitleDecorLayout">@layout/dialog_title_holo</item>
+
+        <!-- AlertDialog attributes -->
         <item name="alertDialogTheme">@android:style/Theme.Holo.Dialog.Alert</item>
+        <item name="alertDialogStyle">@android:style/AlertDialog.Holo</item>
         <item name="alertDialogCenterButtons">false</item>
         <item name="alertDialogIcon">@android:drawable/ic_dialog_alert_holo_dark</item>
 
+        <!-- Presentation attributes -->
+        <item name="presentationTheme">@android:style/Theme.Holo.Dialog.Presentation</item>
+
+        <!-- Toast attributes -->
         <item name="toastFrameBackground">@android:drawable/toast_frame_holo</item>
-        
+
         <!-- Panel attributes -->
         <item name="panelBackground">@android:drawable/menu_hardkey_panel_holo_dark</item>
         <item name="panelFullBackground">@android:drawable/menu_background_fill_parent_width</item>
@@ -1050,6 +1077,7 @@ please see themes_device_defaults.xml.
         <item name="absListViewStyle">@android:style/Widget.Holo.AbsListView</item>
         <item name="autoCompleteTextViewStyle">@android:style/Widget.Holo.AutoCompleteTextView</item>
         <item name="checkboxStyle">@android:style/Widget.Holo.CompoundButton.CheckBox</item>
+        <item name="checkedTextViewStyle">@android:style/Widget.Holo.CheckedTextView</item>
         <item name="dropDownListViewStyle">@android:style/Widget.Holo.ListView.DropDown</item>
         <item name="editTextStyle">@android:style/Widget.Holo.EditText</item>
         <item name="expandableListViewStyle">@android:style/Widget.Holo.ExpandableListView</item>
@@ -1267,6 +1295,8 @@ please see themes_device_defaults.xml.
         <item name="textAppearanceListItemSmall">?android:attr/textAppearanceMedium</item>
         <item name="listPreferredItemPaddingLeft">8dip</item>
         <item name="listPreferredItemPaddingRight">8dip</item>
+        <item name="listPreferredItemPaddingStart">8dip</item>
+        <item name="listPreferredItemPaddingEnd">8dip</item>
 
         <!-- @hide -->
         <item name="searchResultListItemHeight">58dip</item>
@@ -1299,6 +1329,7 @@ please see themes_device_defaults.xml.
         <item name="windowFrame">@null</item>
         <item name="windowNoTitle">false</item>
         <item name="windowFullscreen">false</item>
+        <item name="windowOverscan">false</item>
         <item name="windowIsFloating">false</item>
         <item name="android:windowContentOverlay">@android:drawable/ab_solid_shadow_holo</item>
         <item name="windowShowWallpaper">false</item>
@@ -1311,17 +1342,23 @@ please see themes_device_defaults.xml.
         <item name="windowActionModeOverlay">false</item>
 
         <!-- Dialog attributes -->
-        <item name="alertDialogStyle">@android:style/AlertDialog.Holo.Light</item>
         <item name="dialogTheme">@android:style/Theme.Holo.Light.Dialog</item>
         <item name="dialogTitleIconsDecorLayout">@layout/dialog_title_icons_holo</item>
         <item name="dialogCustomTitleDecorLayout">@layout/dialog_custom_title_holo</item>
         <item name="dialogTitleDecorLayout">@layout/dialog_title_holo</item>
-        <item name="alertDialogCenterButtons">false</item>
+
+        <!-- AlertDialog attributes -->
         <item name="alertDialogTheme">@android:style/Theme.Holo.Light.Dialog.Alert</item>
+        <item name="alertDialogStyle">@android:style/AlertDialog.Holo.Light</item>
+        <item name="alertDialogCenterButtons">false</item>
         <item name="alertDialogIcon">@android:drawable/ic_dialog_alert_holo_light</item>
 
+        <!-- Presentation attributes -->
+        <item name="presentationTheme">@android:style/Theme.Holo.Light.Dialog.Presentation</item>
+
+        <!-- Toast attributes -->
         <item name="toastFrameBackground">@android:drawable/toast_frame_holo</item>
-        
+
         <!-- Panel attributes -->
         <item name="panelBackground">@android:drawable/menu_hardkey_panel_holo_light</item>
         <item name="panelFullBackground">@android:drawable/menu_background_fill_parent_width</item>
@@ -1355,6 +1392,7 @@ please see themes_device_defaults.xml.
         <item name="absListViewStyle">@android:style/Widget.Holo.Light.AbsListView</item>
         <item name="autoCompleteTextViewStyle">@android:style/Widget.Holo.Light.AutoCompleteTextView</item>
         <item name="checkboxStyle">@android:style/Widget.Holo.Light.CompoundButton.CheckBox</item>
+        <item name="checkedTextViewStyle">@android:style/Widget.Holo.Light.CheckedTextView</item>
         <item name="dropDownListViewStyle">@android:style/Widget.Holo.ListView.DropDown</item>
         <item name="editTextStyle">@android:style/Widget.Holo.Light.EditText</item>
         <item name="expandableListViewStyle">@android:style/Widget.Holo.Light.ExpandableListView</item>
@@ -1421,6 +1459,9 @@ please see themes_device_defaults.xml.
         <item name="ringtonePreferenceStyle">@android:style/Preference.Holo.RingtonePreference</item>
         <item name="preferenceLayoutChild">@android:layout/preference_child_holo</item>
         <item name="detailsElementBackground">@android:drawable/panel_bg_holo_light</item>
+
+        <!-- PreferenceFrameLayout attributes -->
+        <item name="preferenceFrameLayoutStyle">@android:style/Widget.Holo.PreferenceFrameLayout</item>
 
         <!-- Search widget styles -->
         <item name="searchWidgetCorpusItemBackground">@android:color/search_widget_corpus_item_background</item>
@@ -1522,9 +1563,20 @@ please see themes_device_defaults.xml.
     </style>
     
     <!-- Variant of the holographic (dark) theme that has no title bar and fills
-         the entire screen -->
+         the entire screen.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.Holo.NoActionBar.Fullscreen">
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- Variant of the holographic (dark) theme that has no title bar and fills
+         the entire screen and extends into the display overscan region.  This theme
+         sets {@link android.R.attr#windowFullscreen} and {@link android.R.attr#windowOverscan}
+         to true. -->
+    <style name="Theme.Holo.NoActionBar.Overscan">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowOverscan">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
 
@@ -1535,12 +1587,23 @@ please see themes_device_defaults.xml.
     </style>
 
     <!-- Variant of the holographic (light) theme that has no title bar and fills
-         the entire screen -->
+         the entire screen.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.Holo.Light.NoActionBar.Fullscreen">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
  
+    <!-- Variant of the holographic (light) theme that has no title bar and fills
+         the entire screen and extends into the display overscan region.  This theme
+         sets {@link android.R.attr#windowFullscreen} and {@link android.R.attr#windowOverscan}
+         to true. -->
+    <style name="Theme.Holo.Light.NoActionBar.Overscan">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowOverscan">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
     <!-- Dialog themes for Holo -->
     <eat-comment />
 
@@ -1573,6 +1636,10 @@ please see themes_device_defaults.xml.
 
         <item name="listPreferredItemPaddingLeft">16dip</item>
         <item name="listPreferredItemPaddingRight">16dip</item>
+        <item name="listPreferredItemPaddingStart">16dip</item>
+        <item name="listPreferredItemPaddingEnd">16dip</item>
+
+        <item name="preferencePanelStyle">@style/PreferencePanel.Dialog</item>
     </style>
 
     <!-- Variant of Theme.Holo.Dialog that has a nice minimum width for
@@ -1650,6 +1717,10 @@ please see themes_device_defaults.xml.
     <style name="Theme.Holo.DialogWhenLarge.NoActionBar" parent="@android:style/Theme.Holo.NoActionBar">
     </style>
 
+    <!-- Theme for a presentation window on a secondary display. -->
+    <style name="Theme.Holo.Dialog.Presentation" parent="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+    </style>
+
     <!-- Light holo dialog themes -->
 
     <!-- Holo light theme for dialog windows and activities, which is used by the
@@ -1681,6 +1752,10 @@ please see themes_device_defaults.xml.
 
         <item name="listPreferredItemPaddingLeft">16dip</item>
         <item name="listPreferredItemPaddingRight">16dip</item>
+        <item name="listPreferredItemPaddingStart">16dip</item>
+        <item name="listPreferredItemPaddingEnd">16dip</item>
+
+        <item name="preferencePanelStyle">@style/PreferencePanel.Dialog</item>
     </style>
 
     <!-- Variant of Theme.Holo.Light.Dialog that has a nice minimum width for
@@ -1743,6 +1818,10 @@ please see themes_device_defaults.xml.
         <item name="windowContentOverlay">@null</item>
         <item name="android:windowMinWidthMajor">@android:dimen/dialog_min_width_major</item>
         <item name="android:windowMinWidthMinor">@android:dimen/dialog_min_width_minor</item>
+    </style>
+
+    <!-- Theme for a presentation window on a secondary display. -->
+    <style name="Theme.Holo.Light.Dialog.Presentation" parent="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen" >
     </style>
 
     <!-- Default holographic (dark) for windows that want to have the user's selected

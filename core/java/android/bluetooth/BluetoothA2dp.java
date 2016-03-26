@@ -18,12 +18,13 @@ package android.bluetooth;
 
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.os.RemoteException;
-import android.os.ServiceManager;
-import android.server.BluetoothA2dpService;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ import java.util.List;
  */
 public final class BluetoothA2dp implements BluetoothProfile {
     private static final String TAG = "BluetoothA2dp";
-    private static final boolean DBG = false;
+    private static final boolean DBG = true;
+    private static final boolean VDBG = false;
 
     /**
      * Intent used to broadcast the change in connection state of the A2DP
@@ -102,37 +104,90 @@ public final class BluetoothA2dp implements BluetoothProfile {
      */
     public static final int STATE_NOT_PLAYING   =  11;
 
+    private Context mContext;
     private ServiceListener mServiceListener;
     private IBluetoothA2dp mService;
     private BluetoothAdapter mAdapter;
 
+    final private IBluetoothStateChangeCallback mBluetoothStateChangeCallback =
+            new IBluetoothStateChangeCallback.Stub() {
+                public void onBluetoothStateChange(boolean up) {
+                    if (DBG) Log.d(TAG, "onBluetoothStateChange: up=" + up);
+                    if (!up) {
+                        if (VDBG) Log.d(TAG,"Unbinding service...");
+                        synchronized (mConnection) {
+                            try {
+                                mService = null;
+                                mContext.unbindService(mConnection);
+                            } catch (Exception re) {
+                                Log.e(TAG,"",re);
+                            }
+                        }
+                    } else {
+                        synchronized (mConnection) {
+                            try {
+                                if (mService == null) {
+                                    if (VDBG) Log.d(TAG,"Binding service...");
+                                    if (!mContext.bindService(new Intent(IBluetoothA2dp.class.getName()), mConnection, 0)) {
+                                        Log.e(TAG, "Could not bind to Bluetooth A2DP Service");
+                                    }
+                                }
+                            } catch (Exception re) {
+                                Log.e(TAG,"",re);
+                            }
+                        }
+                    }
+                }
+        };
     /**
      * Create a BluetoothA2dp proxy object for interacting with the local
      * Bluetooth A2DP service.
      *
      */
-    /*package*/ BluetoothA2dp(Context mContext, ServiceListener l) {
-        IBinder b = ServiceManager.getService(BluetoothA2dpService.BLUETOOTH_A2DP_SERVICE);
+    /*package*/ BluetoothA2dp(Context context, ServiceListener l) {
+        mContext = context;
         mServiceListener = l;
         mAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (b != null) {
-            mService = IBluetoothA2dp.Stub.asInterface(b);
-            if (mServiceListener != null) {
-                mServiceListener.onServiceConnected(BluetoothProfile.A2DP, this);
+        IBluetoothManager mgr = mAdapter.getBluetoothManager();
+        if (mgr != null) {
+            try {
+                mgr.registerStateChangeCallback(mBluetoothStateChangeCallback);
+            } catch (RemoteException e) {
+                Log.e(TAG,"",e);
             }
-        } else {
-            Log.w(TAG, "Bluetooth A2DP service not available!");
+        }
 
-            // Instead of throwing an exception which prevents people from going
-            // into Wireless settings in the emulator. Let it crash later when it is actually used.
-            mService = null;
+        if (!context.bindService(new Intent(IBluetoothA2dp.class.getName()), mConnection, 0)) {
+            Log.e(TAG, "Could not bind to Bluetooth A2DP Service");
         }
     }
 
     /*package*/ void close() {
         mServiceListener = null;
+        IBluetoothManager mgr = mAdapter.getBluetoothManager();
+        if (mgr != null) {
+            try {
+                mgr.unregisterStateChangeCallback(mBluetoothStateChangeCallback);
+            } catch (Exception e) {
+                Log.e(TAG,"",e);
+            }
+        }
+
+        synchronized (mConnection) {
+            if (mService != null) {
+                try {
+                    mService = null;
+                    mContext.unbindService(mConnection);
+                } catch (Exception re) {
+                    Log.e(TAG,"",re);
+                }
+            }
+        }
     }
 
+    public void finalize() {
+        close();
+    }
     /**
      * Initiate connection to a profile of the remote bluetooth device.
      *
@@ -215,7 +270,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
      * {@inheritDoc}
      */
     public List<BluetoothDevice> getConnectedDevices() {
-        if (DBG) log("getConnectedDevices()");
+        if (VDBG) log("getConnectedDevices()");
         if (mService != null && isEnabled()) {
             try {
                 return mService.getConnectedDevices();
@@ -232,7 +287,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
      * {@inheritDoc}
      */
     public List<BluetoothDevice> getDevicesMatchingConnectionStates(int[] states) {
-        if (DBG) log("getDevicesMatchingStates()");
+        if (VDBG) log("getDevicesMatchingStates()");
         if (mService != null && isEnabled()) {
             try {
                 return mService.getDevicesMatchingConnectionStates(states);
@@ -249,7 +304,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
      * {@inheritDoc}
      */
     public int getConnectionState(BluetoothDevice device) {
-        if (DBG) log("getState(" + device + ")");
+        if (VDBG) log("getState(" + device + ")");
         if (mService != null && isEnabled()
             && isValidDevice(device)) {
             try {
@@ -267,7 +322,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
      * Set priority of the profile
      *
      * <p> The device should already be paired.
-     *  Priority can be one of {@link #PRIORITY_ON} or
+     *  Priority can be one of {@link #PRIORITY_ON} orgetBluetoothManager
      * {@link #PRIORITY_OFF},
      *
      * <p>Requires {@link android.Manifest.permission#BLUETOOTH_ADMIN}
@@ -283,7 +338,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
         if (mService != null && isEnabled()
             && isValidDevice(device)) {
             if (priority != BluetoothProfile.PRIORITY_OFF &&
-                priority != BluetoothProfile.PRIORITY_ON) {
+                priority != BluetoothProfile.PRIORITY_ON){
               return false;
             }
             try {
@@ -311,7 +366,7 @@ public final class BluetoothA2dp implements BluetoothProfile {
      * @hide
      */
     public int getPriority(BluetoothDevice device) {
-        if (DBG) log("getPriority(" + device + ")");
+        if (VDBG) log("getPriority(" + device + ")");
         if (mService != null && isEnabled()
             && isValidDevice(device)) {
             try {
@@ -347,67 +402,6 @@ public final class BluetoothA2dp implements BluetoothProfile {
     }
 
     /**
-     * Initiate suspend from an A2DP sink.
-     *
-     * <p> This API will return false in scenarios like the A2DP
-     * device is not in connected state etc. When this API returns,
-     * true, it is guaranteed that {@link #ACTION_CONNECTION_STATE_CHANGED}
-     * intent will be broadcasted with the state. Users can get the
-     * state of the A2DP device from this intent.
-     *
-     * <p>Requires {@link android.Manifest.permission#BLUETOOTH_ADMIN}
-     * permission.
-     *
-     * @param device Remote A2DP sink
-     * @return false on immediate error,
-     *               true otherwise
-     * @hide
-     */
-    public boolean suspendSink(BluetoothDevice device) {
-        if (mService != null && isEnabled()
-            && isValidDevice(device)) {
-            try {
-                return mService.suspendSink(device);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Stack:" + Log.getStackTraceString(new Throwable()));
-                return false;
-            }
-        }
-        if (mService == null) Log.w(TAG, "Proxy not attached to service");
-        return false;
-    }
-
-    /**
-     * Initiate resume from a suspended A2DP sink.
-     *
-     * <p> This API will return false in scenarios like the A2DP
-     * device is not in suspended state etc. When this API returns,
-     * true, it is guaranteed that {@link #ACTION_SINK_STATE_CHANGED}
-     * intent will be broadcasted with the state. Users can get the
-     * state of the A2DP device from this intent.
-     *
-     * <p>Requires {@link android.Manifest.permission#BLUETOOTH_ADMIN}
-     *
-     * @param device Remote A2DP sink
-     * @return false on immediate error,
-     *               true otherwise
-     * @hide
-     */
-    public boolean resumeSink(BluetoothDevice device) {
-        if (mService != null && isEnabled()
-            && isValidDevice(device)) {
-            try {
-                return mService.resumeSink(device);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Stack:" + Log.getStackTraceString(new Throwable()));
-                return false;
-            }
-        }
-        if (mService == null) Log.w(TAG, "Proxy not attached to service");
-        return false;
-    }
-
-    /**
      * This function checks if the remote device is an AVCRP
      * target and thus whether we should send volume keys
      * changes or not.
@@ -425,23 +419,6 @@ public final class BluetoothA2dp implements BluetoothProfile {
             }
         }
         return false;
-    }
-
-    /**
-     * Allow or disallow incoming connection
-     * @param device Sink
-     * @param value True / False
-     * @return Success or Failure of the binder call.
-     * @hide
-     */
-    public boolean allowIncomingConnect(BluetoothDevice device, boolean value) {
-        if (DBG) log("allowIncomingConnect(" + device + ":" + value + ")");
-        try {
-            return mService.allowIncomingConnect(device, value);
-        } catch (RemoteException e) {
-            Log.e(TAG, "", e);
-            return false;
-        }
     }
 
     /**
@@ -468,6 +445,24 @@ public final class BluetoothA2dp implements BluetoothProfile {
             return "<unknown state " + state + ">";
         }
     }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            if (DBG) Log.d(TAG, "Proxy object connected");
+            mService = IBluetoothA2dp.Stub.asInterface(service);
+
+            if (mServiceListener != null) {
+                mServiceListener.onServiceConnected(BluetoothProfile.A2DP, BluetoothA2dp.this);
+            }
+        }
+        public void onServiceDisconnected(ComponentName className) {
+            if (DBG) Log.d(TAG, "Proxy object disconnected");
+            mService = null;
+            if (mServiceListener != null) {
+                mServiceListener.onServiceDisconnected(BluetoothProfile.A2DP);
+            }
+        }
+    };
 
     private boolean isEnabled() {
        if (mAdapter.getState() == BluetoothAdapter.STATE_ON) return true;

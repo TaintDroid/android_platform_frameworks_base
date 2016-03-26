@@ -144,6 +144,20 @@ public final class BatteryStatsService extends IBatteryStats.Stub {
         }
     }
     
+    public void noteVibratorOn(int uid, long durationMillis) {
+        enforceCallingPermission();
+        synchronized (mStats) {
+            mStats.noteVibratorOnLocked(uid, durationMillis);
+        }
+    }
+
+    public void noteVibratorOff(int uid) {
+        enforceCallingPermission();
+        synchronized (mStats) {
+            mStats.noteVibratorOffLocked(uid);
+        }
+    }
+
     public void noteStartGps(int uid) {
         enforceCallingPermission();
         synchronized (mStats) {
@@ -346,18 +360,18 @@ public final class BatteryStatsService extends IBatteryStats.Stub {
             mStats.noteFullWifiLockReleasedLocked(uid);
         }
     }
-    
-    public void noteScanWifiLockAcquired(int uid) {
+
+    public void noteWifiScanStarted(int uid) {
         enforceCallingPermission();
         synchronized (mStats) {
-            mStats.noteScanWifiLockAcquiredLocked(uid);
+            mStats.noteWifiScanStartedLocked(uid);
         }
     }
-    
-    public void noteScanWifiLockReleased(int uid) {
+
+    public void noteWifiScanStopped(int uid) {
         enforceCallingPermission();
         synchronized (mStats) {
-            mStats.noteScanWifiLockReleasedLocked(uid);
+            mStats.noteWifiScanStoppedLocked(uid);
         }
     }
 
@@ -389,17 +403,17 @@ public final class BatteryStatsService extends IBatteryStats.Stub {
         }
     }
 
-    public void noteScanWifiLockAcquiredFromSource(WorkSource ws) {
+    public void noteWifiScanStartedFromSource(WorkSource ws) {
         enforceCallingPermission();
         synchronized (mStats) {
-            mStats.noteScanWifiLockAcquiredFromSourceLocked(ws);
+            mStats.noteWifiScanStartedFromSourceLocked(ws);
         }
     }
 
-    public void noteScanWifiLockReleasedFromSource(WorkSource ws) {
+    public void noteWifiScanStoppedFromSource(WorkSource ws) {
         enforceCallingPermission();
         synchronized (mStats) {
-            mStats.noteScanWifiLockReleasedFromSourceLocked(ws);
+            mStats.noteWifiScanStoppedFromSourceLocked(ws);
         }
     }
 

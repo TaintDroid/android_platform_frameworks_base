@@ -326,6 +326,7 @@ public class Criteria implements Parcelable {
 
     public static final Parcelable.Creator<Criteria> CREATOR =
         new Parcelable.Creator<Criteria>() {
+        @Override
         public Criteria createFromParcel(Parcel in) {
             Criteria c = new Criteria();
             c.mHorizontalAccuracy = in.readInt();
@@ -340,15 +341,18 @@ public class Criteria implements Parcelable {
             return c;
         }
 
+        @Override
         public Criteria[] newArray(int size) {
             return new Criteria[size];
         }
     };
 
+    @Override
     public int describeContents() {
         return 0;
     }
 
+    @Override
     public void writeToParcel(Parcel parcel, int flags) {
         parcel.writeInt(mHorizontalAccuracy);
         parcel.writeInt(mVerticalAccuracy);
@@ -359,5 +363,44 @@ public class Criteria implements Parcelable {
         parcel.writeInt(mBearingRequired ? 1 : 0);
         parcel.writeInt(mSpeedRequired ? 1 : 0);
         parcel.writeInt(mCostAllowed ? 1 : 0);
+    }
+
+    private static String powerToString(int power) {
+        switch (power) {
+            case NO_REQUIREMENT:
+                return "NO_REQ";
+            case POWER_LOW:
+                return "LOW";
+            case POWER_MEDIUM:
+                return "MEDIUM";
+            case POWER_HIGH:
+                return "HIGH";
+            default:
+                return "???";
+        }
+    }
+
+    private static String accuracyToString(int accuracy) {
+        switch (accuracy) {
+            case NO_REQUIREMENT:
+                return "---";
+            case ACCURACY_HIGH:
+                return "HIGH";
+            case ACCURACY_MEDIUM:
+                return "MEDIUM";
+            case ACCURACY_LOW:
+                return "LOW";
+            default:
+                return "???";
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append("Criteria[power=").append(powerToString(mPowerRequirement));
+        s.append(" acc=").append(accuracyToString(mHorizontalAccuracy));
+        s.append(']');
+        return s.toString();
     }
 }

@@ -155,7 +155,12 @@ public class ActivityInfo extends ComponentInfo
      */
     public static final int FLAG_HARDWARE_ACCELERATED = 0x0200;
     /**
+     * Value for {@link #flags}: true when the application can be displayed over the lockscreen
+     * and consequently over all users' windows.
      * @hide
+     */
+    public static final int FLAG_SHOW_ON_LOCK_SCREEN = 0x0400;
+    /**
      * Bit in {@link #flags} corresponding to an immersive activity
      * that wishes not to be interrupted by notifications.
      * Applications that hide the system notification bar with
@@ -168,9 +173,30 @@ public class ActivityInfo extends ComponentInfo
      * {@link #FLAG_IMMERSIVE} set, however, will not be interrupted; the
      * notification may be shown in some other way (such as a small floating
      * "toast" window).
-     * {@see android.app.Notification#FLAG_HIGH_PRIORITY}
+     *
+     * Note that this flag will always reflect the Activity's
+     * <code>android:immersive</code> manifest definition, even if the Activity's
+     * immersive state is changed at runtime via
+     * {@link android.app.Activity#setImmersive(boolean)}.
+     *
+     * @see android.app.Notification#FLAG_HIGH_PRIORITY
+     * @see android.app.Activity#setImmersive(boolean)
      */
-    public static final int FLAG_IMMERSIVE = 0x0400;
+    public static final int FLAG_IMMERSIVE = 0x0800;
+    /**
+     * @hide Bit in {@link #flags}: If set, this component will only be seen
+     * by the primary user.  Only works with broadcast receivers.  Set from the
+     * {@link android.R.attr#primaryUserOnly} attribute.
+     */
+    public static final int FLAG_PRIMARY_USER_ONLY = 0x20000000;
+    /**
+     * Bit in {@link #flags}: If set, a single instance of the receiver will
+     * run for all users on the device.  Set from the
+     * {@link android.R.attr#singleUser} attribute.  Note that this flag is
+     * only relevant for ActivityInfo structures that are describing receiver
+     * components; it is not applied to activities.
+     */
+    public static final int FLAG_SINGLE_USER = 0x40000000;
     /**
      * Options that have been set in the activity declaration in the
      * manifest.
@@ -181,7 +207,7 @@ public class ActivityInfo extends ComponentInfo
      * {@link #FLAG_STATE_NOT_NEEDED}, {@link #FLAG_EXCLUDE_FROM_RECENTS},
      * {@link #FLAG_ALLOW_TASK_REPARENTING}, {@link #FLAG_NO_HISTORY},
      * {@link #FLAG_FINISH_ON_CLOSE_SYSTEM_DIALOGS},
-     * {@link #FLAG_HARDWARE_ACCELERATED}
+     * {@link #FLAG_HARDWARE_ACCELERATED}, {@link #FLAG_SINGLE_USER}.
      */
     public int flags;
 
@@ -253,6 +279,30 @@ public class ActivityInfo extends ComponentInfo
     public static final int SCREEN_ORIENTATION_FULL_SENSOR = 10;
 
     /**
+     * Constant corresponding to <code>userLandscape</code> in
+     * the {@link android.R.attr#screenOrientation} attribute.
+     */
+    public static final int SCREEN_ORIENTATION_USER_LANDSCAPE = 11;
+
+    /**
+     * Constant corresponding to <code>userPortrait</code> in
+     * the {@link android.R.attr#screenOrientation} attribute.
+     */
+    public static final int SCREEN_ORIENTATION_USER_PORTRAIT = 12;
+
+    /**
+     * Constant corresponding to <code>fullUser</code> in
+     * the {@link android.R.attr#screenOrientation} attribute.
+     */
+    public static final int SCREEN_ORIENTATION_FULL_USER = 13;
+
+    /**
+     * Constant corresponding to <code>locked</code> in
+     * the {@link android.R.attr#screenOrientation} attribute.
+     */
+    public static final int SCREEN_ORIENTATION_LOCKED = 14;
+
+    /**
      * The preferred screen orientation this activity would like to run in.
      * From the {@link android.R.attr#screenOrientation} attribute, one of
      * {@link #SCREEN_ORIENTATION_UNSPECIFIED},
@@ -266,7 +316,11 @@ public class ActivityInfo extends ComponentInfo
      * {@link #SCREEN_ORIENTATION_SENSOR_PORTRAIT},
      * {@link #SCREEN_ORIENTATION_REVERSE_LANDSCAPE},
      * {@link #SCREEN_ORIENTATION_REVERSE_PORTRAIT},
-     * {@link #SCREEN_ORIENTATION_FULL_SENSOR}.
+     * {@link #SCREEN_ORIENTATION_FULL_SENSOR},
+     * {@link #SCREEN_ORIENTATION_USER_LANDSCAPE},
+     * {@link #SCREEN_ORIENTATION_USER_PORTRAIT},
+     * {@link #SCREEN_ORIENTATION_FULL_USER},
+     * {@link #SCREEN_ORIENTATION_LOCKED},
      */
     public int screenOrientation = SCREEN_ORIENTATION_UNSPECIFIED;
     
@@ -358,9 +412,21 @@ public class ActivityInfo extends ComponentInfo
     public static final int CONFIG_SMALLEST_SCREEN_SIZE = 0x0800;
     /**
      * Bit in {@link #configChanges} that indicates that the activity
+     * can itself handle density changes. Set from the
+     * {@link android.R.attr#configChanges} attribute.
+     */
+    public static final int CONFIG_DENSITY = 0x1000;
+    /**
+     * Bit in {@link #configChanges} that indicates that the activity
+     * can itself handle the change to layout direction. Set from the
+     * {@link android.R.attr#configChanges} attribute.
+     */
+    public static final int CONFIG_LAYOUT_DIRECTION = 0x2000;
+    /**
+     * Bit in {@link #configChanges} that indicates that the activity
      * can itself handle changes to the font scaling factor.  Set from the
      * {@link android.R.attr#configChanges} attribute.  This is
-     * not a core resource configutation, but a higher-level value, so its
+     * not a core resource configuration, but a higher-level value, so its
      * constant starts at the high bits.
      */
     public static final int CONFIG_FONT_SCALE = 0x40000000;
@@ -383,6 +449,8 @@ public class ActivityInfo extends ComponentInfo
         0x1000, // UI MODE
         0x0200, // SCREEN SIZE
         0x2000, // SMALLEST SCREEN SIZE
+        0x0100, // DENSITY
+        0x4000, // LAYOUT DIRECTION
     };
     /** @hide
      * Convert Java change bits to native.
@@ -419,8 +487,9 @@ public class ActivityInfo extends ComponentInfo
      * {@link #CONFIG_MCC}, {@link #CONFIG_MNC},
      * {@link #CONFIG_LOCALE}, {@link #CONFIG_TOUCHSCREEN},
      * {@link #CONFIG_KEYBOARD}, {@link #CONFIG_NAVIGATION},
-     * {@link #CONFIG_ORIENTATION}, and {@link #CONFIG_SCREEN_LAYOUT}.  Set from the
-     * {@link android.R.attr#configChanges} attribute.
+     * {@link #CONFIG_ORIENTATION}, {@link #CONFIG_SCREEN_LAYOUT} and
+     * {@link #CONFIG_LAYOUT_DIRECTION}.  Set from the {@link android.R.attr#configChanges}
+     * attribute.
      */
     public int configChanges;
     

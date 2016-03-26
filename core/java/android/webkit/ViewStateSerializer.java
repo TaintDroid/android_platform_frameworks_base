@@ -16,7 +16,6 @@
 package android.webkit;
 
 import android.graphics.Point;
-import android.graphics.Region;
 import android.webkit.WebViewCore.DrawData;
 
 import java.io.DataInputStream;
@@ -32,7 +31,8 @@ class ViewStateSerializer {
 
     private static final int WORKING_STREAM_STORAGE = 16 * 1024;
 
-    static final int VERSION = 1;
+    // VERSION = 1 was for pictures encoded using a previous copy of libskia
+    static final int VERSION = 2;
 
     static boolean serializeViewState(OutputStream stream, DrawData draw)
             throws IOException {
@@ -67,6 +67,15 @@ class ViewStateSerializer {
         stream.close();
         return draw;
     }
+
+    public static void dumpLayerHierarchy(int baseLayer, OutputStream out, int level) {
+        nativeDumpLayerHierarchy(baseLayer, level, out,
+                new byte[WORKING_STREAM_STORAGE]);
+    }
+
+
+    private static native void nativeDumpLayerHierarchy(int baseLayer, int level,
+            OutputStream out, byte[] storage);
 
     private static native boolean nativeSerializeViewState(int baseLayer,
             OutputStream stream, byte[] storage);

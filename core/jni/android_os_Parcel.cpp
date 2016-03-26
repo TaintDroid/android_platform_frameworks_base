@@ -620,6 +620,30 @@ static void android_os_Parcel_enforceInterface(JNIEnv* env, jclass clazz, jint n
             "Binder invocation to an incorrect interface");
 }
 
+#ifdef WITH_TAINT_TRACKING
+static void android_os_Parcel_updateTaint(JNIEnv* env, jobject clazz, jint tag, jint start, jint len)
+{
+    Parcel *parcel = parcelForJavaObject(env, clazz);
+    if (parcel != NULL){
+        parcel->updateTaint(tag, start, len);
+    }
+}
+#endif
+
+#ifdef WITH_TAINT_TRACKING
+static jint android_os_Parcel_getTaint(JNIEnv* env, jobject clazz, jint start, jint len)
+{
+    Parcel* parcel = parcelForJavaObject(env, clazz);
+    if(parcel != NULL){
+        return parcel->getTaint(start, len);
+    }
+
+    // An exception is thrown from parcelForJavaObject in most failure cases,
+    // therefore, we can return TAINT_CLEAR here. Alternatively, return 0xffffffff
+    return 0;
+}
+#endif
+
 // ----------------------------------------------------------------------------
 
 static const JNINativeMethod gParcelMethods[] = {
@@ -667,6 +691,10 @@ static const JNINativeMethod gParcelMethods[] = {
     {"nativeHasFileDescriptors",  "(I)Z", (void*)android_os_Parcel_hasFileDescriptors},
     {"nativeWriteInterfaceToken", "(ILjava/lang/String;)V", (void*)android_os_Parcel_writeInterfaceToken},
     {"nativeEnforceInterface",    "(ILjava/lang/String;)V", (void*)android_os_Parcel_enforceInterface},
+#ifdef WITH_TAINT_TRACKING
+    {"updateTaint",              "(III)V", (void*)android_os_Parcel_updateTaint},
+    {"getTaint",                 "(II)I", (void*)android_os_Parcel_getTaint},
+#endif
 };
 
 const char* const kParcelPathName = "android/os/Parcel";

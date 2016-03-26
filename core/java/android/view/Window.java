@@ -16,9 +16,7 @@
 
 package android.view;
 
-import android.app.Application;
 import android.content.Context;
-import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PixelFormat;
@@ -27,7 +25,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemProperties;
-import android.util.Slog;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
@@ -92,6 +89,13 @@ public abstract class Window {
      * If overlay is enabled, the action mode UI will be allowed to cover existing window content.
      */
     public static final int FEATURE_ACTION_MODE_OVERLAY = 10;
+
+    /**
+     * Max value used as a feature ID
+     * @hide
+     */
+    public static final int FEATURE_MAX = FEATURE_ACTION_MODE_OVERLAY;
+
     /** Flag for setting the progress bar's visibility to VISIBLE */
     public static final int PROGRESS_VISIBILITY_ON = -1;
     /** Flag for setting the progress bar's visibility to GONE */
@@ -119,6 +123,8 @@ public abstract class Window {
      */
     public static final int ID_ANDROID_CONTENT = com.android.internal.R.id.content;
 
+    private static final String PROPERTY_HARDWARE_UI = "persist.sys.ui.hw";
+
     private final Context mContext;
     
     private TypedArray mWindowStyle;
@@ -126,6 +132,7 @@ public abstract class Window {
     private WindowManager mWindowManager;
     private IBinder mAppToken;
     private String mAppName;
+    private boolean mHardwareAccelerated;
     private Window mContainer;
     private Window mActiveChild;
     private boolean mIsActive = false;
@@ -454,7 +461,7 @@ public abstract class Window {
      * display panels.  This is <em>not</em> used for displaying the
      * Window itself -- that must be done by the client.
      *
-     * @param wm The ViewManager for adding new windows.
+     * @param wm The window manager for adding new windows.
      */
     public void setWindowManager(WindowManager wm, IBinder appToken, String appName) {
         setWindowManager(wm, appToken, appName, false);
@@ -465,86 +472,64 @@ public abstract class Window {
      * display panels.  This is <em>not</em> used for displaying the
      * Window itself -- that must be done by the client.
      *
-     * @param wm The ViewManager for adding new windows.
+     * @param wm The window manager for adding new windows.
      */
     public void setWindowManager(WindowManager wm, IBinder appToken, String appName,
             boolean hardwareAccelerated) {
         mAppToken = appToken;
         mAppName = appName;
+        mHardwareAccelerated = hardwareAccelerated
+                || SystemProperties.getBoolean(PROPERTY_HARDWARE_UI, false);
         if (wm == null) {
-            wm = WindowManagerImpl.getDefault();
+            wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         }
-        mWindowManager = new LocalWindowManager(wm, hardwareAccelerated);
+        mWindowManager = ((WindowManagerImpl)wm).createLocalWindowManager(this);
     }
 
-    static CompatibilityInfoHolder getCompatInfo(Context context) {
-        Application app = (Application)context.getApplicationContext();
-        return app != null ? app.mLoadedApk.mCompatibilityInfo : new CompatibilityInfoHolder();
-    }
-
-    private class LocalWindowManager extends WindowManagerImpl.CompatModeWrapper {
-        private static final String PROPERTY_HARDWARE_UI = "persist.sys.ui.hw";
-
-        private final boolean mHardwareAccelerated;
-
-        LocalWindowManager(WindowManager wm, boolean hardwareAccelerated) {
-            super(wm, getCompatInfo(mContext));
-            mHardwareAccelerated = hardwareAccelerated ||
-                    SystemProperties.getBoolean(PROPERTY_HARDWARE_UI, false);
-        }
-
-        public boolean isHardwareAccelerated() {
-            return mHardwareAccelerated;
-        }
-        
-        public final void addView(View view, ViewGroup.LayoutParams params) {
-            // Let this throw an exception on a bad params.
-            WindowManager.LayoutParams wp = (WindowManager.LayoutParams)params;
-            CharSequence curTitle = wp.getTitle();
-            if (wp.type >= WindowManager.LayoutParams.FIRST_SUB_WINDOW &&
-                wp.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
-                if (wp.token == null) {
-                    View decor = peekDecorView();
-                    if (decor != null) {
-                        wp.token = decor.getWindowToken();
-                    }
+    void adjustLayoutParamsForSubWindow(WindowManager.LayoutParams wp) {
+        CharSequence curTitle = wp.getTitle();
+        if (wp.type >= WindowManager.LayoutParams.FIRST_SUB_WINDOW &&
+            wp.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW) {
+            if (wp.token == null) {
+                View decor = peekDecorView();
+                if (decor != null) {
+                    wp.token = decor.getWindowToken();
                 }
-                if (curTitle == null || curTitle.length() == 0) {
-                    String title;
-                    if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA) {
-                        title="Media";
-                    } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA_OVERLAY) {
-                        title="MediaOvr";
-                    } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
-                        title="Panel";
-                    } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL) {
-                        title="SubPanel";
-                    } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG) {
-                        title="AtchDlg";
-                    } else {
-                        title=Integer.toString(wp.type);
-                    }
-                    if (mAppName != null) {
-                        title += ":" + mAppName;
-                    }
-                    wp.setTitle(title);
-                }
-            } else {
-                if (wp.token == null) {
-                    wp.token = mContainer == null ? mAppToken : mContainer.mAppToken;
-                }
-                if ((curTitle == null || curTitle.length() == 0)
-                        && mAppName != null) {
-                    wp.setTitle(mAppName);
-                }
-           }
-            if (wp.packageName == null) {
-                wp.packageName = mContext.getPackageName();
             }
-            if (mHardwareAccelerated) {
-                wp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+            if (curTitle == null || curTitle.length() == 0) {
+                String title;
+                if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA) {
+                    title="Media";
+                } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA_OVERLAY) {
+                    title="MediaOvr";
+                } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_PANEL) {
+                    title="Panel";
+                } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL) {
+                    title="SubPanel";
+                } else if (wp.type == WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG) {
+                    title="AtchDlg";
+                } else {
+                    title=Integer.toString(wp.type);
+                }
+                if (mAppName != null) {
+                    title += ":" + mAppName;
+                }
+                wp.setTitle(title);
             }
-            super.addView(view, params);
+        } else {
+            if (wp.token == null) {
+                wp.token = mContainer == null ? mAppToken : mContainer.mAppToken;
+            }
+            if ((curTitle == null || curTitle.length() == 0)
+                    && mAppName != null) {
+                wp.setTitle(mAppName);
+            }
+        }
+        if (wp.packageName == null) {
+            wp.packageName = mContext.getPackageName();
+        }
+        if (mHardwareAccelerated) {
+            wp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
     }
 
@@ -718,6 +703,7 @@ public abstract class Window {
      * per {@link #setFlags}.
      * @param flags The flag bits to be set.
      * @see #setFlags
+     * @see #clearFlags
      */
     public void addFlags(int flags) {
         setFlags(flags, flags);
@@ -728,6 +714,7 @@ public abstract class Window {
      * per {@link #setFlags}.
      * @param flags The flag bits to be cleared.
      * @see #setFlags
+     * @see #addFlags
      */
     public void clearFlags(int flags) {
         setFlags(0, flags);
@@ -749,6 +736,8 @@ public abstract class Window {
      *
      * @param flags The new window flags (see WindowManager.LayoutParams).
      * @param mask Which of the window flag bits to modify.
+     * @see #addFlags
+     * @see #clearFlags
      */
     public void setFlags(int flags, int mask) {
         final WindowManager.LayoutParams attrs = getAttributes();

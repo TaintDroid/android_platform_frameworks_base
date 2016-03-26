@@ -23,6 +23,7 @@ import static android.Manifest.permission.MODIFY_NETWORK_ACCOUNTING;
 import static android.Manifest.permission.READ_NETWORK_USAGE_HISTORY;
 import static android.content.Intent.ACTION_SHUTDOWN;
 import static android.content.Intent.ACTION_UID_REMOVED;
+import static android.content.Intent.ACTION_USER_REMOVED;
 import static android.content.Intent.EXTRA_UID;
 import static android.net.ConnectivityManager.ACTION_TETHER_STATE_CHANGED;
 import static android.net.ConnectivityManager.CONNECTIVITY_ACTION_IMMEDIATE;
@@ -38,23 +39,23 @@ import static android.net.NetworkTemplate.buildTemplateMobileWildcard;
 import static android.net.NetworkTemplate.buildTemplateWifiWildcard;
 import static android.net.TrafficStats.KB_IN_BYTES;
 import static android.net.TrafficStats.MB_IN_BYTES;
-import static android.provider.Settings.Secure.NETSTATS_DEV_BUCKET_DURATION;
-import static android.provider.Settings.Secure.NETSTATS_DEV_DELETE_AGE;
-import static android.provider.Settings.Secure.NETSTATS_DEV_PERSIST_BYTES;
-import static android.provider.Settings.Secure.NETSTATS_DEV_ROTATE_AGE;
-import static android.provider.Settings.Secure.NETSTATS_GLOBAL_ALERT_BYTES;
-import static android.provider.Settings.Secure.NETSTATS_POLL_INTERVAL;
-import static android.provider.Settings.Secure.NETSTATS_REPORT_XT_OVER_DEV;
-import static android.provider.Settings.Secure.NETSTATS_SAMPLE_ENABLED;
-import static android.provider.Settings.Secure.NETSTATS_TIME_CACHE_MAX_AGE;
-import static android.provider.Settings.Secure.NETSTATS_UID_BUCKET_DURATION;
-import static android.provider.Settings.Secure.NETSTATS_UID_DELETE_AGE;
-import static android.provider.Settings.Secure.NETSTATS_UID_PERSIST_BYTES;
-import static android.provider.Settings.Secure.NETSTATS_UID_ROTATE_AGE;
-import static android.provider.Settings.Secure.NETSTATS_UID_TAG_BUCKET_DURATION;
-import static android.provider.Settings.Secure.NETSTATS_UID_TAG_DELETE_AGE;
-import static android.provider.Settings.Secure.NETSTATS_UID_TAG_PERSIST_BYTES;
-import static android.provider.Settings.Secure.NETSTATS_UID_TAG_ROTATE_AGE;
+import static android.provider.Settings.Global.NETSTATS_DEV_BUCKET_DURATION;
+import static android.provider.Settings.Global.NETSTATS_DEV_DELETE_AGE;
+import static android.provider.Settings.Global.NETSTATS_DEV_PERSIST_BYTES;
+import static android.provider.Settings.Global.NETSTATS_DEV_ROTATE_AGE;
+import static android.provider.Settings.Global.NETSTATS_GLOBAL_ALERT_BYTES;
+import static android.provider.Settings.Global.NETSTATS_POLL_INTERVAL;
+import static android.provider.Settings.Global.NETSTATS_REPORT_XT_OVER_DEV;
+import static android.provider.Settings.Global.NETSTATS_SAMPLE_ENABLED;
+import static android.provider.Settings.Global.NETSTATS_TIME_CACHE_MAX_AGE;
+import static android.provider.Settings.Global.NETSTATS_UID_BUCKET_DURATION;
+import static android.provider.Settings.Global.NETSTATS_UID_DELETE_AGE;
+import static android.provider.Settings.Global.NETSTATS_UID_PERSIST_BYTES;
+import static android.provider.Settings.Global.NETSTATS_UID_ROTATE_AGE;
+import static android.provider.Settings.Global.NETSTATS_UID_TAG_BUCKET_DURATION;
+import static android.provider.Settings.Global.NETSTATS_UID_TAG_DELETE_AGE;
+import static android.provider.Settings.Global.NETSTATS_UID_TAG_PERSIST_BYTES;
+import static android.provider.Settings.Global.NETSTATS_UID_TAG_ROTATE_AGE;
 import static android.telephony.PhoneStateListener.LISTEN_DATA_CONNECTION_STATE;
 import static android.telephony.PhoneStateListener.LISTEN_NONE;
 import static android.text.format.DateUtils.DAY_IN_MILLIS;
@@ -76,6 +77,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.IConnectivityManager;
 import android.net.INetworkManagementEventObserver;
 import android.net.INetworkStatsService;
@@ -99,8 +102,9 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Settings;
-import android.provider.Settings.Secure;
+import android.provider.Settings.Global;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.EventLog;
@@ -111,6 +115,8 @@ import android.util.Slog;
 import android.util.SparseIntArray;
 import android.util.TrustedTime;
 
+import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.FileRotator;
 import com.android.internal.util.IndentingPrintWriter;
 import com.android.server.EventLogTags;
@@ -121,8 +127,10 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Collect and persist detailed network statistics, and provide this data to
@@ -158,7 +166,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
 
     private IConnectivityManager mConnManager;
 
-    // @VisibleForTesting
+    @VisibleForTesting
     public static final String ACTION_NETWORK_STATS_POLL =
             "com.android.server.action.NETWORK_STATS_POLL";
     public static final String ACTION_NETWORK_STATS_UPDATED =
@@ -320,6 +328,10 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
         // listen for uid removal to clean stats
         final IntentFilter removedFilter = new IntentFilter(ACTION_UID_REMOVED);
         mContext.registerReceiver(mRemovedReceiver, removedFilter, null, mHandler);
+
+        // listen for user changes to clean stats
+        final IntentFilter userFilter = new IntentFilter(ACTION_USER_REMOVED);
+        mContext.registerReceiver(mUserReceiver, userFilter, null, mHandler);
 
         // persist stats during clean shutdown
         final IntentFilter shutdownFilter = new IntentFilter(ACTION_SHUTDOWN);
@@ -685,7 +697,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
     /**
      * Update {@link NetworkStatsRecorder} and {@link #mGlobalAlertBytes} to
      * reflect current {@link #mPersistThreshold} value. Always defers to
-     * {@link Secure} values when defined.
+     * {@link Global} values when defined.
      */
     private void updatePersistThresholds() {
         mDevRecorder.setPersistThreshold(mSettings.getDevPersistBytes(mPersistThreshold));
@@ -738,11 +750,34 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
         public void onReceive(Context context, Intent intent) {
             // on background handler thread, and UID_REMOVED is protected
             // broadcast.
-            final int uid = intent.getIntExtra(EXTRA_UID, 0);
+
+            final int uid = intent.getIntExtra(EXTRA_UID, -1);
+            if (uid == -1) return;
+
             synchronized (mStatsLock) {
                 mWakeLock.acquire();
                 try {
-                    removeUidLocked(uid);
+                    removeUidsLocked(uid);
+                } finally {
+                    mWakeLock.release();
+                }
+            }
+        }
+    };
+
+    private BroadcastReceiver mUserReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // On background handler thread, and USER_REMOVED is protected
+            // broadcast.
+
+            final int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, -1);
+            if (userId == -1) return;
+
+            synchronized (mStatsLock) {
+                mWakeLock.acquire();
+                try {
+                    removeUserLocked(userId);
                 } finally {
                     mWakeLock.release();
                 }
@@ -763,7 +798,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
     /**
      * Observer that watches for {@link INetworkManagementService} alerts.
      */
-    private INetworkManagementEventObserver mAlertObserver = new NetworkAlertObserver() {
+    private INetworkManagementEventObserver mAlertObserver = new BaseNetworkObserver() {
         @Override
         public void limitReached(String limitName, String iface) {
             // only someone like NMS should be calling us
@@ -868,7 +903,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
                 ident.add(NetworkIdentity.buildNetworkIdentity(mContext, state));
 
                 // remember any ifaces associated with mobile networks
-                if (isNetworkTypeMobile(state.networkInfo.getType())) {
+                if (isNetworkTypeMobile(state.networkInfo.getType()) && iface != null) {
                     if (!contains(mMobileIfaces, iface)) {
                         mMobileIfaces = appendElement(String.class, mMobileIfaces, iface);
                     }
@@ -905,13 +940,13 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
     }
 
     private void performPoll(int flags) {
+        // try refreshing time source when stale
+        if (mTime.getCacheAge() > mSettings.getTimeCacheMaxAge()) {
+            mTime.forceRefresh();
+        }
+
         synchronized (mStatsLock) {
             mWakeLock.acquire();
-
-            // try refreshing time source when stale
-            if (mTime.getCacheAge() > mSettings.getTimeCacheMaxAge()) {
-                mTime.forceRefresh();
-            }
 
             try {
                 performPollLocked(flags);
@@ -989,7 +1024,8 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
         // finally, dispatch updated event to any listeners
         final Intent updatedIntent = new Intent(ACTION_NETWORK_STATS_UPDATED);
         updatedIntent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-        mContext.sendBroadcast(updatedIntent, READ_NETWORK_USAGE_HISTORY);
+        mContext.sendBroadcastAsUser(updatedIntent, UserHandle.ALL,
+                READ_NETWORK_USAGE_HISTORY);
     }
 
     /**
@@ -1032,15 +1068,37 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
     /**
      * Clean up {@link #mUidRecorder} after UID is removed.
      */
-    private void removeUidLocked(int uid) {
-        // perform one last poll before removing
+    private void removeUidsLocked(int... uids) {
+        if (LOGV) Slog.v(TAG, "removeUidsLocked() for UIDs " + Arrays.toString(uids));
+
+        // Perform one last poll before removing
         performPollLocked(FLAG_PERSIST_ALL);
 
-        mUidRecorder.removeUidLocked(uid);
-        mUidTagRecorder.removeUidLocked(uid);
+        mUidRecorder.removeUidsLocked(uids);
+        mUidTagRecorder.removeUidsLocked(uids);
 
-        // clear kernel stats associated with UID
-        resetKernelUidStats(uid);
+        // Clear kernel stats associated with UID
+        for (int uid : uids) {
+            resetKernelUidStats(uid);
+        }
+    }
+
+    /**
+     * Clean up {@link #mUidRecorder} after user is removed.
+     */
+    private void removeUserLocked(int userId) {
+        if (LOGV) Slog.v(TAG, "removeUserLocked() for userId=" + userId);
+
+        // Build list of UIDs that we should clean up
+        int[] uids = new int[0];
+        final List<ApplicationInfo> apps = mContext.getPackageManager().getInstalledApplications(
+                PackageManager.GET_UNINSTALLED_PACKAGES | PackageManager.GET_DISABLED_COMPONENTS);
+        for (ApplicationInfo app : apps) {
+            final int uid = UserHandle.getUid(userId, app.uid);
+            uids = ArrayUtils.appendInt(uids, uid);
+        }
+
+        removeUidsLocked(uids);
     }
 
     @Override
@@ -1206,7 +1264,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
 
     /**
      * Default external settings that read from
-     * {@link android.provider.Settings.Secure}.
+     * {@link android.provider.Settings.Global}.
      */
     private static class DefaultNetworkStatsSettings implements NetworkStatsSettings {
         private final ContentResolver mResolver;
@@ -1216,39 +1274,39 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
             // TODO: adjust these timings for production builds
         }
 
-        private long getSecureLong(String name, long def) {
-            return Settings.Secure.getLong(mResolver, name, def);
+        private long getGlobalLong(String name, long def) {
+            return Settings.Global.getLong(mResolver, name, def);
         }
-        private boolean getSecureBoolean(String name, boolean def) {
+        private boolean getGlobalBoolean(String name, boolean def) {
             final int defInt = def ? 1 : 0;
-            return Settings.Secure.getInt(mResolver, name, defInt) != 0;
+            return Settings.Global.getInt(mResolver, name, defInt) != 0;
         }
 
         @Override
         public long getPollInterval() {
-            return getSecureLong(NETSTATS_POLL_INTERVAL, 30 * MINUTE_IN_MILLIS);
+            return getGlobalLong(NETSTATS_POLL_INTERVAL, 30 * MINUTE_IN_MILLIS);
         }
         @Override
         public long getTimeCacheMaxAge() {
-            return getSecureLong(NETSTATS_TIME_CACHE_MAX_AGE, DAY_IN_MILLIS);
+            return getGlobalLong(NETSTATS_TIME_CACHE_MAX_AGE, DAY_IN_MILLIS);
         }
         @Override
         public long getGlobalAlertBytes(long def) {
-            return getSecureLong(NETSTATS_GLOBAL_ALERT_BYTES, def);
+            return getGlobalLong(NETSTATS_GLOBAL_ALERT_BYTES, def);
         }
         @Override
         public boolean getSampleEnabled() {
-            return getSecureBoolean(NETSTATS_SAMPLE_ENABLED, true);
+            return getGlobalBoolean(NETSTATS_SAMPLE_ENABLED, true);
         }
         @Override
         public boolean getReportXtOverDev() {
-            return getSecureBoolean(NETSTATS_REPORT_XT_OVER_DEV, true);
+            return getGlobalBoolean(NETSTATS_REPORT_XT_OVER_DEV, true);
         }
         @Override
         public Config getDevConfig() {
-            return new Config(getSecureLong(NETSTATS_DEV_BUCKET_DURATION, HOUR_IN_MILLIS),
-                    getSecureLong(NETSTATS_DEV_ROTATE_AGE, 15 * DAY_IN_MILLIS),
-                    getSecureLong(NETSTATS_DEV_DELETE_AGE, 90 * DAY_IN_MILLIS));
+            return new Config(getGlobalLong(NETSTATS_DEV_BUCKET_DURATION, HOUR_IN_MILLIS),
+                    getGlobalLong(NETSTATS_DEV_ROTATE_AGE, 15 * DAY_IN_MILLIS),
+                    getGlobalLong(NETSTATS_DEV_DELETE_AGE, 90 * DAY_IN_MILLIS));
         }
         @Override
         public Config getXtConfig() {
@@ -1256,19 +1314,19 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
         }
         @Override
         public Config getUidConfig() {
-            return new Config(getSecureLong(NETSTATS_UID_BUCKET_DURATION, 2 * HOUR_IN_MILLIS),
-                    getSecureLong(NETSTATS_UID_ROTATE_AGE, 15 * DAY_IN_MILLIS),
-                    getSecureLong(NETSTATS_UID_DELETE_AGE, 90 * DAY_IN_MILLIS));
+            return new Config(getGlobalLong(NETSTATS_UID_BUCKET_DURATION, 2 * HOUR_IN_MILLIS),
+                    getGlobalLong(NETSTATS_UID_ROTATE_AGE, 15 * DAY_IN_MILLIS),
+                    getGlobalLong(NETSTATS_UID_DELETE_AGE, 90 * DAY_IN_MILLIS));
         }
         @Override
         public Config getUidTagConfig() {
-            return new Config(getSecureLong(NETSTATS_UID_TAG_BUCKET_DURATION, 2 * HOUR_IN_MILLIS),
-                    getSecureLong(NETSTATS_UID_TAG_ROTATE_AGE, 5 * DAY_IN_MILLIS),
-                    getSecureLong(NETSTATS_UID_TAG_DELETE_AGE, 15 * DAY_IN_MILLIS));
+            return new Config(getGlobalLong(NETSTATS_UID_TAG_BUCKET_DURATION, 2 * HOUR_IN_MILLIS),
+                    getGlobalLong(NETSTATS_UID_TAG_ROTATE_AGE, 5 * DAY_IN_MILLIS),
+                    getGlobalLong(NETSTATS_UID_TAG_DELETE_AGE, 15 * DAY_IN_MILLIS));
         }
         @Override
         public long getDevPersistBytes(long def) {
-            return getSecureLong(NETSTATS_DEV_PERSIST_BYTES, def);
+            return getGlobalLong(NETSTATS_DEV_PERSIST_BYTES, def);
         }
         @Override
         public long getXtPersistBytes(long def) {
@@ -1276,11 +1334,11 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
         }
         @Override
         public long getUidPersistBytes(long def) {
-            return getSecureLong(NETSTATS_UID_PERSIST_BYTES, def);
+            return getGlobalLong(NETSTATS_UID_PERSIST_BYTES, def);
         }
         @Override
         public long getUidTagPersistBytes(long def) {
-            return getSecureLong(NETSTATS_UID_TAG_PERSIST_BYTES, def);
+            return getGlobalLong(NETSTATS_UID_TAG_PERSIST_BYTES, def);
         }
     }
 }

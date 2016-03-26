@@ -25,19 +25,23 @@
 
 #include <cutils/compiler.h>
 
-#include "Extensions.h"
+#include "thread/TaskProcessor.h"
+#include "thread/TaskManager.h"
+
 #include "FontRenderer.h"
 #include "GammaFontRenderer.h"
 #include "TextureCache.h"
 #include "LayerCache.h"
+#include "RenderBufferCache.h"
 #include "GradientCache.h"
 #include "PatchCache.h"
 #include "ProgramCache.h"
-#include "ShapeCache.h"
 #include "PathCache.h"
 #include "TextDropShadowCache.h"
 #include "FboCache.h"
 #include "ResourceCache.h"
+#include "Stencil.h"
+#include "Dither.h"
 
 namespace android {
 namespace uirenderer {
@@ -64,8 +68,8 @@ static const TextureVertex gMeshVertices[] = {
 static const GLsizei gMeshStride = sizeof(TextureVertex);
 static const GLsizei gVertexStride = sizeof(Vertex);
 static const GLsizei gAlphaVertexStride = sizeof(AlphaVertex);
-static const GLsizei gAAVertexStride = sizeof(AAVertex);
 static const GLsizei gMeshTextureOffset = 2 * sizeof(float);
+static const GLsizei gVertexAlphaOffset = 2 * sizeof(float);
 static const GLsizei gVertexAAWidthOffset = 2 * sizeof(float);
 static const GLsizei gVertexAALengthOffset = 3 * sizeof(float);
 static const GLsizei gMeshCount = 4;
@@ -110,6 +114,11 @@ public:
      * Initialize caches.
      */
     void init();
+
+    /**
+     * Initialize global system properties.
+     */
+    bool initProperties();
 
     /**
      * Flush the cache.
@@ -167,17 +176,26 @@ public:
     bool unbindIndicesBuffer();
 
     /**
-     * Binds an attrib to the specified float vertex pointer.
-     * Assumes a stride of gMeshStride and a size of 2.
+     * Binds the specified buffer as the current GL unpack pixel buffer.
      */
-    void bindPositionVertexPointer(bool force, GLuint slot, GLvoid* vertices,
-            GLsizei stride = gMeshStride);
+    bool bindPixelBuffer(const GLuint buffer);
+
+    /**
+     * Resets the current unpack pixel buffer to 0 (default value.)
+     */
+    bool unbindPixelBuffer();
 
     /**
      * Binds an attrib to the specified float vertex pointer.
      * Assumes a stride of gMeshStride and a size of 2.
      */
-    void bindTexCoordsVertexPointer(bool force, GLuint slot, GLvoid* vertices);
+    void bindPositionVertexPointer(bool force, GLvoid* vertices, GLsizei stride = gMeshStride);
+
+    /**
+     * Binds an attrib to the specified float vertex pointer.
+     * Assumes a stride of gMeshStride and a size of 2.
+     */
+    void bindTexCoordsVertexPointer(bool force, GLvoid* vertices, GLsizei stride = gMeshStride);
 
     /**
      * Resets the vertex pointers.
@@ -186,7 +204,7 @@ public:
     void resetTexCoordsVertexPointer();
 
     void enableTexCoordsVertexArray();
-    void disbaleTexCoordsVertexArray();
+    void disableTexCoordsVertexArray();
 
     /**
      * Activate the specified texture unit. The texture unit must
@@ -197,12 +215,19 @@ public:
     /**
      * Sets the scissor for the current surface.
      */
-    void setScissor(GLint x, GLint y, GLint width, GLint height);
+    bool setScissor(GLint x, GLint y, GLint width, GLint height);
 
     /**
      * Resets the scissor state.
      */
     void resetScissor();
+
+    bool enableScissor();
+    bool disableScissor();
+    void setScissorEnabled(bool enabled);
+
+    void startTiling(GLuint x, GLuint y, GLuint width, GLuint height, bool discard);
+    void endTiling();
 
     /**
      * Returns the mesh used to draw regions. Calling this method will
@@ -217,35 +242,53 @@ public:
     void dumpMemoryUsage();
     void dumpMemoryUsage(String8& log);
 
+    bool hasRegisteredFunctors();
+    void registerFunctors(uint32_t functorCount);
+    void unregisterFunctors(uint32_t functorCount);
+
     bool blend;
     GLenum lastSrcMode;
     GLenum lastDstMode;
     Program* currentProgram;
+    bool scissorEnabled;
+
+    bool drawDeferDisabled;
+    bool drawReorderDisabled;
 
     // VBO to draw with
     GLuint meshBuffer;
 
-    // GL extensions
-    Extensions extensions;
-
     // Misc
     GLint maxTextureSize;
 
+    // Debugging
+    bool debugLayersUpdates;
+    bool debugOverdraw;
+
+    enum StencilClipDebug {
+        kStencilHide,
+        kStencilShowHighlight,
+        kStencilShowRegion
+    };
+    StencilClipDebug debugStencilClip;
+
     TextureCache textureCache;
     LayerCache layerCache;
+    RenderBufferCache renderBufferCache;
     GradientCache gradientCache;
     ProgramCache programCache;
     PathCache pathCache;
-    RoundRectShapeCache roundRectShapeCache;
-    CircleShapeCache circleShapeCache;
-    OvalShapeCache ovalShapeCache;
-    RectShapeCache rectShapeCache;
-    ArcShapeCache arcShapeCache;
     PatchCache patchCache;
     TextDropShadowCache dropShadowCache;
     FboCache fboCache;
-    GammaFontRenderer fontRenderer;
     ResourceCache resourceCache;
+
+    GammaFontRenderer* fontRenderer;
+
+    TaskManager tasks;
+
+    Dither dither;
+    Stencil stencil;
 
     // Debug methods
     PFNGLINSERTEVENTMARKEREXTPROC eventMark;
@@ -256,6 +299,7 @@ public:
     PFNGLGETOBJECTLABELEXTPROC getLabel;
 
 private:
+    void initFont();
     void initExtensions();
     void initConstraints();
 
@@ -273,8 +317,11 @@ private:
 
     GLuint mCurrentBuffer;
     GLuint mCurrentIndicesBuffer;
+    GLuint mCurrentPixelBuffer;
     void* mCurrentPositionPointer;
+    GLsizei mCurrentPositionStride;
     void* mCurrentTexCoordsPointer;
+    GLsizei mCurrentTexCoordsStride;
 
     bool mTexCoordsArrayEnabled;
 
@@ -284,6 +331,8 @@ private:
     GLint mScissorY;
     GLint mScissorWidth;
     GLint mScissorHeight;
+
+    Extensions& mExtensions;
 
     // Used to render layers
     TextureVertex* mRegionMesh;
@@ -295,6 +344,8 @@ private:
 
     DebugLevel mDebugLevel;
     bool mInitialized;
+
+    uint32_t mFunctorsCount;
 }; // class Caches
 
 }; // namespace uirenderer

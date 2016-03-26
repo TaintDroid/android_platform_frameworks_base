@@ -28,6 +28,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Surface;
+import android.view.SurfaceControl;
 import android.view.SurfaceSession;
 import android.view.Surface.OutOfResourcesException;
 
@@ -35,22 +36,22 @@ import android.view.Surface.OutOfResourcesException;
  * Displays a watermark on top of the window manager's windows.
  */
 class Watermark {
-    final String[] mTokens;
-    final String mText;
-    final Paint mTextPaint;
-    final int mTextWidth;
-    final int mTextHeight;
-    final int mTextAscent;
-    final int mTextDescent;
-    final int mDeltaX;
-    final int mDeltaY;
+    private final Display mDisplay;
+    private final String[] mTokens;
+    private final String mText;
+    private final Paint mTextPaint;
+    private final int mTextWidth;
+    private final int mTextHeight;
+    private final int mDeltaX;
+    private final int mDeltaY;
 
-    Surface mSurface;
-    int mLastDW;
-    int mLastDH;
-    boolean mDrawNeeded;
+    private final SurfaceControl mSurfaceControl;
+    private final Surface mSurface = new Surface();
+    private int mLastDW;
+    private int mLastDH;
+    private boolean mDrawNeeded;
 
-    Watermark(DisplayMetrics dm, SurfaceSession session, String[] tokens) {
+    Watermark(Display display, DisplayMetrics dm, SurfaceSession session, String[] tokens) {
         if (false) {
             Log.i(WindowManagerService.TAG, "*********************** WATERMARK");
             for (int i=0; i<tokens.length; i++) {
@@ -58,6 +59,7 @@ class Watermark {
             }
         }
 
+        mDisplay = display;
         mTokens = tokens;
 
         StringBuilder builder = new StringBuilder(32);
@@ -88,8 +90,6 @@ class Watermark {
 
         FontMetricsInt fm = mTextPaint.getFontMetricsInt();
         mTextWidth = (int)mTextPaint.measureText(mText);
-        mTextAscent = fm.ascent;
-        mTextDescent = fm.descent;
         mTextHeight = fm.descent - fm.ascent;
 
         mDeltaX = WindowManagerService.getPropertyInt(tokens, 2,
@@ -110,21 +110,25 @@ class Watermark {
         mTextPaint.setColor(color);
         mTextPaint.setShadowLayer(shadowRadius, shadowDx, shadowDy, shadowColor);
 
+        SurfaceControl ctrl = null;
         try {
-            mSurface = new Surface(session, 0,
-                    "WatermarkSurface", -1, 1, 1, PixelFormat.TRANSLUCENT, 0);
-            mSurface.setLayer(WindowManagerService.TYPE_LAYER_MULTIPLIER*100);
-            mSurface.setPosition(0, 0);
-            mSurface.show();
-        } catch (OutOfResourcesException e) {
+            ctrl = new SurfaceControl(session, "WatermarkSurface",
+                    1, 1, PixelFormat.TRANSLUCENT, SurfaceControl.HIDDEN);
+            ctrl.setLayerStack(mDisplay.getLayerStack());
+            ctrl.setLayer(WindowManagerService.TYPE_LAYER_MULTIPLIER*100);
+            ctrl.setPosition(0, 0);
+            ctrl.show();
+            mSurface.copyFrom(ctrl);
+        } catch (SurfaceControl.OutOfResourcesException e) {
         }
+        mSurfaceControl = ctrl;
     }
 
     void positionSurface(int dw, int dh) {
         if (mLastDW != dw || mLastDH != dh) {
             mLastDW = dw;
             mLastDH = dh;
-            mSurface.setSize(dw, dh);
+            mSurfaceControl.setSize(dw, dh);
             mDrawNeeded = true;
         }
     }

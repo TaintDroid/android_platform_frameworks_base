@@ -16,11 +16,8 @@
 
 package android.view;
 
-import com.android.layoutlib.bridge.android.BridgeWindowManager;
-import com.android.layoutlib.bridge.impl.RenderAction;
 import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-import android.os.RemoteException;
 
 /**
  * Delegate used to provide new implementation of a select few methods of {@link Display}
@@ -31,57 +28,9 @@ import android.os.RemoteException;
  */
 public class Display_Delegate {
 
-    // ---- Overridden methods ----
-
     @LayoutlibDelegate
-    public static IWindowManager getWindowManager() {
-        return RenderAction.getCurrentContext().getIWindowManager();
+    static void updateDisplayInfoLocked(Display theDisplay) {
+        // do nothing
     }
 
-    // ---- Native methods ----
-
-    @LayoutlibDelegate
-    /*package*/ static int getDisplayCount() {
-        return 1;
-    }
-
-    @LayoutlibDelegate
-    /** @hide special for when we are faking the screen size. */
-    /*package*/ static int getRawWidthNative(Display theDisplay) {
-        // same as real since we're not faking compatibility mode.
-        return RenderAction.getCurrentContext().getIWindowManager().getMetrics().widthPixels;
-    }
-
-    @LayoutlibDelegate
-    /** @hide special for when we are faking the screen size. */
-    /*package*/ static int getRawHeightNative(Display theDisplay) {
-        // same as real since we're not faking compatibility mode.
-        return RenderAction.getCurrentContext().getIWindowManager().getMetrics().heightPixels;
-    }
-
-    @LayoutlibDelegate
-    /*package*/ static int getOrientation(Display theDisplay) {
-        try {
-            // always dynamically query for the current window manager
-            return getWindowManager().getRotation();
-        } catch (RemoteException e) {
-            // this will never been thrown since this is not a true RPC.
-        }
-
-        return Surface.ROTATION_0;
-    }
-
-    @LayoutlibDelegate
-    /*package*/ static void nativeClassInit() {
-        // not needed for now.
-    }
-
-    @LayoutlibDelegate
-    /*package*/ static void init(Display theDisplay, int display) {
-        // always dynamically query for the current window manager
-        BridgeWindowManager wm = RenderAction.getCurrentContext().getIWindowManager();
-        theDisplay.mDensity = wm.getMetrics().density;
-        theDisplay.mDpiX = wm.getMetrics().xdpi;
-        theDisplay.mDpiY = wm.getMetrics().ydpi;
-    }
 }

@@ -7,6 +7,7 @@
 #include "Bundle.h"
 #include "ResourceFilter.h"
 #include "ResourceTable.h"
+#include "Images.h"
 #include "XMLNode.h"
 
 #include <utils/Log.h>
@@ -591,6 +592,10 @@ int doDump(Bundle* bundle)
                         goto bail;
                     }
                     printf("uses-permission: %s\n", name.string());
+                    int req = getIntegerAttribute(tree, REQUIRED_ATTR, NULL, 1);
+                    if (!req) {
+                        printf("optional-permission: %s\n", name.string());
+                    }
                 }
             }
         } else if (strcmp("badging", option) == 0) {
@@ -1032,6 +1037,10 @@ int doDump(Bundle* bundle)
                                 hasWriteCallLogPermission = true;
                             }
                             printf("uses-permission:'%s'\n", name.string());
+                            int req = getIntegerAttribute(tree, REQUIRED_ATTR, NULL, 1);
+                            if (!req) {
+                                printf("optional-permission:'%s'\n", name.string());
+                            }
                         } else {
                             fprintf(stderr, "ERROR getting 'android:name' attribute: %s\n",
                                     error.string());
@@ -1282,7 +1291,7 @@ int doDump(Bundle* bundle)
                 // network location feature, we infer that it meant to
                 printf("uses-feature:'android.hardware.location.network'\n");
                 printf("uses-implied-feature:'android.hardware.location.network'," \
-                        "'requested android.permission.ACCESS_COURSE_LOCATION permission'\n");
+                        "'requested android.permission.ACCESS_COARSE_LOCATION permission'\n");
             }
 
             // Bluetooth-related compatibility logic
@@ -1835,6 +1844,27 @@ int doCrunch(Bundle* bundle)
     fprintf(stdout, "To destination dir: %s\n", bundle->getCrunchedOutputDir());
 
     updatePreProcessedCache(bundle);
+
+    return NO_ERROR;
+}
+
+/*
+ * Do PNG Crunching on a single flag
+ *  -i points to a single png file
+ *  -o points to a single png output file
+ */
+int doSingleCrunch(Bundle* bundle)
+{
+    fprintf(stdout, "Crunching single PNG file: %s\n", bundle->getSingleCrunchInputFile());
+    fprintf(stdout, "\tOutput file: %s\n", bundle->getSingleCrunchOutputFile());
+
+    String8 input(bundle->getSingleCrunchInputFile());
+    String8 output(bundle->getSingleCrunchOutputFile());
+
+    if (preProcessImageToCache(bundle, input, output) != NO_ERROR) {
+        // we can't return the status_t as it gets truncate to the lower 8 bits.
+        return 42;
+    }
 
     return NO_ERROR;
 }

@@ -19,6 +19,7 @@ package android.content;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.DatabaseErrorHandler;
@@ -31,7 +32,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.util.AttributeSet;
+import android.view.CompatibilityInfoHolder;
+import android.view.Display;
+import android.view.WindowManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,6 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Interface to global information about an application environment.  This is
@@ -58,18 +65,34 @@ public abstract class Context {
      */
     public static final int MODE_PRIVATE = 0x0000;
     /**
+     * @deprecated Creating world-readable files is very dangerous, and likely
+     * to cause security holes in applications.  It is strongly discouraged;
+     * instead, applications should use more formal mechanism for interactions
+     * such as {@link ContentProvider}, {@link BroadcastReceiver}, and
+     * {@link android.app.Service}.  There are no guarantees that this
+     * access mode will remain on a file, such as when it goes through a
+     * backup and restore.
      * File creation mode: allow all other applications to have read access
      * to the created file.
      * @see #MODE_PRIVATE
      * @see #MODE_WORLD_WRITEABLE
      */
+    @Deprecated
     public static final int MODE_WORLD_READABLE = 0x0001;
     /**
+     * @deprecated Creating world-writable files is very dangerous, and likely
+     * to cause security holes in applications.  It is strongly discouraged;
+     * instead, applications should use more formal mechanism for interactions
+     * such as {@link ContentProvider}, {@link BroadcastReceiver}, and
+     * {@link android.app.Service}.  There are no guarantees that this
+     * access mode will remain on a file, such as when it goes through a
+     * backup and restore.
      * File creation mode: allow all other applications to have write access
      * to the created file.
      * @see #MODE_PRIVATE
      * @see #MODE_WORLD_READABLE
      */
+    @Deprecated
     public static final int MODE_WORLD_WRITEABLE = 0x0002;
     /**
      * File creation mode: for use with {@link #openFileOutput}, if the file
@@ -157,7 +180,7 @@ public abstract class Context {
      * Flag for {@link #bindService}: indicates that the client application
      * binding to this service considers the service to be more important than
      * the app itself.  When set, the platform will try to have the out of
-     * memory kill the app before it kills the service it is bound to, though
+     * memory killer kill the app before it kills the service it is bound to, though
      * this is not guaranteed to be the case.
      */
     public static final int BIND_ABOVE_CLIENT = 0x0008;
@@ -198,6 +221,19 @@ public abstract class Context {
     public static final int BIND_ADJUST_WITH_ACTIVITY = 0x0080;
 
     /**
+     * @hide An idea that is not yet implemented.
+     * Flag for {@link #bindService}: If binding from an activity, consider
+     * this service to be visible like the binding activity is.  That is,
+     * it will be treated as something more important to keep around than
+     * invisible background activities.  This will impact the number of
+     * recent activities the user can switch between without having them
+     * restart.  There is no guarantee this will be respected, as the system
+     * tries to balance such requests from one app vs. the importantance of
+     * keeping other apps around.
+     */
+    public static final int BIND_VISIBLE = 0x0100;
+
+    /**
      * Flag for {@link #bindService}: Don't consider the bound service to be
      * visible, even if the caller is visible.
      * @hide
@@ -220,6 +256,12 @@ public abstract class Context {
      * Return the Looper for the main thread of the current process.  This is
      * the thread used to dispatch calls to application components (activities,
      * services, etc).
+     * <p>
+     * By definition, this method returns the same result as would be obtained
+     * by calling {@link Looper#getMainLooper() Looper.getMainLooper()}.
+     * </p>
+     *
+     * @return The main looper.
      */
     public abstract Looper getMainLooper();
 
@@ -382,6 +424,9 @@ public abstract class Context {
 
     /** Return the name of this application's package. */
     public abstract String getPackageName();
+
+    /** @hide Return the name of the base context this context is derived from. */
+    public abstract String getBasePackageName();
 
     /** Return the full application info for this context's package. */
     public abstract ApplicationInfo getApplicationInfo();
@@ -553,6 +598,10 @@ public abstract class Context {
      * can read and write files placed here.
      * </ul>
      *
+     * <p>On devices with multiple users (as described by {@link UserManager}),
+     * each user has their own isolated external storage. Applications only
+     * have access to the external storage for the user they're running as.</p>
+     *
      * <p>Here is an example of typical code to manipulate a file in
      * an application's private storage:</p>
      *
@@ -582,6 +631,9 @@ public abstract class Context {
      * {@sample development/samples/ApiDemos/src/com/example/android/apis/content/ExternalStorage.java
      * private_picture}
      *
+     * <p>Writing to this path requires the
+     * {@link android.Manifest.permission#WRITE_EXTERNAL_STORAGE} permission.</p>
+     *
      * @param type The type of files directory to return.  May be null for
      * the root of the files directory or one of
      * the following Environment constants for a subdirectory:
@@ -607,6 +659,11 @@ public abstract class Context {
      * Return the directory where this application's OBB files (if there
      * are any) can be found.  Note if the application does not have any OBB
      * files, this directory may not exist.
+     *
+     * <p>On devices with multiple users (as described by {@link UserManager}),
+     * multiple users may share the same OBB storage location. Applications
+     * should ensure that multiple instances running under different users
+     * don't interfere with each other.</p>
      */
     public abstract File getObbDir();
 
@@ -640,8 +697,12 @@ public abstract class Context {
      * are some important differences:
      *
      * <ul>
-     * <li>The platform does not monitor the space available in external storage,
-     * and thus will not automatically delete these files.  Note that you should
+     * <li>The platform does not always monitor the space available in external
+     * storage, and thus may not automatically delete these files.  Currently
+     * the only time files here will be deleted by the platform is when running
+     * on {@link android.os.Build.VERSION_CODES#JELLY_BEAN_MR1} or later and
+     * {@link android.os.Environment#isExternalStorageEmulated()
+     * Environment.isExternalStorageEmulated()} returns true.  Note that you should
      * be managing the maximum space you will use for these anyway, just like
      * with {@link #getCacheDir()}.
      * <li>External files are not always available: they will disappear if the
@@ -650,6 +711,13 @@ public abstract class Context {
      * <li>There is no security enforced with these files.  All applications
      * can read and write files placed here.
      * </ul>
+     *
+     * <p>On devices with multiple users (as described by {@link UserManager}),
+     * each user has their own isolated external storage. Applications only
+     * have access to the external storage for the user they're running as.</p>
+     *
+     * <p>Writing to this path requires the
+     * {@link android.Manifest.permission#WRITE_EXTERNAL_STORAGE} permission.</p>
      *
      * @return Returns the path of the directory holding application cache files
      * on external storage.  Returns null if external storage is not currently
@@ -851,6 +919,20 @@ public abstract class Context {
     public abstract void startActivity(Intent intent);
 
     /**
+     * Version of {@link #startActivity(Intent)} that allows you to specify the
+     * user the activity will be started for.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS_FULL permission.
+     * @param intent The description of the activity to start.
+     * @param user The UserHandle of the user to start this activity for.
+     * @throws ActivityNotFoundException
+     * @hide
+     */
+    public void startActivityAsUser(Intent intent, UserHandle user) {
+        throw new RuntimeException("Not implemented. Must override in a subclass.");
+    }
+
+    /**
      * Launch a new activity.  You will not receive any information about when
      * the activity exits.
      *
@@ -876,6 +958,24 @@ public abstract class Context {
      * @see PackageManager#resolveActivity
      */
     public abstract void startActivity(Intent intent, Bundle options);
+
+    /**
+     * Version of {@link #startActivity(Intent, Bundle)} that allows you to specify the
+     * user the activity will be started for.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS_FULL permission.
+     * @param intent The description of the activity to start.
+     * @param options Additional options for how the Activity should be started.
+     * May be null if there are no options.  See {@link android.app.ActivityOptions}
+     * for how to build the Bundle supplied here; there are no supported definitions
+     * for building it manually.
+     * @param user The UserHandle of the user to start this activity for.
+     * @throws ActivityNotFoundException
+     * @hide
+     */
+    public void startActivityAsUser(Intent intent, Bundle options, UserHandle userId) {
+        throw new RuntimeException("Not implemented. Must override in a subclass.");
+    }
 
     /**
      * Same as {@link #startActivities(Intent[], Bundle)} with no options
@@ -915,6 +1015,36 @@ public abstract class Context {
      * @see PackageManager#resolveActivity
      */
     public abstract void startActivities(Intent[] intents, Bundle options);
+
+    /**
+     * @hide
+     * Launch multiple new activities.  This is generally the same as calling
+     * {@link #startActivity(Intent)} for the first Intent in the array,
+     * that activity during its creation calling {@link #startActivity(Intent)}
+     * for the second entry, etc.  Note that unlike that approach, generally
+     * none of the activities except the last in the array will be created
+     * at this point, but rather will be created when the user first visits
+     * them (due to pressing back from the activity on top).
+     *
+     * <p>This method throws {@link ActivityNotFoundException}
+     * if there was no Activity found for <em>any</em> given Intent.  In this
+     * case the state of the activity stack is undefined (some Intents in the
+     * list may be on it, some not), so you probably want to avoid such situations.
+     *
+     * @param intents An array of Intents to be started.
+     * @param options Additional options for how the Activity should be started.
+     * @param userHandle The user for whom to launch the activities
+     * See {@link android.content.Context#startActivity(Intent, Bundle)
+     * Context.startActivity(Intent, Bundle)} for more details.
+     *
+     * @throws ActivityNotFoundException
+     *
+     * @see {@link #startActivities(Intent[])}
+     * @see PackageManager#resolveActivity
+     */
+    public void startActivitiesAsUser(Intent[] intents, Bundle options, UserHandle userHandle) {
+        throw new RuntimeException("Not implemented. Must override in a subclass.");
+    }
 
     /**
      * Same as {@link #startIntentSender(IntentSender, Intent, int, int, int, Bundle)}
@@ -988,16 +1118,6 @@ public abstract class Context {
     public abstract void sendBroadcast(Intent intent);
 
     /**
-     * Same as #sendBroadcast(Intent intent), but for a specific user. Used by the system only.
-     * @param intent the intent to broadcast
-     * @param userId user to send the intent to
-     * @hide
-     */
-    public void sendBroadcast(Intent intent, int userId) {
-        throw new RuntimeException("Not implemented. Must override in a subclass.");
-    }
-
-    /**
      * Broadcast the given intent to all interested BroadcastReceivers, allowing
      * an optional required permission to be enforced.  This
      * call is asynchronous; it returns immediately, and you will continue
@@ -1023,6 +1143,14 @@ public abstract class Context {
      */
     public abstract void sendBroadcast(Intent intent,
             String receiverPermission);
+
+    /**
+     * Like {@link #sendBroadcast(Intent, String)}, but also allows specification
+     * of an assocated app op as per {@link android.app.AppOpsManager}.
+     * @hide
+     */
+    public abstract void sendBroadcast(Intent intent,
+            String receiverPermission, int appOp);
 
     /**
      * Broadcast the given intent to all interested BroadcastReceivers, delivering
@@ -1095,6 +1223,80 @@ public abstract class Context {
             Bundle initialExtras);
 
     /**
+     * Like {@link #sendOrderedBroadcast(Intent, String, BroadcastReceiver, android.os.Handler,
+     * int, String, android.os.Bundle)}, but also allows specification
+     * of an assocated app op as per {@link android.app.AppOpsManager}.
+     * @hide
+     */
+    public abstract void sendOrderedBroadcast(Intent intent,
+            String receiverPermission, int appOp, BroadcastReceiver resultReceiver,
+            Handler scheduler, int initialCode, String initialData,
+            Bundle initialExtras);
+
+    /**
+     * Version of {@link #sendBroadcast(Intent)} that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     * @param intent The intent to broadcast
+     * @param user UserHandle to send the intent to.
+     * @see #sendBroadcast(Intent)
+     */
+    public abstract void sendBroadcastAsUser(Intent intent, UserHandle user);
+
+    /**
+     * Version of {@link #sendBroadcast(Intent, String)} that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     *
+     * @param intent The Intent to broadcast; all receivers matching this
+     *               Intent will receive the broadcast.
+     * @param user UserHandle to send the intent to.
+     * @param receiverPermission (optional) String naming a permission that
+     *               a receiver must hold in order to receive your broadcast.
+     *               If null, no permission is required.
+     *
+     * @see #sendBroadcast(Intent, String)
+     */
+    public abstract void sendBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission);
+
+    /**
+     * Version of
+     * {@link #sendOrderedBroadcast(Intent, String, BroadcastReceiver, Handler, int, String, Bundle)}
+     * that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     *
+     * <p>See {@link BroadcastReceiver} for more information on Intent broadcasts.
+     *
+     * @param intent The Intent to broadcast; all receivers matching this
+     *               Intent will receive the broadcast.
+     * @param user UserHandle to send the intent to.
+     * @param receiverPermission String naming a permissions that
+     *               a receiver must hold in order to receive your broadcast.
+     *               If null, no permission is required.
+     * @param resultReceiver Your own BroadcastReceiver to treat as the final
+     *                       receiver of the broadcast.
+     * @param scheduler A custom Handler with which to schedule the
+     *                  resultReceiver callback; if null it will be
+     *                  scheduled in the Context's main thread.
+     * @param initialCode An initial value for the result code.  Often
+     *                    Activity.RESULT_OK.
+     * @param initialData An initial value for the result data.  Often
+     *                    null.
+     * @param initialExtras An initial value for the result extras.  Often
+     *                      null.
+     *
+     * @see #sendOrderedBroadcast(Intent, String, BroadcastReceiver, Handler, int, String, Bundle)
+     */
+    public abstract void sendOrderedBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission, BroadcastReceiver resultReceiver, Handler scheduler,
+            int initialCode, String initialData, Bundle initialExtras);
+
+    /**
      * Perform a {@link #sendBroadcast(Intent)} that is "sticky," meaning the
      * Intent you are sending stays around after the broadcast is complete,
      * so that others can quickly retrieve that data through the return
@@ -1160,7 +1362,6 @@ public abstract class Context {
             Handler scheduler, int initialCode, String initialData,
             Bundle initialExtras);
 
-
     /**
      * Remove the data previously sent with {@link #sendStickyBroadcast},
      * so that it is as if the sticky broadcast had never happened.
@@ -1174,6 +1375,70 @@ public abstract class Context {
      * @see #sendStickyBroadcast
      */
     public abstract void removeStickyBroadcast(Intent intent);
+
+    /**
+     * Version of {@link #sendStickyBroadcast(Intent)} that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     *
+     * @param intent The Intent to broadcast; all receivers matching this
+     * Intent will receive the broadcast, and the Intent will be held to
+     * be re-broadcast to future receivers.
+     * @param user UserHandle to send the intent to.
+     *
+     * @see #sendBroadcast(Intent)
+     */
+    public abstract void sendStickyBroadcastAsUser(Intent intent, UserHandle user);
+
+    /**
+     * Version of
+     * {@link #sendStickyOrderedBroadcast(Intent, BroadcastReceiver, Handler, int, String, Bundle)}
+     * that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     *
+     * <p>See {@link BroadcastReceiver} for more information on Intent broadcasts.
+     *
+     * @param intent The Intent to broadcast; all receivers matching this
+     *               Intent will receive the broadcast.
+     * @param user UserHandle to send the intent to.
+     * @param resultReceiver Your own BroadcastReceiver to treat as the final
+     *                       receiver of the broadcast.
+     * @param scheduler A custom Handler with which to schedule the
+     *                  resultReceiver callback; if null it will be
+     *                  scheduled in the Context's main thread.
+     * @param initialCode An initial value for the result code.  Often
+     *                    Activity.RESULT_OK.
+     * @param initialData An initial value for the result data.  Often
+     *                    null.
+     * @param initialExtras An initial value for the result extras.  Often
+     *                      null.
+     *
+     * @see #sendStickyOrderedBroadcast(Intent, BroadcastReceiver, Handler, int, String, Bundle)
+     */
+    public abstract void sendStickyOrderedBroadcastAsUser(Intent intent,
+            UserHandle user, BroadcastReceiver resultReceiver,
+            Handler scheduler, int initialCode, String initialData,
+            Bundle initialExtras);
+
+    /**
+     * Version of {@link #removeStickyBroadcast(Intent)} that allows you to specify the
+     * user the broadcast will be sent to.  This is not available to applications
+     * that are not pre-installed on the system image.  Using it requires holding
+     * the INTERACT_ACROSS_USERS permission.
+     *
+     * <p>You must hold the {@link android.Manifest.permission#BROADCAST_STICKY}
+     * permission in order to use this API.  If you do not hold that
+     * permission, {@link SecurityException} will be thrown.
+     *
+     * @param intent The Intent that was previously broadcast.
+     * @param user UserHandle to remove the sticky broadcast from.
+     *
+     * @see #sendStickyBroadcastAsUser
+     */
+    public abstract void removeStickyBroadcastAsUser(Intent intent, UserHandle user);
 
     /**
      * Register a BroadcastReceiver to be run in the main activity thread.  The
@@ -1258,9 +1523,35 @@ public abstract class Context {
      * @see #unregisterReceiver
      */
     public abstract Intent registerReceiver(BroadcastReceiver receiver,
-                                            IntentFilter filter,
-                                            String broadcastPermission,
-                                            Handler scheduler);
+            IntentFilter filter, String broadcastPermission, Handler scheduler);
+
+    /**
+     * @hide
+     * Same as {@link #registerReceiver(BroadcastReceiver, IntentFilter, String, Handler)
+     * but for a specific user.  This receiver will receiver broadcasts that
+     * are sent to the requested user.  It
+     * requires holding the {@link android.Manifest.permission#INTERACT_ACROSS_USERS_FULL}
+     * permission.
+     *
+     * @param receiver The BroadcastReceiver to handle the broadcast.
+     * @param user UserHandle to send the intent to.
+     * @param filter Selects the Intent broadcasts to be received.
+     * @param broadcastPermission String naming a permissions that a
+     *      broadcaster must hold in order to send an Intent to you.  If null,
+     *      no permission is required.
+     * @param scheduler Handler identifying the thread that will receive
+     *      the Intent.  If null, the main thread of the process will be used.
+     *
+     * @return The first sticky intent found that matches <var>filter</var>,
+     *         or null if there are none.
+     *
+     * @see #registerReceiver(BroadcastReceiver, IntentFilter, String, Handler
+     * @see #sendBroadcast
+     * @see #unregisterReceiver
+     */
+    public abstract Intent registerReceiverAsUser(BroadcastReceiver receiver,
+            UserHandle user, IntentFilter filter, String broadcastPermission,
+            Handler scheduler);
 
     /**
      * Unregister a previously registered BroadcastReceiver.  <em>All</em>
@@ -1351,6 +1642,16 @@ public abstract class Context {
     public abstract boolean stopService(Intent service);
 
     /**
+     * @hide like {@link #startService(Intent)} but for a specific user.
+     */
+    public abstract ComponentName startServiceAsUser(Intent service, UserHandle user);
+
+    /**
+     * @hide like {@link #stopService(Intent)} but for a specific user.
+     */
+    public abstract boolean stopServiceAsUser(Intent service, UserHandle user);
+    
+    /**
      * Connect to an application service, creating it if needed.  This defines
      * a dependency between your application and the service.  The given
      * <var>conn</var> will receive the service object when it is created and be
@@ -1379,6 +1680,7 @@ public abstract class Context {
      *      description (action, category, etc) to match an
      *      {@link IntentFilter} published by a service.
      * @param conn Receives information as the service is started and stopped.
+     *      This must be a valid ServiceConnection object; it must not be null.
      * @param flags Operation options for the binding.  May be 0,
      *          {@link #BIND_AUTO_CREATE}, {@link #BIND_DEBUG_UNBIND},
      *          {@link #BIND_NOT_FOREGROUND}, {@link #BIND_ABOVE_CLIENT},
@@ -1400,11 +1702,11 @@ public abstract class Context {
             int flags);
 
     /**
-     * Same as {@link #bindService(Intent, ServiceConnection, int)}, but with an explicit userId
+     * Same as {@link #bindService(Intent, ServiceConnection, int)}, but with an explicit userHandle
      * argument for use by system server and other multi-user aware code.
      * @hide
      */
-    public boolean bindService(Intent service, ServiceConnection conn, int flags, int userId) {
+    public boolean bindServiceAsUser(Intent service, ServiceConnection conn, int flags, UserHandle user) {
         throw new RuntimeException("Not implemented. Must override in a subclass.");
     }
 
@@ -1414,7 +1716,7 @@ public abstract class Context {
      * stop at any time.
      *
      * @param conn The connection interface previously supplied to
-     *             bindService().
+     *             bindService().  This parameter must not be null.
      *
      * @see #bindService
      */
@@ -1720,17 +2022,6 @@ public abstract class Context {
 
     /**
      * Use with {@link #getSystemService} to retrieve a {@link
-     * android.net.ThrottleManager} for handling management of
-     * throttling.
-     *
-     * @hide
-     * @see #getSystemService
-     * @see android.net.ThrottleManager
-     */
-    public static final String THROTTLE_SERVICE = "throttle";
-
-    /**
-     * Use with {@link #getSystemService} to retrieve a {@link
      * android.os.IUpdateLock} for managing runtime sequences that
      * must not be interrupted by headless OTA application or similar.
      *
@@ -1906,6 +2197,14 @@ public abstract class Context {
 
     /**
      * Use with {@link #getSystemService} to retrieve a
+     * {@link android.bluetooth.BluetoothAdapter} for using Bluetooth.
+     *
+     * @see #getSystemService
+     */
+    public static final String BLUETOOTH_SERVICE = "bluetooth";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
      * {@link android.net.sip.SipManager} for accessing the SIP related service.
      *
      * @see #getSystemService
@@ -1945,6 +2244,15 @@ public abstract class Context {
 
     /**
      * Use with {@link #getSystemService} to retrieve a
+     * {@link android.hardware.display.DisplayManager} for interacting with display devices.
+     *
+     * @see #getSystemService
+     * @see android.hardware.display.DisplayManager
+     */
+    public static final String DISPLAY_SERVICE = "display";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
      * {@link android.os.SchedulingPolicyService} for managing scheduling policy.
      *
      * @see #getSystemService
@@ -1953,6 +2261,27 @@ public abstract class Context {
      * @hide
      */
     public static final String SCHEDULING_POLICY_SERVICE = "scheduling_policy";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
+     * {@link android.os.UserManager} for managing users on devices that support multiple users.
+     *
+     * @see #getSystemService
+     * @see android.os.UserManager
+     */
+    public static final String USER_SERVICE = "user";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
+     * {@link android.app.AppOpsManager} for tracking application operations
+     * on the device.
+     *
+     * @see #getSystemService
+     * @see android.app.AppOpsManager
+     *
+     * @hide
+     */
+    public static final String APP_OPS_SERVICE = "appops";
 
     /**
      * Determine whether the given permission is allowed for a particular
@@ -2355,6 +2684,73 @@ public abstract class Context {
      */
     public abstract Context createPackageContext(String packageName,
             int flags) throws PackageManager.NameNotFoundException;
+
+    /**
+     * Similar to {@link #createPackageContext(String, int)}, but with a
+     * different {@link UserHandle}. For example, {@link #getContentResolver()}
+     * will open any {@link Uri} as the given user.
+     *
+     * @hide
+     */
+    public abstract Context createPackageContextAsUser(
+            String packageName, int flags, UserHandle user)
+            throws PackageManager.NameNotFoundException;
+
+    /**
+     * Get the userId associated with this context
+     * @return user id
+     *
+     * @hide
+     */
+    public abstract int getUserId();
+
+    /**
+     * Return a new Context object for the current Context but whose resources
+     * are adjusted to match the given Configuration.  Each call to this method
+     * returns a new instance of a Context object; Context objects are not
+     * shared, however common state (ClassLoader, other Resources for the
+     * same configuration) may be so the Context itself can be fairly lightweight.
+     *
+     * @param overrideConfiguration A {@link Configuration} specifying what
+     * values to modify in the base Configuration of the original Context's
+     * resources.  If the base configuration changes (such as due to an
+     * orientation change), the resources of this context will also change except
+     * for those that have been explicitly overridden with a value here.
+     *
+     * @return A Context with the given configuration override.
+     */
+    public abstract Context createConfigurationContext(Configuration overrideConfiguration);
+
+    /**
+     * Return a new Context object for the current Context but whose resources
+     * are adjusted to match the metrics of the given Display.  Each call to this method
+     * returns a new instance of a Context object; Context objects are not
+     * shared, however common state (ClassLoader, other Resources for the
+     * same configuration) may be so the Context itself can be fairly lightweight.
+     *
+     * The returned display Context provides a {@link WindowManager}
+     * (see {@link #getSystemService(String)}) that is configured to show windows
+     * on the given display.  The WindowManager's {@link WindowManager#getDefaultDisplay}
+     * method can be used to retrieve the Display from the returned Context.
+     *
+     * @param display A {@link Display} object specifying the display
+     * for whose metrics the Context's resources should be tailored and upon which
+     * new windows should be shown.
+     *
+     * @return A Context for the display.
+     */
+    public abstract Context createDisplayContext(Display display);
+
+    /**
+     * Gets the compatibility info holder for this context.  This information
+     * is provided on a per-application basis and is used to simulate lower density
+     * display metrics for legacy applications.
+     *
+     * @param displayId The display id for which to get compatibility info.
+     * @return The compatibility info holder, or null if not required by the application.
+     * @hide
+     */
+    public abstract CompatibilityInfoHolder getCompatibilityInfo(int displayId);
 
     /**
      * Indicates whether this Context is restricted.

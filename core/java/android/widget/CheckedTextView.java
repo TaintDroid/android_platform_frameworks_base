@@ -55,7 +55,7 @@ public class CheckedTextView extends TextView implements Checkable {
     }
 
     public CheckedTextView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        this(context, attrs, R.attr.checkedTextViewStyle);
     }
 
     public CheckedTextView(Context context, AttributeSet attrs, int defStyle) {
@@ -101,7 +101,7 @@ public class CheckedTextView extends TextView implements Checkable {
     /**
      * Set the checkmark to a given Drawable, identified by its resourece id. This will be drawn
      * when {@link #isChecked()} is true.
-     * 
+     *
      * @param resid The Drawable to use for the checkmark.
      *
      * @see #setCheckMarkDrawable(Drawable)
@@ -144,14 +144,14 @@ public class CheckedTextView extends TextView implements Checkable {
             d.setVisible(getVisibility() == VISIBLE, false);
             d.setState(CHECKED_STATE_SET);
             setMinHeight(d.getIntrinsicHeight());
-            
+
             mCheckMarkWidth = d.getIntrinsicWidth();
             d.setState(getDrawableState());
         } else {
             mCheckMarkWidth = 0;
         }
         mCheckMarkDrawable = d;
-        // Do padding resolution. This will call setPadding() and do a requestLayout() if needed.
+        // Do padding resolution. This will call internalSetPadding() and do a requestLayout() if needed.
         resolvePadding();
     }
 
@@ -169,28 +169,44 @@ public class CheckedTextView extends TextView implements Checkable {
         return mCheckMarkDrawable;
     }
 
+    /**
+     * @hide
+     */
     @Override
-    public void onPaddingChanged(int layoutDirection) {
+    protected void internalSetPadding(int left, int top, int right, int bottom) {
+        super.internalSetPadding(left, top, right, bottom);
+        setBasePadding(isLayoutRtl());
+    }
+
+    @Override
+    public void onRtlPropertiesChanged(int layoutDirection) {
+        super.onRtlPropertiesChanged(layoutDirection);
+        updatePadding();
+    }
+
+    private void updatePadding() {
+        resetPaddingToInitialValues();
         int newPadding = (mCheckMarkDrawable != null) ?
                 mCheckMarkWidth + mBasePadding : mBasePadding;
-        mNeedRequestlayout |= (mPaddingRight != newPadding);
-        mPaddingRight = newPadding;
+        if (isLayoutRtl()) {
+            mNeedRequestlayout |= (mPaddingLeft != newPadding);
+            mPaddingLeft = newPadding;
+        } else {
+            mNeedRequestlayout |= (mPaddingRight != newPadding);
+            mPaddingRight = newPadding;
+        }
         if (mNeedRequestlayout) {
             requestLayout();
             mNeedRequestlayout = false;
         }
     }
-    
-    @Override
-    public void setPadding(int left, int top, int right, int bottom) {
-        super.setPadding(left, top, right, bottom);
-        mBasePadding = mPaddingRight;
-    }
 
-    @Override
-    public void setPaddingRelative(int start, int top, int end, int bottom) {
-        super.setPaddingRelative(start, top, end, bottom);
-        mBasePadding = getPaddingEnd();
+    private void setBasePadding(boolean isLayoutRtl) {
+        if (isLayoutRtl) {
+            mBasePadding = mPaddingLeft;
+        } else {
+            mBasePadding = mPaddingRight;
+        }
     }
 
     @Override
@@ -213,12 +229,20 @@ public class CheckedTextView extends TextView implements Checkable {
                     break;
             }
             
-            int right = getWidth();
-            checkMarkDrawable.setBounds(
-                    right - mPaddingRight,
-                    y, 
-                    right - mPaddingRight + mCheckMarkWidth,
-                    y + height);
+            final boolean isLayoutRtl = isLayoutRtl();
+            final int width = getWidth();
+            final int top = y;
+            final int bottom = top + height;
+            final int left;
+            final int right;
+            if (isLayoutRtl) {
+                left = mBasePadding;
+                right = left + mCheckMarkWidth;
+            } else {
+                right = width - mBasePadding;
+                left = right - mCheckMarkWidth;
+            }
+            checkMarkDrawable.setBounds( left, top, right, bottom);
             checkMarkDrawable.draw(canvas);
         }
     }

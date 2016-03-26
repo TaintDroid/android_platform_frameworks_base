@@ -18,6 +18,7 @@ package android.renderscript;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import android.content.res.Resources;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -26,6 +27,7 @@ import android.view.Surface;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.util.TypedValue;
+import android.graphics.Canvas;
 
 /**
  * <p>
@@ -67,7 +69,7 @@ import android.util.TypedValue;
  * <div class="special reference">
  * <h3>Developer Guides</h3>
  * <p>For more information about creating an application that uses Renderscript, read the
- * <a href="{@docRoot}guide/topics/graphics/renderscript.html">Renderscript</a> developer guide.</p>
+ * <a href="{@docRoot}guide/topics/renderscript/index.html">Renderscript</a> developer guide.</p>
  * </div>
  **/
 public class Allocation extends BaseObj {
@@ -91,6 +93,9 @@ public class Allocation extends BaseObj {
     int mCurrentDimY;
     int mCurrentDimZ;
     int mCurrentCount;
+    static HashMap<Integer, Allocation> mAllocationMap =
+            new HashMap<Integer, Allocation>();
+    IoInputNotifier mBufferNotifier;
 
 
     /**
@@ -146,6 +151,19 @@ public class Allocation extends BaseObj {
      *
      */
     public static final int USAGE_IO_OUTPUT = 0x0040;
+
+    /**
+     * USAGE_SHARED The allocation's backing store will be inherited
+     * from another object (usually a Bitmap); calling appropriate
+     * copy methods will be significantly faster than if the entire
+     * allocation were copied every time.
+     *
+     * This is set by default for allocations created with
+     * CreateFromBitmap(RenderScript, Bitmap) in API version 18 and
+     * higher.
+     *
+     */
+    public static final int USAGE_SHARED = 0x0080;
 
     /**
      * Controls mipmap behavior when using the bitmap creation and
@@ -233,6 +251,10 @@ public class Allocation extends BaseObj {
         }
     }
 
+    private void setBitmap(Bitmap b) {
+        mBitmap = b;
+    }
+
     Allocation(int id, RenderScript rs, Type t, int usage) {
         super(id, rs);
         if ((usage & ~(USAGE_SCRIPT |
@@ -241,7 +263,8 @@ public class Allocation extends BaseObj {
                        USAGE_GRAPHICS_CONSTANTS |
                        USAGE_GRAPHICS_RENDER_TARGET |
                        USAGE_IO_INPUT |
-                       USAGE_IO_OUTPUT)) != 0) {
+                       USAGE_IO_OUTPUT |
+                       USAGE_SHARED)) != 0) {
             throw new RSIllegalArgumentException("Unknown usage specified.");
         }
 
@@ -343,10 +366,19 @@ public class Allocation extends BaseObj {
      */
     public void syncAll(int srcLocation) {
         switch (srcLocation) {
-        case USAGE_SCRIPT:
-        case USAGE_GRAPHICS_CONSTANTS:
         case USAGE_GRAPHICS_TEXTURE:
+        case USAGE_SCRIPT:
+            if ((mUsage & USAGE_SHARED) != 0) {
+                copyFrom(mBitmap);
+            }
+            break;
+        case USAGE_GRAPHICS_CONSTANTS:
         case USAGE_GRAPHICS_VERTEX:
+            break;
+        case USAGE_SHARED:
+            if ((mUsage & USAGE_SHARED) != 0) {
+                copyTo(mBitmap);
+            }
             break;
         default:
             throw new RSIllegalArgumentException("Source must be exactly one usage type.");
@@ -411,6 +443,9 @@ public class Allocation extends BaseObj {
 
     private void validateBitmapFormat(Bitmap b) {
         Bitmap.Config bc = b.getConfig();
+        if (bc == null) {
+            throw new RSIllegalArgumentException("Bitmap has an unsupported format for this operation");
+        }
         switch (bc) {
         case ALPHA_8:
             if (mType.getElement().mKind != Element.DataKind.PIXEL_A) {
@@ -470,7 +505,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFromUnchecked(int[] d) {
         mRS.validate();
-        copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFromUnchecked(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFromUnchecked(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        }
     }
     /**
      * Copy an allocation from an array.  This variant is not type
@@ -481,7 +522,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFromUnchecked(short[] d) {
         mRS.validate();
-        copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFromUnchecked(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFromUnchecked(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        }
     }
     /**
      * Copy an allocation from an array.  This variant is not type
@@ -492,7 +539,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFromUnchecked(byte[] d) {
         mRS.validate();
-        copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFromUnchecked(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFromUnchecked(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        }
     }
     /**
      * Copy an allocation from an array.  This variant is not type
@@ -503,7 +556,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFromUnchecked(float[] d) {
         mRS.validate();
-        copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFromUnchecked(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFromUnchecked(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFromUnchecked(0, mCurrentCount, d);
+        }
     }
 
     /**
@@ -515,7 +574,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFrom(int[] d) {
         mRS.validate();
-        copy1DRangeFrom(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFrom(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFrom(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFrom(0, mCurrentCount, d);
+        }
     }
 
     /**
@@ -527,7 +592,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFrom(short[] d) {
         mRS.validate();
-        copy1DRangeFrom(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFrom(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFrom(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFrom(0, mCurrentCount, d);
+        }
     }
 
     /**
@@ -539,7 +610,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFrom(byte[] d) {
         mRS.validate();
-        copy1DRangeFrom(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFrom(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFrom(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFrom(0, mCurrentCount, d);
+        }
     }
 
     /**
@@ -551,7 +628,13 @@ public class Allocation extends BaseObj {
      */
     public void copyFrom(float[] d) {
         mRS.validate();
-        copy1DRangeFrom(0, mCurrentCount, d);
+        if (mCurrentDimZ > 0) {
+            copy3DRangeFrom(0, 0, 0, mCurrentDimX, mCurrentDimY, mCurrentDimZ, d);
+        } else if (mCurrentDimY > 0) {
+            copy2DRangeFrom(0, 0, mCurrentDimX, mCurrentDimY, d);
+        } else {
+            copy1DRangeFrom(0, mCurrentCount, d);
+        }
     }
 
     /**
@@ -562,10 +645,32 @@ public class Allocation extends BaseObj {
      */
     public void copyFrom(Bitmap b) {
         mRS.validate();
+        if (b.getConfig() == null) {
+            Bitmap newBitmap = Bitmap.createBitmap(b.getWidth(), b.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(newBitmap);
+            c.drawBitmap(b, 0, 0, null);
+            copyFrom(newBitmap);
+            return;
+        }
         validateBitmapSize(b);
         validateBitmapFormat(b);
         mRS.nAllocationCopyFromBitmap(getID(mRS), b);
     }
+
+    /**
+     * Copy an allocation from an allocation.  The types of both allocations
+     * must be identical.
+     *
+     * @param a the source allocation
+     */
+    public void copyFrom(Allocation a) {
+        mRS.validate();
+        if (!mType.equals(a.getType())) {
+            throw new RSIllegalArgumentException("Types of allocations must match.");
+        }
+        copy2DRangeFrom(0, 0, mCurrentDimX, mCurrentDimY, a, 0, 0);
+    }
+
 
     /**
      * This is only intended to be used by auto-generate code reflected from the
@@ -794,6 +899,35 @@ public class Allocation extends BaseObj {
         }
     }
 
+    void copy2DRangeFromUnchecked(int xoff, int yoff, int w, int h, byte[] data) {
+        mRS.validate();
+        validate2DRange(xoff, yoff, w, h);
+        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
+                              w, h, data, data.length);
+    }
+
+    void copy2DRangeFromUnchecked(int xoff, int yoff, int w, int h, short[] data) {
+        mRS.validate();
+        validate2DRange(xoff, yoff, w, h);
+        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
+                              w, h, data, data.length * 2);
+    }
+
+    void copy2DRangeFromUnchecked(int xoff, int yoff, int w, int h, int[] data) {
+        mRS.validate();
+        validate2DRange(xoff, yoff, w, h);
+        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
+                              w, h, data, data.length * 4);
+    }
+
+    void copy2DRangeFromUnchecked(int xoff, int yoff, int w, int h, float[] data) {
+        mRS.validate();
+        validate2DRange(xoff, yoff, w, h);
+        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
+                              w, h, data, data.length * 4);
+    }
+
+
     /**
      * Copy a rectangular region from the array into the allocation.
      * The incoming array is assumed to be tightly packed.
@@ -805,31 +939,23 @@ public class Allocation extends BaseObj {
      * @param data to be placed into the allocation
      */
     public void copy2DRangeFrom(int xoff, int yoff, int w, int h, byte[] data) {
-        mRS.validate();
-        validate2DRange(xoff, yoff, w, h);
-        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
-                              w, h, data, data.length);
+        validateIsInt8();
+        copy2DRangeFromUnchecked(xoff, yoff, w, h, data);
     }
 
     public void copy2DRangeFrom(int xoff, int yoff, int w, int h, short[] data) {
-        mRS.validate();
-        validate2DRange(xoff, yoff, w, h);
-        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
-                              w, h, data, data.length * 2);
+        validateIsInt16();
+        copy2DRangeFromUnchecked(xoff, yoff, w, h, data);
     }
 
     public void copy2DRangeFrom(int xoff, int yoff, int w, int h, int[] data) {
-        mRS.validate();
-        validate2DRange(xoff, yoff, w, h);
-        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
-                              w, h, data, data.length * 4);
+        validateIsInt32();
+        copy2DRangeFromUnchecked(xoff, yoff, w, h, data);
     }
 
     public void copy2DRangeFrom(int xoff, int yoff, int w, int h, float[] data) {
-        mRS.validate();
-        validate2DRange(xoff, yoff, w, h);
-        mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID,
-                              w, h, data, data.length * 4);
+        validateIsFloat32();
+        copy2DRangeFromUnchecked(xoff, yoff, w, h, data);
     }
 
     /**
@@ -865,9 +991,147 @@ public class Allocation extends BaseObj {
      */
     public void copy2DRangeFrom(int xoff, int yoff, Bitmap data) {
         mRS.validate();
+        if (data.getConfig() == null) {
+            Bitmap newBitmap = Bitmap.createBitmap(data.getWidth(), data.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(newBitmap);
+            c.drawBitmap(data, 0, 0, null);
+            copy2DRangeFrom(xoff, yoff, newBitmap);
+            return;
+        }
         validateBitmapFormat(data);
         validate2DRange(xoff, yoff, data.getWidth(), data.getHeight());
         mRS.nAllocationData2D(getIDSafe(), xoff, yoff, mSelectedLOD, mSelectedFace.mID, data);
+    }
+
+    private void validate3DRange(int xoff, int yoff, int zoff, int w, int h, int d) {
+        if (mAdaptedAllocation != null) {
+
+        } else {
+
+            if (xoff < 0 || yoff < 0 || zoff < 0) {
+                throw new RSIllegalArgumentException("Offset cannot be negative.");
+            }
+            if (h < 0 || w < 0 || d < 0) {
+                throw new RSIllegalArgumentException("Height or width cannot be negative.");
+            }
+            if (((xoff + w) > mCurrentDimX) || ((yoff + h) > mCurrentDimY) || ((zoff + d) > mCurrentDimZ)) {
+                throw new RSIllegalArgumentException("Updated region larger than allocation.");
+            }
+        }
+    }
+
+    /**
+     * @hide
+     *
+     */
+    void copy3DRangeFromUnchecked(int xoff, int yoff, int zoff, int w, int h, int d, byte[] data) {
+        mRS.validate();
+        validate3DRange(xoff, yoff, zoff, w, h, d);
+        mRS.nAllocationData3D(getIDSafe(), xoff, yoff, zoff, mSelectedLOD,
+                              w, h, d, data, data.length);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    void copy3DRangeFromUnchecked(int xoff, int yoff, int zoff, int w, int h, int d, short[] data) {
+        mRS.validate();
+        validate3DRange(xoff, yoff, zoff, w, h, d);
+        mRS.nAllocationData3D(getIDSafe(), xoff, yoff, zoff, mSelectedLOD,
+                              w, h, d, data, data.length * 2);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    void copy3DRangeFromUnchecked(int xoff, int yoff, int zoff, int w, int h, int d, int[] data) {
+        mRS.validate();
+        validate3DRange(xoff, yoff, zoff, w, h, d);
+        mRS.nAllocationData3D(getIDSafe(), xoff, yoff, zoff, mSelectedLOD,
+                              w, h, d, data, data.length * 4);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    void copy3DRangeFromUnchecked(int xoff, int yoff, int zoff, int w, int h, int d, float[] data) {
+        mRS.validate();
+        validate3DRange(xoff, yoff, zoff, w, h, d);
+        mRS.nAllocationData3D(getIDSafe(), xoff, yoff, zoff, mSelectedLOD,
+                              w, h, d, data, data.length * 4);
+    }
+
+
+    /**
+     * @hide
+     * Copy a rectangular region from the array into the allocation.
+     * The incoming array is assumed to be tightly packed.
+     *
+     * @param xoff X offset of the region to update
+     * @param yoff Y offset of the region to update
+     * @param zoff Z offset of the region to update
+     * @param w Width of the incoming region to update
+     * @param h Height of the incoming region to update
+     * @param d Depth of the incoming region to update
+     * @param data to be placed into the allocation
+     */
+    public void copy3DRangeFrom(int xoff, int yoff, int zoff, int w, int h, int d, byte[] data) {
+        validateIsInt8();
+        copy3DRangeFromUnchecked(xoff, yoff, zoff, w, h, d, data);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    public void copy3DRangeFrom(int xoff, int yoff, int zoff, int w, int h, int d, short[] data) {
+        validateIsInt16();
+        copy3DRangeFromUnchecked(xoff, yoff, zoff, w, h, d, data);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    public void copy3DRangeFrom(int xoff, int yoff, int zoff, int w, int h, int d, int[] data) {
+        validateIsInt32();
+        copy3DRangeFromUnchecked(xoff, yoff, zoff, w, h, d, data);
+    }
+
+    /**
+     * @hide
+     *
+     */
+    public void copy3DRangeFrom(int xoff, int yoff, int zoff, int w, int h, int d, float[] data) {
+        validateIsFloat32();
+        copy3DRangeFromUnchecked(xoff, yoff, zoff, w, h, d, data);
+    }
+
+    /**
+     * @hide
+     * Copy a rectangular region into the allocation from another
+     * allocation.
+     *
+     * @param xoff X offset of the region to update.
+     * @param yoff Y offset of the region to update.
+     * @param w Width of the incoming region to update.
+     * @param h Height of the incoming region to update.
+     * @param d Depth of the incoming region to update.
+     * @param data source allocation.
+     * @param dataXoff X offset in data of the region to update.
+     * @param dataYoff Y offset in data of the region to update.
+     * @param dataZoff Z offset in data of the region to update
+     */
+    public void copy3DRangeFrom(int xoff, int yoff, int zoff, int w, int h, int d,
+                                Allocation data, int dataXoff, int dataYoff, int dataZoff) {
+        mRS.validate();
+        validate3DRange(xoff, yoff, zoff, w, h, d);
+        mRS.nAllocationData3D(getIDSafe(), xoff, yoff, zoff, mSelectedLOD,
+                              w, h, d, data.getID(mRS), dataXoff, dataYoff, dataZoff,
+                              data.mSelectedLOD);
     }
 
 
@@ -947,6 +1211,10 @@ public class Allocation extends BaseObj {
      * A new type will be created with the new dimension.
      *
      * @param dimX The new size of the allocation.
+     *
+     * @deprecated Renderscript objects should be immutable once
+     * created.  The replacement is to create a new allocation and copy the
+     * contents.
      */
     public synchronized void resize(int dimX) {
         if ((mType.getY() > 0)|| (mType.getZ() > 0) || mType.hasFaces() || mType.hasMipmaps()) {
@@ -960,39 +1228,6 @@ public class Allocation extends BaseObj {
         mType.updateFromNative();
         updateCacheInfo(mType);
     }
-
-    /**
-     * Resize a 2D allocation.  The contents of the allocation are
-     * preserved.  If new elements are allocated objects are created
-     * with null contents and the new region is otherwise undefined.
-     *
-     * If the new region is smaller the references of any objects
-     * outside the new region will be released.
-     *
-     * A new type will be created with the new dimension.
-     *
-     * @hide
-     * @param dimX The new size of the allocation.
-     * @param dimY The new size of the allocation.
-     */
-    public void resize(int dimX, int dimY) {
-        if ((mType.getZ() > 0) || mType.hasFaces() || mType.hasMipmaps()) {
-            throw new RSInvalidStateException(
-                "Resize only support for 2D allocations at this time.");
-        }
-        if (mType.getY() == 0) {
-            throw new RSInvalidStateException(
-                "Resize only support for 2D allocations at this time.");
-        }
-        mRS.nAllocationResize2D(getID(mRS), dimX, dimY);
-        mRS.finish();  // Necessary because resize is fifoed and update is async.
-
-        int typeID = mRS.nAllocationGetType(getID(mRS));
-        mType = new Type(typeID, mRS);
-        mType.updateFromNative();
-        updateCacheInfo(mType);
-    }
-
 
 
     // creation
@@ -1135,31 +1370,41 @@ public class Allocation extends BaseObj {
                                               MipmapControl mips,
                                               int usage) {
         rs.validate();
+
+        // WAR undocumented color formats
+        if (b.getConfig() == null) {
+            if ((usage & USAGE_SHARED) != 0) {
+                throw new RSIllegalArgumentException("USAGE_SHARED cannot be used with a Bitmap that has a null config.");
+            }
+            Bitmap newBitmap = Bitmap.createBitmap(b.getWidth(), b.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(newBitmap);
+            c.drawBitmap(b, 0, 0, null);
+            return createFromBitmap(rs, newBitmap, mips, usage);
+        }
+
         Type t = typeFromBitmap(rs, b, mips);
+
+        // enable optimized bitmap path only with no mipmap and script-only usage
+        if (mips == MipmapControl.MIPMAP_NONE &&
+            t.getElement().isCompatible(Element.RGBA_8888(rs)) &&
+            usage == (USAGE_SHARED | USAGE_SCRIPT | USAGE_GRAPHICS_TEXTURE)) {
+            int id = rs.nAllocationCreateBitmapBackedAllocation(t.getID(rs), mips.mID, b, usage);
+            if (id == 0) {
+                throw new RSRuntimeException("Load failed.");
+            }
+
+            // keep a reference to the Bitmap around to prevent GC
+            Allocation alloc = new Allocation(id, rs, t, usage);
+            alloc.setBitmap(b);
+            return alloc;
+        }
+
 
         int id = rs.nAllocationCreateFromBitmap(t.getID(rs), mips.mID, b, usage);
         if (id == 0) {
             throw new RSRuntimeException("Load failed.");
         }
         return new Allocation(id, rs, t, usage);
-    }
-
-    /**
-     *
-     *
-     * @hide
-     *
-     */
-    public SurfaceTexture getSurfaceTexture() {
-        if ((mUsage & USAGE_IO_INPUT) == 0) {
-            throw new RSInvalidStateException("Allocation is not a surface texture.");
-        }
-
-        int id = mRS.nAllocationGetSurfaceTextureID(getID(mRS));
-        SurfaceTexture st = new SurfaceTexture(id);
-        mRS.nAllocationGetSurfaceTextureID2(getID(mRS), st);
-
-        return st;
     }
 
     /**
@@ -1171,7 +1416,17 @@ public class Allocation extends BaseObj {
      *
      */
     public Surface getSurface() {
-        return new Surface(getSurfaceTexture());
+        if ((mUsage & USAGE_IO_INPUT) == 0) {
+            throw new RSInvalidStateException("Allocation is not a surface texture.");
+        }
+        return mRS.nAllocationGetSurface(getID(mRS));
+    }
+
+    /**
+     * @hide
+     */
+    public void setSurfaceTexture(SurfaceTexture st) {
+        setSurface(new Surface(st));
     }
 
     /**
@@ -1189,21 +1444,11 @@ public class Allocation extends BaseObj {
     }
 
     /**
-     * @hide
-     */
-    public void setSurfaceTexture(SurfaceTexture st) {
-        mRS.validate();
-        if ((mUsage & USAGE_IO_OUTPUT) == 0) {
-            throw new RSInvalidStateException("Allocation is not USAGE_IO_OUTPUT.");
-        }
-
-        Surface s = new Surface(st);
-        mRS.nAllocationSetSurface(getID(mRS), s);
-    }
-
-    /**
-     * Creates a non-mipmapped renderscript allocation to use as a
-     * graphics texture
+     * Creates a RenderScript allocation from a bitmap.
+     *
+     * With target API version 18 or greater, this allocation will be
+     * created with USAGE_SHARED. With target API version 17 or lower,
+     * this allocation will be created with USAGE_GRAPHICS_TEXTURE.
      *
      * @param rs Context to which the allocation will belong.
      * @param b bitmap source for the allocation data
@@ -1212,6 +1457,10 @@ public class Allocation extends BaseObj {
      *
      */
     static public Allocation createFromBitmap(RenderScript rs, Bitmap b) {
+        if (rs.getApplicationContext().getApplicationInfo().targetSdkVersion >= 18) {
+            return createFromBitmap(rs, b, MipmapControl.MIPMAP_NONE,
+                                    USAGE_SHARED | USAGE_SCRIPT | USAGE_GRAPHICS_TEXTURE);
+        }
         return createFromBitmap(rs, b, MipmapControl.MIPMAP_NONE,
                                 USAGE_GRAPHICS_TEXTURE);
     }
@@ -1401,6 +1650,9 @@ public class Allocation extends BaseObj {
                                                       int usage) {
 
         rs.validate();
+        if ((usage & (USAGE_SHARED | USAGE_IO_INPUT | USAGE_IO_OUTPUT)) != 0) {
+            throw new RSIllegalArgumentException("Unsupported usage specified.");
+        }
         Bitmap b = BitmapFactory.decodeResource(res, id);
         Allocation alloc = createFromBitmap(rs, b, mips, usage);
         b.recycle();
@@ -1410,6 +1662,10 @@ public class Allocation extends BaseObj {
     /**
      * Creates a non-mipmapped renderscript allocation to use as a
      * graphics texture from the bitmap referenced by resource id
+     *
+     * With target API version 18 or greater, this allocation will be
+     * created with USAGE_SHARED. With target API version 17 or lower,
+     * this allocation will be created with USAGE_GRAPHICS_TEXTURE.
      *
      * @param rs Context to which the allocation will belong.
      * @param res application resources
@@ -1421,6 +1677,11 @@ public class Allocation extends BaseObj {
     static public Allocation createFromBitmapResource(RenderScript rs,
                                                       Resources res,
                                                       int id) {
+        if (rs.getApplicationContext().getApplicationInfo().targetSdkVersion >= 18) {
+            return createFromBitmapResource(rs, res, id,
+                                            MipmapControl.MIPMAP_NONE,
+                                            USAGE_SCRIPT | USAGE_GRAPHICS_TEXTURE);
+        }
         return createFromBitmapResource(rs, res, id,
                                         MipmapControl.MIPMAP_NONE,
                                         USAGE_GRAPHICS_TEXTURE);
@@ -1451,6 +1712,45 @@ public class Allocation extends BaseObj {
             throw new RSRuntimeException("Could not convert string to utf-8.");
         }
     }
+
+    /**
+     * @hide
+     *
+     * Interface to handle notification when new buffers are
+     * available via USAGE_IO_INPUT.  An application will receive
+     * one notification when a buffer is available.  Additional
+     * buffers will not trigger new notifications until a buffer is
+     * processed.
+     */
+    public interface IoInputNotifier {
+        public void onBufferAvailable(Allocation a);
+    }
+
+    /**
+     * @hide
+     *
+     * Set a notification handler for USAGE_IO_INPUT
+     *
+     * @param callback instance of the IoInputNotifier class to be called
+     *                 when buffer arrive.
+     */
+    public void setIoInputNotificationHandler(IoInputNotifier callback) {
+        synchronized(mAllocationMap) {
+            mAllocationMap.put(new Integer(getID(mRS)), this);
+            mBufferNotifier = callback;
+        }
+    }
+
+    static void sendBufferNotification(int id) {
+        synchronized(mAllocationMap) {
+            Allocation a = mAllocationMap.get(new Integer(id));
+
+            if ((a != null) && (a.mBufferNotifier != null)) {
+                a.mBufferNotifier.onBufferAvailable(a);
+            }
+        }
+    }
+
 }
 
 

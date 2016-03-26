@@ -18,9 +18,8 @@ package com.android.server.am;
 
 import android.content.ComponentName;
 import android.os.Binder;
-import android.os.Process;
 import android.os.RemoteException;
-import android.os.UserId;
+import android.os.UserHandle;
 import android.util.Slog;
 import android.util.SparseArray;
 
@@ -31,8 +30,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Keeps track of content providers by authority (name) and class. It separates the mapping by
@@ -44,15 +41,21 @@ public class ProviderMap {
 
     private static final boolean DBG = false;
 
-    private final HashMap<String, ContentProviderRecord> mGlobalByName
+    private final ActivityManagerService mAm;
+
+    private final HashMap<String, ContentProviderRecord> mSingletonByName
             = new HashMap<String, ContentProviderRecord>();
-    private final HashMap<ComponentName, ContentProviderRecord> mGlobalByClass
+    private final HashMap<ComponentName, ContentProviderRecord> mSingletonByClass
             = new HashMap<ComponentName, ContentProviderRecord>();
 
     private final SparseArray<HashMap<String, ContentProviderRecord>> mProvidersByNamePerUser
             = new SparseArray<HashMap<String, ContentProviderRecord>>();
     private final SparseArray<HashMap<ComponentName, ContentProviderRecord>> mProvidersByClassPerUser
             = new SparseArray<HashMap<ComponentName, ContentProviderRecord>>();
+
+    ProviderMap(ActivityManagerService am) {
+        mAm = am;
+    }
 
     ContentProviderRecord getProviderByName(String name) {
         return getProviderByName(name, -1);
@@ -63,7 +66,7 @@ public class ProviderMap {
             Slog.i(TAG, "getProviderByName: " + name + " , callingUid = " + Binder.getCallingUid());
         }
         // Try to find it in the global list
-        ContentProviderRecord record = mGlobalByName.get(name);
+        ContentProviderRecord record = mSingletonByName.get(name);
         if (record != null) {
             return record;
         }
@@ -81,7 +84,7 @@ public class ProviderMap {
             Slog.i(TAG, "getProviderByClass: " + name + ", callingUid = " + Binder.getCallingUid());
         }
         // Try to find it in the global list
-        ContentProviderRecord record = mGlobalByClass.get(name);
+        ContentProviderRecord record = mSingletonByClass.get(name);
         if (record != null) {
             return record;
         }
@@ -95,10 +98,10 @@ public class ProviderMap {
             Slog.i(TAG, "putProviderByName: " + name + " , callingUid = " + Binder.getCallingUid()
                 + ", record uid = " + record.appInfo.uid);
         }
-        if (record.appInfo.uid < Process.FIRST_APPLICATION_UID) {
-            mGlobalByName.put(name, record);
+        if (record.singleton) {
+            mSingletonByName.put(name, record);
         } else {
-            final int userId = UserId.getUserId(record.appInfo.uid);
+            final int userId = UserHandle.getUserId(record.appInfo.uid);
             getProvidersByName(userId).put(name, record);
         }
     }
@@ -108,56 +111,54 @@ public class ProviderMap {
             Slog.i(TAG, "putProviderByClass: " + name + " , callingUid = " + Binder.getCallingUid()
                 + ", record uid = " + record.appInfo.uid);
         }
-        if (record.appInfo.uid < Process.FIRST_APPLICATION_UID) {
-            mGlobalByClass.put(name, record);
+        if (record.singleton) {
+            mSingletonByClass.put(name, record);
         } else {
-            final int userId = UserId.getUserId(record.appInfo.uid);
+            final int userId = UserHandle.getUserId(record.appInfo.uid);
             getProvidersByClass(userId).put(name, record);
         }
     }
 
-    void removeProviderByName(String name, int optionalUserId) {
-        if (mGlobalByName.containsKey(name)) {
+    void removeProviderByName(String name, int userId) {
+        if (mSingletonByName.containsKey(name)) {
             if (DBG)
                 Slog.i(TAG, "Removing from globalByName name=" + name);
-            mGlobalByName.remove(name);
+            mSingletonByName.remove(name);
         } else {
-            // TODO: Verify this works, i.e., the caller happens to be from the correct user
+            if (userId < 0) throw new IllegalArgumentException("Bad user " + userId);
             if (DBG)
                 Slog.i(TAG,
-                        "Removing from providersByName name=" + name + " user="
-                        + (optionalUserId == -1 ? Binder.getOrigCallingUser() : optionalUserId));
-            HashMap<String, ContentProviderRecord> map = getProvidersByName(optionalUserId);
+                        "Removing from providersByName name=" + name + " user=" + userId);
+            HashMap<String, ContentProviderRecord> map = getProvidersByName(userId);
             // map returned by getProvidersByName wouldn't be null
             map.remove(name);
             if (map.size() == 0) {
-                mProvidersByNamePerUser.remove(optionalUserId);
+                mProvidersByNamePerUser.remove(userId);
             }
         }
     }
 
-    void removeProviderByClass(ComponentName name, int optionalUserId) {
-        if (mGlobalByClass.containsKey(name)) {
+    void removeProviderByClass(ComponentName name, int userId) {
+        if (mSingletonByClass.containsKey(name)) {
             if (DBG)
                 Slog.i(TAG, "Removing from globalByClass name=" + name);
-            mGlobalByClass.remove(name);
+            mSingletonByClass.remove(name);
         } else {
+            if (userId < 0) throw new IllegalArgumentException("Bad user " + userId);
             if (DBG)
                 Slog.i(TAG,
-                        "Removing from providersByClass name=" + name + " user="
-                        + (optionalUserId == -1 ? Binder.getOrigCallingUser() : optionalUserId));
-            HashMap<ComponentName, ContentProviderRecord> map = getProvidersByClass(optionalUserId);
+                        "Removing from providersByClass name=" + name + " user=" + userId);
+            HashMap<ComponentName, ContentProviderRecord> map = getProvidersByClass(userId);
             // map returned by getProvidersByClass wouldn't be null
             map.remove(name);
             if (map.size() == 0) {
-                mProvidersByClassPerUser.remove(optionalUserId);
+                mProvidersByClassPerUser.remove(userId);
             }
         }
     }
 
-    private HashMap<String, ContentProviderRecord> getProvidersByName(int optionalUserId) {
-        final int userId = optionalUserId >= 0
-                ? optionalUserId : Binder.getOrigCallingUser();
+    private HashMap<String, ContentProviderRecord> getProvidersByName(int userId) {
+        if (userId < 0) throw new IllegalArgumentException("Bad user " + userId);
         final HashMap<String, ContentProviderRecord> map = mProvidersByNamePerUser.get(userId);
         if (map == null) {
             HashMap<String, ContentProviderRecord> newMap = new HashMap<String, ContentProviderRecord>();
@@ -168,17 +169,65 @@ public class ProviderMap {
         }
     }
 
-    HashMap<ComponentName, ContentProviderRecord> getProvidersByClass(int optionalUserId) {
-        final int userId = optionalUserId >= 0
-                ? optionalUserId : Binder.getOrigCallingUser();
-        final HashMap<ComponentName, ContentProviderRecord> map = mProvidersByClassPerUser.get(userId);
+    HashMap<ComponentName, ContentProviderRecord> getProvidersByClass(int userId) {
+        if (userId < 0) throw new IllegalArgumentException("Bad user " + userId);
+        final HashMap<ComponentName, ContentProviderRecord> map
+                = mProvidersByClassPerUser.get(userId);
         if (map == null) {
-            HashMap<ComponentName, ContentProviderRecord> newMap = new HashMap<ComponentName, ContentProviderRecord>();
+            HashMap<ComponentName, ContentProviderRecord> newMap
+                    = new HashMap<ComponentName, ContentProviderRecord>();
             mProvidersByClassPerUser.put(userId, newMap);
             return newMap;
         } else {
             return map;
         }
+    }
+
+    private boolean collectForceStopProvidersLocked(String name, int appId,
+            boolean doit, boolean evenPersistent, int userId,
+            HashMap<ComponentName, ContentProviderRecord> providers,
+            ArrayList<ContentProviderRecord> result) {
+        boolean didSomething = false;
+        for (ContentProviderRecord provider : providers.values()) {
+            if ((name == null || provider.info.packageName.equals(name))
+                    && (provider.proc == null || evenPersistent || !provider.proc.persistent)) {
+                if (!doit) {
+                    return true;
+                }
+                didSomething = true;
+                result.add(provider);
+            }
+        }
+        return didSomething;
+    }
+
+    boolean collectForceStopProviders(String name, int appId,
+            boolean doit, boolean evenPersistent, int userId,
+            ArrayList<ContentProviderRecord> result) {
+        boolean didSomething = collectForceStopProvidersLocked(name, appId, doit,
+                evenPersistent, userId, mSingletonByClass, result);
+        if (!doit && didSomething) {
+            return true;
+        }
+        if (userId == UserHandle.USER_ALL) {
+            for (int i=0; i<mProvidersByClassPerUser.size(); i++) {
+                if (collectForceStopProvidersLocked(name, appId, doit, evenPersistent,
+                        userId, mProvidersByClassPerUser.valueAt(i), result)) {
+                    if (!doit) {
+                        return true;
+                    }
+                    didSomething = true;
+                }
+            }
+        } else {
+            HashMap<ComponentName, ContentProviderRecord> items
+                    = getProvidersByClass(userId);
+            if (items != null) {
+                didSomething |= collectForceStopProvidersLocked(name, appId, doit,
+                        evenPersistent, userId, items, result);
+            }
+        }
+        return didSomething;
     }
 
     private void dumpProvidersByClassLocked(PrintWriter pw, boolean dumpAll,
@@ -207,37 +256,29 @@ public class ProviderMap {
     }
 
     void dumpProvidersLocked(PrintWriter pw, boolean dumpAll) {
-        boolean needSep = false;
-        if (mGlobalByClass.size() > 0) {
-            if (needSep)
-                pw.println(" ");
-            pw.println("  Published content providers (by class):");
-            dumpProvidersByClassLocked(pw, dumpAll, mGlobalByClass);
+        if (mSingletonByClass.size() > 0) {
+            pw.println("  Published single-user content providers (by class):");
+            dumpProvidersByClassLocked(pw, dumpAll, mSingletonByClass);
         }
 
-        if (mProvidersByClassPerUser.size() > 1) {
+        pw.println("");
+        for (int i = 0; i < mProvidersByClassPerUser.size(); i++) {
+            HashMap<ComponentName, ContentProviderRecord> map = mProvidersByClassPerUser.valueAt(i);
             pw.println("");
-            for (int i = 0; i < mProvidersByClassPerUser.size(); i++) {
-                HashMap<ComponentName, ContentProviderRecord> map = mProvidersByClassPerUser.valueAt(i);
-                pw.println("  User " + mProvidersByClassPerUser.keyAt(i) + ":");
-                dumpProvidersByClassLocked(pw, dumpAll, map);
-                pw.println(" ");
-            }
-        } else if (mProvidersByClassPerUser.size() == 1) {
-            HashMap<ComponentName, ContentProviderRecord> map = mProvidersByClassPerUser.valueAt(0);
+            pw.println("  Published user " + mProvidersByClassPerUser.keyAt(i)
+                    + " content providers (by class):");
             dumpProvidersByClassLocked(pw, dumpAll, map);
         }
-        needSep = true;
 
         if (dumpAll) {
-            pw.println(" ");
-            pw.println("  Authority to provider mappings:");
-            dumpProvidersByNameLocked(pw, mGlobalByName);
+            pw.println("");
+            pw.println("  Single-user authority to provider mappings:");
+            dumpProvidersByNameLocked(pw, mSingletonByName);
 
             for (int i = 0; i < mProvidersByNamePerUser.size(); i++) {
-                if (i > 0) {
-                    pw.println("  User " + mProvidersByNamePerUser.keyAt(i) + ":");
-                }
+                pw.println("");
+                pw.println("  User " + mProvidersByNamePerUser.keyAt(i)
+                        + " authority to provider mappings:");
                 dumpProvidersByNameLocked(pw, mProvidersByNamePerUser.valueAt(i));
             }
         }
@@ -245,30 +286,33 @@ public class ProviderMap {
 
     protected boolean dumpProvider(FileDescriptor fd, PrintWriter pw, String name, String[] args,
             int opti, boolean dumpAll) {
+        ArrayList<ContentProviderRecord> allProviders = new ArrayList<ContentProviderRecord>();
         ArrayList<ContentProviderRecord> providers = new ArrayList<ContentProviderRecord>();
 
-        if ("all".equals(name)) {
-            synchronized (this) {
-                for (ContentProviderRecord r1 : getProvidersByClass(-1).values()) {
-                    providers.add(r1);
-                }
-            }
-        } else {
-            ComponentName componentName = name != null
-                    ? ComponentName.unflattenFromString(name) : null;
-            int objectId = 0;
-            if (componentName == null) {
-                // Not a '/' separated full component name; maybe an object ID?
-                try {
-                    objectId = Integer.parseInt(name, 16);
-                    name = null;
-                    componentName = null;
-                } catch (RuntimeException e) {
-                }
+        synchronized (mAm) {
+            allProviders.addAll(mSingletonByClass.values());
+            for (int i=0; i<mProvidersByClassPerUser.size(); i++) {
+                allProviders.addAll(mProvidersByClassPerUser.valueAt(i).values());
             }
 
-            synchronized (this) {
-                for (ContentProviderRecord r1 : getProvidersByClass(-1).values()) {
+            if ("all".equals(name)) {
+                providers.addAll(allProviders);
+            } else {
+                ComponentName componentName = name != null
+                        ? ComponentName.unflattenFromString(name) : null;
+                int objectId = 0;
+                if (componentName == null) {
+                    // Not a '/' separated full component name; maybe an object ID?
+                    try {
+                        objectId = Integer.parseInt(name, 16);
+                        name = null;
+                        componentName = null;
+                    } catch (RuntimeException e) {
+                    }
+                }
+
+                for (int i=0; i<allProviders.size(); i++) {
+                    ContentProviderRecord r1 = allProviders.get(i);
                     if (componentName != null) {
                         if (r1.name.equals(componentName)) {
                             providers.add(r1);
@@ -306,7 +350,7 @@ public class ProviderMap {
     private void dumpProvider(String prefix, FileDescriptor fd, PrintWriter pw,
             final ContentProviderRecord r, String[] args, boolean dumpAll) {
         String innerPrefix = prefix + "  ";
-        synchronized (this) {
+        synchronized (mAm) {
             pw.print(prefix); pw.print("PROVIDER ");
                     pw.print(r);
                     pw.print(" pid=");
@@ -338,6 +382,4 @@ public class ProviderMap {
             }
         }
     }
-
-
 }

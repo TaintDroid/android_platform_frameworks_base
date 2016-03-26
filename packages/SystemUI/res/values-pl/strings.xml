@@ -58,6 +58,9 @@
     <string name="label_view" msgid="6304565553218192990">"Wyświetl"</string>
     <string name="always_use_device" msgid="1450287437017315906">"Używaj domyślnie dla tego urządzenia USB"</string>
     <string name="always_use_accessory" msgid="1210954576979621596">"Używaj domyślnie dla tego akcesorium USB"</string>
+    <string name="usb_debugging_title" msgid="4513918393387141949">"Zezwalać na debugowanie USB?"</string>
+    <string name="usb_debugging_message" msgid="2220143855912376496">"Odcisk cyfrowy klucza RSA komputera to:"\n"<xliff:g id="FINGERPRINT">%1$s</xliff:g>"</string>
+    <string name="usb_debugging_always" msgid="303335496705863070">"Zawsze zezwalaj z tego komputera"</string>
     <string name="compat_mode_on" msgid="6623839244840638213">"Powiększ, aby wypełnić ekran"</string>
     <string name="compat_mode_off" msgid="4434467572461327898">"Rozciągnij, aby wypełnić ekran"</string>
     <string name="compat_mode_help_header" msgid="7969493989397529910">"Powiększenie w trybie zgodności"</string>
@@ -97,21 +100,36 @@
     <string name="accessibility_data_two_bars" msgid="6166018492360432091">"Dane: dwa paski."</string>
     <string name="accessibility_data_three_bars" msgid="9167670452395038520">"Dane: trzy paski."</string>
     <string name="accessibility_data_signal_full" msgid="2708384608124519369">"Dane: pełna moc sygnału."</string>
-    <string name="accessibility_no_wifi" msgid="7455607460517331976">"Brak sieci Wi-Fi."</string>
-    <string name="accessibility_wifi_one_bar" msgid="6854947280074467207">"Wi-Fi jeden pasek."</string>
-    <string name="accessibility_wifi_two_bars" msgid="3344340012058984348">"Wi-Fi dwa paski."</string>
-    <string name="accessibility_wifi_three_bars" msgid="928322805193265041">"Wi-Fi trzy paski."</string>
-    <string name="accessibility_wifi_signal_full" msgid="1275764416228473932">"Sieć Wi-Fi: pełna moc sygnału."</string>
+    <string name="accessibility_wifi_off" msgid="3177380296697933627">"Wi-Fi wyłączone."</string>
+    <string name="accessibility_no_wifi" msgid="1425476551827924474">"Wi-Fi rozłączone."</string>
+    <string name="accessibility_wifi_one_bar" msgid="7735893178010724377">"Wi-Fi: jeden pasek."</string>
+    <string name="accessibility_wifi_two_bars" msgid="4994274250497262434">"Wi-Fi: dwa paski."</string>
+    <string name="accessibility_wifi_three_bars" msgid="3495755044276588384">"Wi-Fi: trzy paski."</string>
+    <string name="accessibility_wifi_signal_full" msgid="6853561303586480376">"Wi-Fi: pełna moc sygnału."</string>
     <string name="accessibility_no_wimax" msgid="4329180129727630368">"WiMAX: brak"</string>
     <string name="accessibility_wimax_one_bar" msgid="4170994299011863648">"WiMAX: jeden pasek"</string>
     <string name="accessibility_wimax_two_bars" msgid="9176236858336502288">"WiMAX: dwa paski"</string>
     <string name="accessibility_wimax_three_bars" msgid="6116551636752103927">"WiMAX: trzy paski"</string>
     <string name="accessibility_wimax_signal_full" msgid="2768089986795579558">"WiMAX: pełna moc sygnału"</string>
+    <string name="accessibility_no_signal" msgid="7064645320782585167">"Brak sygnału."</string>
+    <string name="accessibility_not_connected" msgid="6395326276213402883">"Nie połączono."</string>
+    <string name="accessibility_zero_bars" msgid="3806060224467027887">"Zero pasków."</string>
+    <string name="accessibility_one_bar" msgid="1685730113192081895">"Jeden pasek."</string>
+    <string name="accessibility_two_bars" msgid="6437363648385206679">"Dwa paski."</string>
+    <string name="accessibility_three_bars" msgid="2648241415119396648">"Trzy paski."</string>
+    <string name="accessibility_signal_full" msgid="9122922886519676839">"Pełna moc sygnału."</string>
+    <string name="accessibility_desc_on" msgid="2385254693624345265">"Wł."</string>
+    <string name="accessibility_desc_off" msgid="6475508157786853157">"Wył."</string>
+    <string name="accessibility_desc_connected" msgid="8366256693719499665">"Połączono."</string>
     <string name="accessibility_data_connection_gprs" msgid="1606477224486747751">"GPRS"</string>
+    <string name="accessibility_data_connection_1x" msgid="994133468120244018">"1 X"</string>
+    <string name="accessibility_data_connection_hspa" msgid="2032328855462645198">"HSPA"</string>
     <string name="accessibility_data_connection_3g" msgid="8628562305003568260">"3G"</string>
     <string name="accessibility_data_connection_3.5g" msgid="8664845609981692001">"3.5G"</string>
     <string name="accessibility_data_connection_4g" msgid="7741000750630089612">"4G"</string>
+    <string name="accessibility_data_connection_lte" msgid="5413468808637540658">"LTE"</string>
     <string name="accessibility_data_connection_cdma" msgid="6132648193978823023">"CDMA"</string>
+    <string name="accessibility_data_connection_roaming" msgid="5977362333466556094">"Roaming"</string>
     <string name="accessibility_data_connection_edge" msgid="4477457051631979278">"Edge"</string>
     <string name="accessibility_data_connection_wifi" msgid="2324496756590645221">"Wi-Fi"</string>
     <string name="accessibility_no_sim" msgid="8274017118472455155">"Brak karty SIM."</string>
@@ -127,22 +145,63 @@
     <string name="accessibility_ringer_vibrate" msgid="666585363364155055">"Dzwonek z wibracjami."</string>
     <string name="accessibility_ringer_silent" msgid="9061243307939135383">"Dzwonek wyciszony."</string>
     <string name="accessibility_recents_item_dismissed" msgid="6803574935084867070">"<xliff:g id="APP">%s</xliff:g>: zamknięto."</string>
+    <string name="accessibility_notification_dismissed" msgid="854211387186306927">"Zamknięto powiadomienie."</string>
+    <string name="accessibility_desc_notification_shade" msgid="4690274844447504208">"Obszar powiadomień."</string>
+    <string name="accessibility_desc_quick_settings" msgid="6186378411582437046">"Szybkie ustawienia."</string>
+    <string name="accessibility_desc_recent_apps" msgid="9014032916410590027">"Ostatnii używane aplikacje."</string>
+    <string name="accessibility_quick_settings_user" msgid="1104846699869476855">"Użytkownik: <xliff:g id="USER">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_wifi" msgid="6099781031669728709">"<xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="NETWORK">%2$s</xliff:g>"</string>
+    <string name="accessibility_quick_settings_mobile" msgid="4876806564086241341">"Sieć komórkowa: <xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="TYPE">%2$s</xliff:g>. <xliff:g id="NETWORK">%3$s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_battery" msgid="1480931583381408972">"Bateria: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_airplane" msgid="4196876722090224753">"Tryb samolotowy: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_bluetooth" msgid="5749054971341882340">"Bluetooth: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_alarm" msgid="3959908972897295660">"Alarm ustawiony na <xliff:g id="TIME">%s</xliff:g>."</string>
     <string name="data_usage_disabled_dialog_3g_title" msgid="5257833881698644687">"Wyłączono transmisję danych 2G/3G"</string>
     <string name="data_usage_disabled_dialog_4g_title" msgid="4789143363492682629">"Wyłączono transmisję danych 4G"</string>
-    <string name="data_usage_disabled_dialog_mobile_title" msgid="1046047248844821202">"Wyłączono komórkową transmisję danych"</string>
+    <string name="data_usage_disabled_dialog_mobile_title" msgid="1046047248844821202">"Transmisja danych została wyłączona"</string>
     <string name="data_usage_disabled_dialog_title" msgid="2086815304858964954">"Wyłączono transmisję danych"</string>
-    <string name="data_usage_disabled_dialog" msgid="3853117269051806280">"Osiągnięto określony limit wykorzystania transmisji danych."\n\n"Jeśli ponownie włączysz przesyłanie danych, operator może naliczyć opłaty."</string>
+    <string name="data_usage_disabled_dialog" msgid="3853117269051806280">"Ustawiony limit transmisji danych został osiągnięty."\n\n"Jeśli ponownie włączysz przesyłanie danych, operator może naliczyć dodatkowe opłaty."</string>
     <string name="data_usage_disabled_dialog_enable" msgid="7729772039208664606">"Włącz transmisję danych"</string>
     <string name="status_bar_settings_signal_meter_disconnected" msgid="1940231521274147771">"Brak internetu"</string>
     <string name="status_bar_settings_signal_meter_wifi_nossid" msgid="6557486452774597820">"Wi-Fi: połączono"</string>
     <string name="gps_notification_searching_text" msgid="8574247005642736060">"Wyszukiwanie sygnału GPS"</string>
-    <string name="gps_notification_found_text" msgid="4619274244146446464">"Lokalizacja ustawiona według GPS"</string>
+    <string name="gps_notification_found_text" msgid="4619274244146446464">"Lokalizacja z GPSa"</string>
     <string name="accessibility_clear_all" msgid="5235938559247164925">"Usuń wszystkie powiadomienia."</string>
-    <string name="dreams_dock_launcher" msgid="3541196417659166245">"Włącz wygaszacz ekranu."</string>
     <string name="status_bar_notification_inspect_item_title" msgid="1163547729015390250">"O aplikacji"</string>
+    <string name="close_universe" msgid="3736513750241754348">"Zamknij"</string>
     <string name="notifications_off_title" msgid="8936620513608443224">"Powiadomienia wyłączone"</string>
     <string name="notifications_off_text" msgid="2529001315769385273">"Kliknij tutaj, by przywrócić powiadomienia."</string>
     <string name="accessibility_rotation_lock_off" msgid="4062780228931590069">"Ekran zostanie obrócony automatycznie."</string>
     <string name="accessibility_rotation_lock_on_landscape" msgid="6731197337665366273">"Ekran jest zablokowany w orientacji poziomej."</string>
     <string name="accessibility_rotation_lock_on_portrait" msgid="5809367521644012115">"Ekran jest zablokowany w orientacji pionowej."</string>
+    <string name="jelly_bean_dream_name" msgid="5992026543636816792">"BeanFlinger"</string>
+    <string name="start_dreams" msgid="7219575858348719790">"Wygaszacz ekranu"</string>
+    <string name="ethernet_label" msgid="7967563676324087464">"Ethernet"</string>
+    <string name="quick_settings_airplane_mode_label" msgid="5510520633448831350">"Tryb samolotowy"</string>
+    <string name="quick_settings_battery_charging_label" msgid="490074774465309209">"Ładowanie (<xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>)"</string>
+    <string name="quick_settings_battery_charged_label" msgid="8865413079414246081">"Naładowana"</string>
+    <string name="quick_settings_bluetooth_label" msgid="6304190285170721401">"Bluetooth"</string>
+    <string name="quick_settings_bluetooth_multiple_devices_label" msgid="3912245565613684735">"Bluetooth (urządzenia: <xliff:g id="NUMBER">%d</xliff:g>)"</string>
+    <string name="quick_settings_bluetooth_off_label" msgid="8159652146149219937">"Bluetooth wył."</string>
+    <string name="quick_settings_brightness_label" msgid="6968372297018755815">"Jasność"</string>
+    <string name="quick_settings_rotation_unlocked_label" msgid="336054930362580584">"Autoobracanie"</string>
+    <string name="quick_settings_rotation_locked_label" msgid="8058646447242565486">"Obracanie jest zablokowane"</string>
+    <string name="quick_settings_ime_label" msgid="7073463064369468429">"Metoda wprowadzania"</string>
+    <string name="quick_settings_location_label" msgid="3292451598267467545">"Lokalizacja w użyciu"</string>
+    <string name="quick_settings_media_device_label" msgid="1302906836372603762">"Urządzenie multimedialne"</string>
+    <string name="quick_settings_rssi_label" msgid="7725671335550695589">"RSSI"</string>
+    <string name="quick_settings_rssi_emergency_only" msgid="2713774041672886750">"Tylko połączenia alarmowe"</string>
+    <string name="quick_settings_settings_label" msgid="5326556592578065401">"Ustawienia"</string>
+    <string name="quick_settings_time_label" msgid="4635969182239736408">"Godzina"</string>
+    <string name="quick_settings_user_label" msgid="5238995632130897840">"Ja"</string>
+    <string name="quick_settings_wifi_label" msgid="9135344704899546041">"Wi-Fi"</string>
+    <string name="quick_settings_wifi_not_connected" msgid="7171904845345573431">"Brak połączenia"</string>
+    <string name="quick_settings_wifi_no_network" msgid="2221993077220856376">"Brak sieci"</string>
+    <string name="quick_settings_wifi_off_label" msgid="7558778100843885864">"Wyłącz Wi-Fi"</string>
+    <string name="quick_settings_wifi_display_label" msgid="6893592964463624333">"Wyświetlacz Wi-Fi"</string>
+    <string name="quick_settings_wifi_display_no_connection_label" msgid="2355298740765736918">"Wyświetlacz bezprzewodowy"</string>
+    <string name="quick_settings_brightness_dialog_title" msgid="8599674057673605368">"Jasność"</string>
+    <string name="quick_settings_brightness_dialog_auto_brightness_label" msgid="5064982743784071218">"AUTOMATYCZNA"</string>
+    <string name="status_bar_help_title" msgid="1199237744086469217">"Tutaj pokazują się powiadomienia"</string>
+    <string name="status_bar_help_text" msgid="7874607155052076323">"Możesz je otworzyć w dowolnej chwili, przesuwając w dół."\n"Przesuń jeszcze raz w dół, by otworzyć ustawienia systemowe."</string>
 </resources>

@@ -90,7 +90,7 @@ public class AlertDialog extends Dialog implements DialogInterface {
 
     /**
      * Special theme constant for {@link #AlertDialog(Context, int)}: use
-     * the device's default alert theme with a dark background.
+     * the device's default alert theme with a light background.
      */
     public static final int THEME_DEVICE_DEFAULT_LIGHT = 5;
     
@@ -110,8 +110,9 @@ public class AlertDialog extends Dialog implements DialogInterface {
         this(context, theme, true);
     }
 
-    AlertDialog(Context context, int theme, boolean createContextWrapper) {
-        super(context, resolveDialogTheme(context, theme), createContextWrapper);
+    AlertDialog(Context context, int theme, boolean createThemeContextWrapper) {
+        super(context, resolveDialogTheme(context, theme), createThemeContextWrapper);
+
         mWindow.alwaysReadCloseOnTouchAttr();
         mAlert = new AlertController(getContext(), this, getWindow());
     }
@@ -566,7 +567,14 @@ public class AlertDialog extends Dialog implements DialogInterface {
         
         /**
          * Sets the callback that will be called if the dialog is canceled.
+         *
+         * <p>Even in a cancelable dialog, the dialog may be dismissed for reasons other than
+         * being canceled or one of the supplied choices being selected.
+         * If you are interested in listening for all cases where the dialog is dismissed
+         * and not just when it is canceled, see
+         * {@link #setOnDismissListener(android.content.DialogInterface.OnDismissListener) setOnDismissListener}.</p>
          * @see #setCancelable(boolean)
+         * @see #setOnDismissListener(android.content.DialogInterface.OnDismissListener)
          *
          * @return This Builder object to allow for chaining of calls to set methods
          */
@@ -575,6 +583,16 @@ public class AlertDialog extends Dialog implements DialogInterface {
             return this;
         }
         
+        /**
+         * Sets the callback that will be called when the dialog is dismissed for any reason.
+         *
+         * @return This Builder object to allow for chaining of calls to set methods
+         */
+        public Builder setOnDismissListener(OnDismissListener onDismissListener) {
+            P.mOnDismissListener = onDismissListener;
+            return this;
+        }
+
         /**
          * Sets the callback that will be called if a key is dispatched to the dialog.
          *
@@ -917,6 +935,7 @@ public class AlertDialog extends Dialog implements DialogInterface {
                 dialog.setCanceledOnTouchOutside(true);
             }
             dialog.setOnCancelListener(P.mOnCancelListener);
+            dialog.setOnDismissListener(P.mOnDismissListener);
             if (P.mOnKeyListener != null) {
                 dialog.setOnKeyListener(P.mOnKeyListener);
             }

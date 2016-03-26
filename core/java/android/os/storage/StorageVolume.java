@@ -19,53 +19,69 @@ package android.os.storage;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.UserHandle;
+
+import java.io.File;
 
 /**
- * A class representing a storage volume
+ * Description of a storage volume and its capabilities, including the
+ * filesystem path where it may be mounted.
+ *
  * @hide
  */
 public class StorageVolume implements Parcelable {
 
-    //private static final String TAG = "StorageVolume";
+    // TODO: switch to more durable token
+    private int mStorageId;
 
-    private final String mPath;
+    private final File mPath;
     private final int mDescriptionId;
+    private final boolean mPrimary;
     private final boolean mRemovable;
     private final boolean mEmulated;
     private final int mMtpReserveSpace;
     private final boolean mAllowMassStorage;
-    private int mStorageId;
-    // maximum file size for the storage, or zero for no limit
+    /** Maximum file size for the storage, or zero for no limit */
     private final long mMaxFileSize;
+    /** When set, indicates exclusive ownership of this volume */
+    private final UserHandle mOwner;
 
     // StorageVolume extra for ACTION_MEDIA_REMOVED, ACTION_MEDIA_UNMOUNTED, ACTION_MEDIA_CHECKING,
     // ACTION_MEDIA_NOFS, ACTION_MEDIA_MOUNTED, ACTION_MEDIA_SHARED, ACTION_MEDIA_UNSHARED,
     // ACTION_MEDIA_BAD_REMOVAL, ACTION_MEDIA_UNMOUNTABLE and ACTION_MEDIA_EJECT broadcasts.
     public static final String EXTRA_STORAGE_VOLUME = "storage_volume";
 
-    public StorageVolume(String path, int descriptionId, boolean removable,
-            boolean emulated, int mtpReserveSpace, boolean allowMassStorage, long maxFileSize) {
+    public StorageVolume(File path, int descriptionId, boolean primary, boolean removable,
+            boolean emulated, int mtpReserveSpace, boolean allowMassStorage, long maxFileSize,
+            UserHandle owner) {
         mPath = path;
         mDescriptionId = descriptionId;
+        mPrimary = primary;
         mRemovable = removable;
         mEmulated = emulated;
         mMtpReserveSpace = mtpReserveSpace;
         mAllowMassStorage = allowMassStorage;
         mMaxFileSize = maxFileSize;
+        mOwner = owner;
     }
 
-    // for parcelling only
-    private StorageVolume(String path, int descriptionId, boolean removable,
-            boolean emulated, int mtpReserveSpace, int storageId,
-            boolean allowMassStorage, long maxFileSize) {
-        mPath = path;
-        mDescriptionId = descriptionId;
-        mRemovable = removable;
-        mEmulated = emulated;
-        mMtpReserveSpace = mtpReserveSpace;
-        mAllowMassStorage = allowMassStorage;
-        mStorageId = storageId;
-        mMaxFileSize = maxFileSize;
+    private StorageVolume(Parcel in) {
+        mStorageId = in.readInt();
+        mPath = new File(in.readString());
+        mDescriptionId = in.readInt();
+        mPrimary = in.readInt() != 0;
+        mRemovable = in.readInt() != 0;
+        mEmulated = in.readInt() != 0;
+        mMtpReserveSpace = in.readInt();
+        mAllowMassStorage = in.readInt() != 0;
+        mMaxFileSize = in.readLong();
+        mOwner = in.readParcelable(null);
+    }
+
+    public static StorageVolume fromTemplate(StorageVolume template, File path, UserHandle owner) {
+        return new StorageVolume(path, template.mDescriptionId, template.mPrimary,
+                template.mRemovable, template.mEmulated, template.mMtpReserveSpace,
+                template.mAllowMassStorage, template.mMaxFileSize, owner);
     }
 
     /**
@@ -74,6 +90,10 @@ public class StorageVolume implements Parcelable {
      * @return the mount path
      */
     public String getPath() {
+        return mPath.toString();
+    }
+
+    public File getPathFile() {
         return mPath;
     }
 
@@ -88,6 +108,10 @@ public class StorageVolume implements Parcelable {
 
     public int getDescriptionId() {
         return mDescriptionId;
+    }
+
+    public boolean isPrimary() {
+        return mPrimary;
     }
 
     /**
@@ -161,6 +185,10 @@ public class StorageVolume implements Parcelable {
         return mMaxFileSize;
     }
 
+    public UserHandle getOwner() {
+        return mOwner;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof StorageVolume && mPath != null) {
@@ -177,45 +205,49 @@ public class StorageVolume implements Parcelable {
 
     @Override
     public String toString() {
-        return "StorageVolume [mAllowMassStorage=" + mAllowMassStorage + ", mDescriptionId="
-                + mDescriptionId + ", mEmulated=" + mEmulated + ", mMaxFileSize=" + mMaxFileSize
-                + ", mMtpReserveSpace=" + mMtpReserveSpace + ", mPath=" + mPath + ", mRemovable="
-                + mRemovable + ", mStorageId=" + mStorageId + "]";
+        final StringBuilder builder = new StringBuilder("StorageVolume [");
+        builder.append("mStorageId=").append(mStorageId);
+        builder.append(" mPath=").append(mPath);
+        builder.append(" mDescriptionId=").append(mDescriptionId);
+        builder.append(" mPrimary=").append(mPrimary);
+        builder.append(" mRemovable=").append(mRemovable);
+        builder.append(" mEmulated=").append(mEmulated);
+        builder.append(" mMtpReserveSpace=").append(mMtpReserveSpace);
+        builder.append(" mAllowMassStorage=").append(mAllowMassStorage);
+        builder.append(" mMaxFileSize=").append(mMaxFileSize);
+        builder.append(" mOwner=").append(mOwner);
+        builder.append("]");
+        return builder.toString();
     }
 
-    public static final Parcelable.Creator<StorageVolume> CREATOR =
-        new Parcelable.Creator<StorageVolume>() {
+    public static final Creator<StorageVolume> CREATOR = new Creator<StorageVolume>() {
+        @Override
         public StorageVolume createFromParcel(Parcel in) {
-            String path = in.readString();
-            int descriptionId = in.readInt();
-            int removable = in.readInt();
-            int emulated = in.readInt();
-            int storageId = in.readInt();
-            int mtpReserveSpace = in.readInt();
-            int allowMassStorage = in.readInt();
-            long maxFileSize = in.readLong();
-            return new StorageVolume(path, descriptionId,
-                    removable == 1, emulated == 1, mtpReserveSpace,
-                    storageId, allowMassStorage == 1, maxFileSize);
+            return new StorageVolume(in);
         }
 
+        @Override
         public StorageVolume[] newArray(int size) {
             return new StorageVolume[size];
         }
     };
 
+    @Override
     public int describeContents() {
         return 0;
     }
 
+    @Override
     public void writeToParcel(Parcel parcel, int flags) {
-        parcel.writeString(mPath);
+        parcel.writeInt(mStorageId);
+        parcel.writeString(mPath.toString());
         parcel.writeInt(mDescriptionId);
+        parcel.writeInt(mPrimary ? 1 : 0);
         parcel.writeInt(mRemovable ? 1 : 0);
         parcel.writeInt(mEmulated ? 1 : 0);
-        parcel.writeInt(mStorageId);
         parcel.writeInt(mMtpReserveSpace);
         parcel.writeInt(mAllowMassStorage ? 1 : 0);
         parcel.writeLong(mMaxFileSize);
+        parcel.writeParcelable(mOwner, flags);
     }
 }

@@ -28,6 +28,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
@@ -37,6 +38,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.UserHandle;
+import android.view.CompatibilityInfoHolder;
+import android.view.Display;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -99,6 +103,12 @@ public class MockContext extends Context {
 
     @Override
     public String getPackageName() {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public String getBasePackageName() {
         throw new UnsupportedOperationException();
     }
 
@@ -284,14 +294,14 @@ public class MockContext extends Context {
         throw new UnsupportedOperationException();
     }
 
-    /** @hide */
     @Override
-    public void sendBroadcast(Intent intent, int userId) {
+    public void sendBroadcast(Intent intent, String receiverPermission) {
         throw new UnsupportedOperationException();
     }
 
+    /** @hide */
     @Override
-    public void sendBroadcast(Intent intent, String receiverPermission) {
+    public void sendBroadcast(Intent intent, String receiverPermission, int appOp) {
         throw new UnsupportedOperationException();
     }
 
@@ -305,6 +315,32 @@ public class MockContext extends Context {
     public void sendOrderedBroadcast(Intent intent, String receiverPermission,
             BroadcastReceiver resultReceiver, Handler scheduler, int initialCode, String initialData,
            Bundle initialExtras) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public void sendOrderedBroadcast(Intent intent, String receiverPermission, int appOp,
+            BroadcastReceiver resultReceiver, Handler scheduler, int initialCode, String initialData,
+           Bundle initialExtras) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendBroadcastAsUser(Intent intent, UserHandle user) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendOrderedBroadcastAsUser(Intent intent, UserHandle user,
+            String receiverPermission, BroadcastReceiver resultReceiver, Handler scheduler,
+            int initialCode, String initialData, Bundle initialExtras) {
         throw new UnsupportedOperationException();
     }
 
@@ -326,6 +362,24 @@ public class MockContext extends Context {
     }
 
     @Override
+    public void sendStickyBroadcastAsUser(Intent intent, UserHandle user) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sendStickyOrderedBroadcastAsUser(Intent intent,
+            UserHandle user, BroadcastReceiver resultReceiver,
+            Handler scheduler, int initialCode, String initialData,
+            Bundle initialExtras) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeStickyBroadcastAsUser(Intent intent, UserHandle user) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter) {
         throw new UnsupportedOperationException();
     }
@@ -333,6 +387,13 @@ public class MockContext extends Context {
     @Override
     public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter,
             String broadcastPermission, Handler scheduler) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public Intent registerReceiverAsUser(BroadcastReceiver receiver, UserHandle user,
+            IntentFilter filter, String broadcastPermission, Handler scheduler) {
         throw new UnsupportedOperationException();
     }
 
@@ -351,6 +412,18 @@ public class MockContext extends Context {
         throw new UnsupportedOperationException();
     }
 
+    /** @hide */
+    @Override
+    public ComponentName startServiceAsUser(Intent service, UserHandle user) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @hide */
+    @Override
+    public boolean stopServiceAsUser(Intent service, UserHandle user) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public boolean bindService(Intent service, ServiceConnection conn, int flags) {
         throw new UnsupportedOperationException();
@@ -358,7 +431,8 @@ public class MockContext extends Context {
 
     /** @hide */
     @Override
-    public boolean bindService(Intent service, ServiceConnection conn, int flags, int userId) {
+    public boolean bindServiceAsUser(Intent service, ServiceConnection conn, int flags,
+            UserHandle user) {
         throw new UnsupportedOperationException();
     }
 
@@ -470,8 +544,37 @@ public class MockContext extends Context {
         throw new UnsupportedOperationException();
     }
 
+    /** {@hide} */
+    @Override
+    public Context createPackageContextAsUser(String packageName, int flags, UserHandle user)
+            throws PackageManager.NameNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    /** {@hide} */
+    @Override
+    public int getUserId() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Context createConfigurationContext(Configuration overrideConfiguration) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Context createDisplayContext(Display display) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public boolean isRestricted() {
         throw new UnsupportedOperationException();        
+    }
+
+    /** @hide */
+    @Override
+    public CompatibilityInfoHolder getCompatibilityInfo(int displayId) {
+        throw new UnsupportedOperationException();
     }
 }

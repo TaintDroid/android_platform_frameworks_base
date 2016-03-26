@@ -79,7 +79,7 @@ public class ManageDialog extends AlertActivity implements
             mDataReceived = (TextView) view.findViewById(R.id.data_received);
             mDataRowsHidden = true;
 
-            if (mConfig.user.equals(VpnConfig.LEGACY_VPN)) {
+            if (mConfig.legacy) {
                 mAlertParams.mIconId = android.R.drawable.ic_dialog_info;
                 mAlertParams.mTitle = getText(R.string.legacy_title);
             } else {
@@ -123,7 +123,11 @@ public class ManageDialog extends AlertActivity implements
             if (which == DialogInterface.BUTTON_POSITIVE) {
                 mConfig.configureIntent.send();
             } else if (which == DialogInterface.BUTTON_NEUTRAL) {
-                mService.prepareVpn(mConfig.user, VpnConfig.LEGACY_VPN);
+                if (mConfig.legacy) {
+                    mService.prepareVpn(VpnConfig.LEGACY_VPN, VpnConfig.LEGACY_VPN);
+                } else {
+                    mService.prepareVpn(mConfig.user, VpnConfig.LEGACY_VPN);
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "onClick", e);

@@ -115,4 +115,10 @@ public class BatteryManager {
     public static final int BATTERY_PLUGGED_AC = 1;
     /** Power source is a USB port. */
     public static final int BATTERY_PLUGGED_USB = 2;
+    /** Power source is wireless. */
+    public static final int BATTERY_PLUGGED_WIRELESS = 4;
+
+    /** @hide */
+    public static final int BATTERY_PLUGGED_ANY =
+            BATTERY_PLUGGED_AC | BATTERY_PLUGGED_USB | BATTERY_PLUGGED_WIRELESS;
 }

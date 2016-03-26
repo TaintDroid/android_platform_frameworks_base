@@ -5,7 +5,7 @@ page.title=Linking to Your Products
 <div class="sidebox">
 <a href="badges.html">
   <img alt="Get it on Google Play"
-       src="http://www.android.com/images/brand/get_it_on_play_logo_small.png" />
+       src="{@docRoot}images/brand/en_app_rgb_wo_45.png" />
 </a>
 <p>For a link that includes the Google Play brand icon, check out the <a href="badges.html">Badges</a> page. </p>
 </div>
@@ -51,7 +51,7 @@ file</a>. The package name is also visible in the Developer Console. </p>
 
 <p>Here's an example:</p>
 
-<p style="margin-left:1em;"><code><a href="http://play.google.com/store/apps/details?id=com.google.android.apps">http://play.google.com/store/apps/details?id=com.google.android.apps</a></code></p>
+<p style="margin-left:1em;"><code><a href="http://play.google.com/store/apps/details?id=com.google.android.apps.maps">http://play.google.com/store/apps/details?id=com.google.android.apps.maps</a></code></p>
 
 <p>For details on how to send the link in an Android app, see <a href="#android-app">Linking from an Android App</a>.</p>
 

@@ -35,7 +35,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -345,10 +344,10 @@ public final class ContactsContract {
      * directory provider URIs by themselves. This level of indirection allows
      * Contacts Provider to implement additional system-level features and
      * optimizations. Access to Contacts Provider is protected by the
-     * READ_CONTACTS permission, but access to the directory provider is not.
-     * Therefore directory providers must reject requests coming from clients
-     * other than the Contacts Provider itself. An easy way to prevent such
-     * unauthorized access is to check the name of the calling package:
+     * READ_CONTACTS permission, but access to the directory provider is protected by
+     * BIND_DIRECTORY_SEARCH. This permission was introduced at the API level 17, for previous
+     * platform versions the provider should perform the following check to make sure the call
+     * is coming from the ContactsProvider:
      * <pre>
      * private boolean isCallerAllowed() {
      *   PackageManager pm = getContext().getPackageManager();
@@ -938,6 +937,15 @@ public final class ContactsContract {
          * its row id changed as a result of a sync or aggregation.
          */
         public static final String LOOKUP_KEY = "lookup";
+
+        /**
+         * Timestamp (milliseconds since epoch) of when this contact was last updated.  This
+         * includes updates to all data associated with this contact including raw contacts.  Any
+         * modification (including deletes and inserts) of underlying contact data are also
+         * reflected in this timestamp.
+         */
+        public static final String CONTACT_LAST_UPDATED_TIMESTAMP =
+                "contact_last_updated_timestamp";
     }
 
     /**
@@ -1358,7 +1366,7 @@ public final class ContactsContract {
      * status definitions. Automatically computed as the highest presence of all
      * constituent raw contacts. The provider may choose not to store this value
      * in persistent storage. The expectation is that presence status will be
-     * updated on a regular basic.</td>
+     * updated on a regular basis.</td>
      * </tr>
      * <tr>
      * <td>String</td>
@@ -2112,6 +2120,56 @@ public final class ContactsContract {
         return id >= Profile.MIN_ID;
     }
 
+    protected interface DeletedContactsColumns {
+
+        /**
+         * A reference to the {@link ContactsContract.Contacts#_ID} that was deleted.
+         * <P>Type: INTEGER</P>
+         */
+        public static final String CONTACT_ID = "contact_id";
+
+        /**
+         * Time (milliseconds since epoch) that the contact was deleted.
+         */
+        public static final String CONTACT_DELETED_TIMESTAMP = "contact_deleted_timestamp";
+    }
+
+    /**
+     * Constants for the deleted contact table.  This table holds a log of deleted contacts.
+     * <p>
+     * Log older than {@link #DAYS_KEPT_MILLISECONDS} may be deleted.
+     */
+    public static final class DeletedContacts implements DeletedContactsColumns {
+
+        /**
+         * This utility class cannot be instantiated
+         */
+        private DeletedContacts() {
+        }
+
+        /**
+         * The content:// style URI for this table, which requests a directory of raw contact rows
+         * matching the selection criteria.
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI,
+                "deleted_contacts");
+
+        /**
+         * Number of days that the delete log will be kept.  After this time, delete records may be
+         * deleted.
+         *
+         * @hide
+         */
+        private static final int DAYS_KEPT = 30;
+
+        /**
+         * Milliseconds that the delete log will be kept.  After this time, delete records may be
+         * deleted.
+         */
+        public static final long DAYS_KEPT_MILLISECONDS = 1000L * 60L * 60L * 24L * (long)DAYS_KEPT;
+    }
+
+
     protected interface RawContactsColumns {
         /**
          * A reference to the {@link ContactsContract.Contacts#_ID} that this
@@ -2325,7 +2383,7 @@ public final class ContactsContract {
      * parameters.  The latter approach is preferable, especially when you can reuse the
      * URI:
      * <pre>
-     * Uri rawContactUri = RawContacts.URI.buildUpon()
+     * Uri rawContactUri = RawContacts.CONTENT_URI.buildUpon()
      *          .appendQueryParameter(RawContacts.ACCOUNT_NAME, accountName)
      *          .appendQueryParameter(RawContacts.ACCOUNT_TYPE, accountType)
      *          .build();
@@ -3792,13 +3850,24 @@ public final class ContactsContract {
     }
 
     /**
+     * Columns in the Data_Usage_Stat table
+     */
+    protected interface DataUsageStatColumns {
+        /** The last time (in milliseconds) this {@link Data} was used. */
+        public static final String LAST_TIME_USED = "last_time_used";
+
+        /** The number of times the referenced {@link Data} has been used. */
+        public static final String TIMES_USED = "times_used";
+    }
+
+    /**
      * Combines all columns returned by {@link ContactsContract.Data} table queries.
      *
      * @see ContactsContract.Data
      */
     protected interface DataColumnsWithJoins extends BaseColumns, DataColumns, StatusColumns,
             RawContactsColumns, ContactsColumns, ContactNameColumns, ContactOptionsColumns,
-            ContactStatusColumns {
+            ContactStatusColumns, DataUsageStatColumns {
     }
 
     /**
@@ -4130,7 +4199,7 @@ public final class ContactsContract {
      * all IM rows. See {@link StatusUpdates} for individual status definitions.
      * The provider may choose not to store this value
      * in persistent storage. The expectation is that presence status will be
-     * updated on a regular basic.
+     * updated on a regular basis.
      * </td>
      * </tr>
      * <tr>
@@ -4322,6 +4391,13 @@ public final class ContactsContract {
          * of data rows matching the selection criteria.
          */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "data");
+
+        /**
+         * A boolean parameter for {@link Data#CONTENT_URI}.
+         * This specifies whether or not the returned data items should be filtered to show
+         * data items belonging to visible contacts only.
+         */
+        public static final String VISIBLE_CONTACTS_ONLY = "visible_contacts_only";
 
         /**
          * The MIME type of the results from {@link #CONTENT_URI}.
@@ -4694,7 +4770,8 @@ public final class ContactsContract {
          * The content:// style URI for this table. Append the phone number you want to lookup
          * to this URI and query it to perform a lookup. For example:
          * <pre>
-         * Uri lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_URI, Uri.encode(phoneNumber));
+         * Uri lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI,
+         *         Uri.encode(phoneNumber));
          * </pre>
          */
         public static final Uri CONTENT_FILTER_URI = Uri.withAppendedPath(AUTHORITY_URI,
@@ -6831,6 +6908,38 @@ public final class ContactsContract {
             public static final Uri CONTENT_FILTER_URI = Uri.withAppendedPath(CONTENT_URI,
                     "filter");
         }
+
+        /**
+         * A special class of data items, used to refer to types of data that can be used to attempt
+         * to start communicating with a person ({@link Phone} and {@link Email}). Note that this
+         * is NOT a separate data kind.
+         *
+         * This URI allows the ContactsProvider to return a unified result for data items that users
+         * can use to initiate communications with another contact. {@link Phone} and {@link Email}
+         * are the current data types in this category.
+         */
+        public static final class Contactables implements DataColumnsWithJoins, CommonColumns {
+            /**
+             * The content:// style URI for these data items, which requests a directory of data
+             * rows matching the selection criteria.
+             */
+            public static final Uri CONTENT_URI = Uri.withAppendedPath(Data.CONTENT_URI,
+                    "contactables");
+
+            /**
+             * The content:// style URI for these data items, which allows for a query parameter to
+             * be appended onto the end to filter for data items matching the query.
+             */
+            public static final Uri CONTENT_FILTER_URI = Uri.withAppendedPath(
+                    Contactables.CONTENT_URI, "filter");
+
+            /**
+             * A boolean parameter for {@link Data#CONTENT_URI}.
+             * This specifies whether or not the returned data items should be filtered to show
+             * data items belonging to visible contacts only.
+             */
+            public static final String VISIBLE_CONTACTS_ONLY = "visible_contacts_only";
+        }
     }
 
     /**
@@ -7658,6 +7767,54 @@ public final class ContactsContract {
         public static final int MODE_LARGE = 3;
 
         /**
+         * Constructs the QuickContacts intent with a view's rect.
+         * @hide
+         */
+        public static Intent composeQuickContactsIntent(Context context, View target, Uri lookupUri,
+                int mode, String[] excludeMimes) {
+            // Find location and bounds of target view, adjusting based on the
+            // assumed local density.
+            final float appScale = context.getResources().getCompatibilityInfo().applicationScale;
+            final int[] pos = new int[2];
+            target.getLocationOnScreen(pos);
+
+            final Rect rect = new Rect();
+            rect.left = (int) (pos[0] * appScale + 0.5f);
+            rect.top = (int) (pos[1] * appScale + 0.5f);
+            rect.right = (int) ((pos[0] + target.getWidth()) * appScale + 0.5f);
+            rect.bottom = (int) ((pos[1] + target.getHeight()) * appScale + 0.5f);
+
+            return composeQuickContactsIntent(context, rect, lookupUri, mode, excludeMimes);
+        }
+
+        /**
+         * Constructs the QuickContacts intent.
+         * @hide
+         */
+        public static Intent composeQuickContactsIntent(Context context, Rect target,
+                Uri lookupUri, int mode, String[] excludeMimes) {
+            // When launching from an Activiy, we don't want to start a new task, but otherwise
+            // we *must* start a new task.  (Otherwise startActivity() would crash.)
+            Context actualContext = context;
+            while ((actualContext instanceof ContextWrapper)
+                    && !(actualContext instanceof Activity)) {
+                actualContext = ((ContextWrapper) actualContext).getBaseContext();
+            }
+            final int intentFlags = (actualContext instanceof Activity)
+                    ? Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET
+                    : Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK;
+
+            // Launch pivot dialog through intent for now
+            final Intent intent = new Intent(ACTION_QUICK_CONTACT).addFlags(intentFlags);
+
+            intent.setData(lookupUri);
+            intent.setSourceBounds(target);
+            intent.putExtra(EXTRA_MODE, mode);
+            intent.putExtra(EXTRA_EXCLUDE_MIMES, excludeMimes);
+            return intent;
+        }
+
+        /**
          * Trigger a dialog that lists the various methods of interacting with
          * the requested {@link Contacts} entry. This may be based on available
          * {@link ContactsContract.Data} rows under that contact, and may also
@@ -7682,20 +7839,10 @@ public final class ContactsContract {
          */
         public static void showQuickContact(Context context, View target, Uri lookupUri, int mode,
                 String[] excludeMimes) {
-            // Find location and bounds of target view, adjusting based on the
-            // assumed local density.
-            final float appScale = context.getResources().getCompatibilityInfo().applicationScale;
-            final int[] pos = new int[2];
-            target.getLocationOnScreen(pos);
-
-            final Rect rect = new Rect();
-            rect.left = (int) (pos[0] * appScale + 0.5f);
-            rect.top = (int) (pos[1] * appScale + 0.5f);
-            rect.right = (int) ((pos[0] + target.getWidth()) * appScale + 0.5f);
-            rect.bottom = (int) ((pos[1] + target.getHeight()) * appScale + 0.5f);
-
             // Trigger with obtained rectangle
-            showQuickContact(context, rect, lookupUri, mode, excludeMimes);
+            Intent intent = composeQuickContactsIntent(context, target, lookupUri, mode,
+                    excludeMimes);
+            context.startActivity(intent);
         }
 
         /**
@@ -7726,24 +7873,8 @@ public final class ContactsContract {
          */
         public static void showQuickContact(Context context, Rect target, Uri lookupUri, int mode,
                 String[] excludeMimes) {
-            // When launching from an Activiy, we don't want to start a new task, but otherwise
-            // we *must* start a new task.  (Otherwise startActivity() would crash.)
-            Context actualContext = context;
-            while ((actualContext instanceof ContextWrapper)
-                    && !(actualContext instanceof Activity)) {
-                actualContext = ((ContextWrapper) actualContext).getBaseContext();
-            }
-            final int intentFlags = (actualContext instanceof Activity)
-                    ? Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET
-                    : Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK;
-
-            // Launch pivot dialog through intent for now
-            final Intent intent = new Intent(ACTION_QUICK_CONTACT).addFlags(intentFlags);
-
-            intent.setData(lookupUri);
-            intent.setSourceBounds(target);
-            intent.putExtra(EXTRA_MODE, mode);
-            intent.putExtra(EXTRA_EXCLUDE_MIMES, excludeMimes);
+            Intent intent = composeQuickContactsIntent(context, target, lookupUri, mode,
+                    excludeMimes);
             context.startActivity(intent);
         }
     }
@@ -7835,6 +7966,13 @@ public final class ContactsContract {
                 "android.provider.Contacts.SEARCH_SUGGESTION_CREATE_CONTACT_CLICKED";
 
         /**
+         * This is the intent that is fired when the contacts database is created. <p> The
+         * READ_CONTACT permission is required to receive these broadcasts.
+         */
+        public static final String CONTACTS_DATABASE_CREATED =
+                "android.provider.Contacts.DATABASE_CREATED";
+
+        /**
          * Starts an Activity that lets the user pick a contact to attach an image to.
          * After picking the contact it launches the image cropper in face detection mode.
          */
@@ -7898,6 +8036,16 @@ public final class ContactsContract {
          */
         public static final String ACTION_GET_MULTIPLE_PHONES =
                 "com.android.contacts.action.GET_MULTIPLE_PHONES";
+
+        /**
+         * A broadcast action which is sent when any change has been made to the profile, such
+         * as the profile name or the picture.  A receiver must have
+         * the android.permission.READ_PROFILE permission.
+         *
+         * @hide
+         */
+        public static final String ACTION_PROFILE_CHANGED =
+                "android.provider.Contacts.PROFILE_CHANGED";
 
         /**
          * Used with {@link #SHOW_OR_CREATE_CONTACT} to force creating a new

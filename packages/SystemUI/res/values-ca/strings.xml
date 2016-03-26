@@ -44,9 +44,9 @@
     <string name="status_bar_settings_airplane" msgid="4879879698500955300">"Mode d\'avió"</string>
     <string name="status_bar_settings_auto_rotation" msgid="3790482541357798421">"Gira pantalla automàticament"</string>
     <string name="status_bar_settings_mute_label" msgid="554682549917429396">"Silen."</string>
-    <string name="status_bar_settings_auto_brightness_label" msgid="511453614962324674">"AUTOM."</string>
+    <string name="status_bar_settings_auto_brightness_label" msgid="511453614962324674">"AUTO."</string>
     <string name="status_bar_settings_notifications" msgid="397146176280905137">"Notificacions"</string>
-    <string name="bluetooth_tethered" msgid="7094101612161133267">"Bluetooth sense fil"</string>
+    <string name="bluetooth_tethered" msgid="7094101612161133267">"Bluetooth ancorat"</string>
     <string name="status_bar_input_method_settings_configure_input_methods" msgid="3504292471512317827">"Configura els mètodes d\'entrada"</string>
     <string name="status_bar_use_physical_keyboard" msgid="7551903084416057810">"Teclat físic"</string>
     <string name="usb_device_permission_prompt" msgid="834698001271562057">"Vols permetre que l\'aplicació <xliff:g id="APPLICATION">%1$s</xliff:g> accedeixi al dispositiu USB?"</string>
@@ -58,6 +58,9 @@
     <string name="label_view" msgid="6304565553218192990">"Mostra"</string>
     <string name="always_use_device" msgid="1450287437017315906">"Utilitza de manera predet. per al dispositiu USB"</string>
     <string name="always_use_accessory" msgid="1210954576979621596">"Utilitza de manera predet. per a l\'accessori USB"</string>
+    <string name="usb_debugging_title" msgid="4513918393387141949">"Vols permetre la depuració USB?"</string>
+    <string name="usb_debugging_message" msgid="2220143855912376496">"L\'empremta digital de la clau de l\'RSA de l\'equip és:"\n"<xliff:g id="FINGERPRINT">%1$s</xliff:g>"</string>
+    <string name="usb_debugging_always" msgid="303335496705863070">"Dóna sempre permís des d\'aquest equip"</string>
     <string name="compat_mode_on" msgid="6623839244840638213">"Zoom per omplir pantalla"</string>
     <string name="compat_mode_off" msgid="4434467572461327898">"Estira per omplir pant."</string>
     <string name="compat_mode_help_header" msgid="7969493989397529910">"Zoom de compatibilitat"</string>
@@ -97,25 +100,40 @@
     <string name="accessibility_data_two_bars" msgid="6166018492360432091">"Senyal de dades: dues barres."</string>
     <string name="accessibility_data_three_bars" msgid="9167670452395038520">"Senyal de dades: tres barres."</string>
     <string name="accessibility_data_signal_full" msgid="2708384608124519369">"Senyal de dades: complet."</string>
-    <string name="accessibility_no_wifi" msgid="7455607460517331976">"No hi ha Wi-Fi."</string>
-    <string name="accessibility_wifi_one_bar" msgid="6854947280074467207">"Una barra de Wi-Fi."</string>
-    <string name="accessibility_wifi_two_bars" msgid="3344340012058984348">"Dues barres de Wi-Fi."</string>
-    <string name="accessibility_wifi_three_bars" msgid="928322805193265041">"Tres barres de Wi-Fi."</string>
-    <string name="accessibility_wifi_signal_full" msgid="1275764416228473932">"Senyal Wi-Fi: complet."</string>
+    <string name="accessibility_wifi_off" msgid="3177380296697933627">"Wi-Fi desactivada."</string>
+    <string name="accessibility_no_wifi" msgid="1425476551827924474">"Wi-Fi desconnectada."</string>
+    <string name="accessibility_wifi_one_bar" msgid="7735893178010724377">"Senyal Wi-Fi: una barra."</string>
+    <string name="accessibility_wifi_two_bars" msgid="4994274250497262434">"Senyal Wi-Fi: dues barres."</string>
+    <string name="accessibility_wifi_three_bars" msgid="3495755044276588384">"Senyal Wi-Fi: tres barres."</string>
+    <string name="accessibility_wifi_signal_full" msgid="6853561303586480376">"Senyal Wi-Fi: complet."</string>
     <string name="accessibility_no_wimax" msgid="4329180129727630368">"Sense WiMAX."</string>
     <string name="accessibility_wimax_one_bar" msgid="4170994299011863648">"Una barra de WiMAX."</string>
     <string name="accessibility_wimax_two_bars" msgid="9176236858336502288">"Dues barres de WiMAX."</string>
     <string name="accessibility_wimax_three_bars" msgid="6116551636752103927">"Tres barres de WiMAX."</string>
     <string name="accessibility_wimax_signal_full" msgid="2768089986795579558">"Senyal de WiMAX plena."</string>
+    <string name="accessibility_no_signal" msgid="7064645320782585167">"Sense senyal."</string>
+    <string name="accessibility_not_connected" msgid="6395326276213402883">"Sense connexió."</string>
+    <string name="accessibility_zero_bars" msgid="3806060224467027887">"Cap barra."</string>
+    <string name="accessibility_one_bar" msgid="1685730113192081895">"Una barra."</string>
+    <string name="accessibility_two_bars" msgid="6437363648385206679">"Dues barres."</string>
+    <string name="accessibility_three_bars" msgid="2648241415119396648">"Tres barres."</string>
+    <string name="accessibility_signal_full" msgid="9122922886519676839">"Senyal complet."</string>
+    <string name="accessibility_desc_on" msgid="2385254693624345265">"Activat."</string>
+    <string name="accessibility_desc_off" msgid="6475508157786853157">"Desactivat."</string>
+    <string name="accessibility_desc_connected" msgid="8366256693719499665">"Connectat."</string>
     <string name="accessibility_data_connection_gprs" msgid="1606477224486747751">"GPRS"</string>
+    <string name="accessibility_data_connection_1x" msgid="994133468120244018">"1 X"</string>
+    <string name="accessibility_data_connection_hspa" msgid="2032328855462645198">"HSPA"</string>
     <string name="accessibility_data_connection_3g" msgid="8628562305003568260">"3G"</string>
     <string name="accessibility_data_connection_3.5g" msgid="8664845609981692001">"3,5G"</string>
     <string name="accessibility_data_connection_4g" msgid="7741000750630089612">"4G"</string>
+    <string name="accessibility_data_connection_lte" msgid="5413468808637540658">"LTE"</string>
     <string name="accessibility_data_connection_cdma" msgid="6132648193978823023">"CDMA"</string>
+    <string name="accessibility_data_connection_roaming" msgid="5977362333466556094">"Itinerància"</string>
     <string name="accessibility_data_connection_edge" msgid="4477457051631979278">"Vora"</string>
     <string name="accessibility_data_connection_wifi" msgid="2324496756590645221">"Wi-Fi"</string>
     <string name="accessibility_no_sim" msgid="8274017118472455155">"No hi ha cap targeta SIM."</string>
-    <string name="accessibility_bluetooth_tether" msgid="4102784498140271969">"Connexió Bluetooth mitjançant dispositiu portàtil"</string>
+    <string name="accessibility_bluetooth_tether" msgid="4102784498140271969">"Ancoratge de Bluetooth"</string>
     <string name="accessibility_airplane_mode" msgid="834748999790763092">"Mode d\'avió."</string>
     <!-- String.format failed for translation -->
     <!-- no translation found for accessibility_battery_level (7451474187113371965) -->
@@ -129,6 +147,17 @@
     <string name="accessibility_ringer_vibrate" msgid="666585363364155055">"Mode vibració."</string>
     <string name="accessibility_ringer_silent" msgid="9061243307939135383">"Mode silenci."</string>
     <string name="accessibility_recents_item_dismissed" msgid="6803574935084867070">"S\'ha omès <xliff:g id="APP">%s</xliff:g>."</string>
+    <string name="accessibility_notification_dismissed" msgid="854211387186306927">"Notificació omesa."</string>
+    <string name="accessibility_desc_notification_shade" msgid="4690274844447504208">"Àrea de notificacions"</string>
+    <string name="accessibility_desc_quick_settings" msgid="6186378411582437046">"Configuració ràpida."</string>
+    <string name="accessibility_desc_recent_apps" msgid="9014032916410590027">"Aplicacions recents."</string>
+    <string name="accessibility_quick_settings_user" msgid="1104846699869476855">"Usuari <xliff:g id="USER">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_wifi" msgid="6099781031669728709">"<xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="NETWORK">%2$s</xliff:g>"</string>
+    <string name="accessibility_quick_settings_mobile" msgid="4876806564086241341">"Mòbil <xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="TYPE">%2$s</xliff:g>. <xliff:g id="NETWORK">%3$s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_battery" msgid="1480931583381408972">"Bateria <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_airplane" msgid="4196876722090224753">"Mode d\'avió <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_bluetooth" msgid="5749054971341882340">"Bluetooth <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_alarm" msgid="3959908972897295660">"Alarma establerta a les <xliff:g id="TIME">%s</xliff:g>."</string>
     <string name="data_usage_disabled_dialog_3g_title" msgid="5257833881698644687">"Dades 2G-3G desactivades"</string>
     <string name="data_usage_disabled_dialog_4g_title" msgid="4789143363492682629">"Dades 4G desactivades"</string>
     <string name="data_usage_disabled_dialog_mobile_title" msgid="1046047248844821202">"Dades mòbils desactivades"</string>
@@ -140,11 +169,41 @@
     <string name="gps_notification_searching_text" msgid="8574247005642736060">"S\'està cercant un GPS"</string>
     <string name="gps_notification_found_text" msgid="4619274244146446464">"S\'ha establert la ubicació per GPS"</string>
     <string name="accessibility_clear_all" msgid="5235938559247164925">"Esborra totes les notificacions."</string>
-    <string name="dreams_dock_launcher" msgid="3541196417659166245">"Activa el protector de pantalla"</string>
     <string name="status_bar_notification_inspect_item_title" msgid="1163547729015390250">"Informació de l\'aplicació"</string>
+    <string name="close_universe" msgid="3736513750241754348">"Tanca"</string>
     <string name="notifications_off_title" msgid="8936620513608443224">"Notificacions desactivades"</string>
     <string name="notifications_off_text" msgid="2529001315769385273">"Pica aquí per tornar a activar les notificacions."</string>
     <string name="accessibility_rotation_lock_off" msgid="4062780228931590069">"La pantalla girarà automàticament."</string>
     <string name="accessibility_rotation_lock_on_landscape" msgid="6731197337665366273">"La pantalla està bloquejada en orientació horitzontal."</string>
     <string name="accessibility_rotation_lock_on_portrait" msgid="5809367521644012115">"La pantalla està bloquejada en orientació vertical."</string>
+    <string name="jelly_bean_dream_name" msgid="5992026543636816792">"BeanFlinger"</string>
+    <string name="start_dreams" msgid="7219575858348719790">"Estalvi de pantalla"</string>
+    <string name="ethernet_label" msgid="7967563676324087464">"Ethernet"</string>
+    <string name="quick_settings_airplane_mode_label" msgid="5510520633448831350">"Mode d\'avió"</string>
+    <string name="quick_settings_battery_charging_label" msgid="490074774465309209">"S\'està carregant, <xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>"</string>
+    <string name="quick_settings_battery_charged_label" msgid="8865413079414246081">"Carregada"</string>
+    <string name="quick_settings_bluetooth_label" msgid="6304190285170721401">"Bluetooth"</string>
+    <string name="quick_settings_bluetooth_multiple_devices_label" msgid="3912245565613684735">"Bluetooth (<xliff:g id="NUMBER">%d</xliff:g> dispositius)"</string>
+    <string name="quick_settings_bluetooth_off_label" msgid="8159652146149219937">"Bluetooth desactivat"</string>
+    <string name="quick_settings_brightness_label" msgid="6968372297018755815">"Brillantor"</string>
+    <string name="quick_settings_rotation_unlocked_label" msgid="336054930362580584">"Rotació automàtica"</string>
+    <string name="quick_settings_rotation_locked_label" msgid="8058646447242565486">"Rotació bloquejada"</string>
+    <string name="quick_settings_ime_label" msgid="7073463064369468429">"Mètode d\'entrada"</string>
+    <string name="quick_settings_location_label" msgid="3292451598267467545">"Ubicació en ús"</string>
+    <string name="quick_settings_media_device_label" msgid="1302906836372603762">"Dispositiu multimèdia"</string>
+    <string name="quick_settings_rssi_label" msgid="7725671335550695589">"RSSI"</string>
+    <string name="quick_settings_rssi_emergency_only" msgid="2713774041672886750">"Només trucades d\'emergència"</string>
+    <string name="quick_settings_settings_label" msgid="5326556592578065401">"Configuració"</string>
+    <string name="quick_settings_time_label" msgid="4635969182239736408">"Hora"</string>
+    <string name="quick_settings_user_label" msgid="5238995632130897840">"Jo"</string>
+    <string name="quick_settings_wifi_label" msgid="9135344704899546041">"Wi-Fi"</string>
+    <string name="quick_settings_wifi_not_connected" msgid="7171904845345573431">"Desconnectat"</string>
+    <string name="quick_settings_wifi_no_network" msgid="2221993077220856376">"No hi ha cap xarxa"</string>
+    <string name="quick_settings_wifi_off_label" msgid="7558778100843885864">"Wi-Fi desconnectada"</string>
+    <string name="quick_settings_wifi_display_label" msgid="6893592964463624333">"Pantalla Wi-Fi"</string>
+    <string name="quick_settings_wifi_display_no_connection_label" msgid="2355298740765736918">"Pantalla sense fil"</string>
+    <string name="quick_settings_brightness_dialog_title" msgid="8599674057673605368">"Brillantor"</string>
+    <string name="quick_settings_brightness_dialog_auto_brightness_label" msgid="5064982743784071218">"AUTOMÀTICA"</string>
+    <string name="status_bar_help_title" msgid="1199237744086469217">"Les notificacions apareixen aquí"</string>
+    <string name="status_bar_help_text" msgid="7874607155052076323">"Accedeix-hi en qualsevol moment: només has de fer lliscar el dit cap avall."\n"Torna a fer lliscar el dit cap avall per fer que es mostrin els controls del sistema."</string>
 </resources>

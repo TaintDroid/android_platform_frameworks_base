@@ -87,9 +87,14 @@ easier.
         <item name="android:windowAnimationStyle">@android:style/Animation.DeviceDefault.Activity</item>
 
         <!-- Dialog attributes -->
-        <item name="alertDialogStyle">@android:style/AlertDialog.DeviceDefault</item>
         <item name="dialogTheme">@android:style/Theme.DeviceDefault.Dialog</item>
+
+        <!-- AlertDialog attributes -->
         <item name="alertDialogTheme">@android:style/Theme.DeviceDefault.Dialog.Alert</item>
+        <item name="alertDialogStyle">@android:style/AlertDialog.DeviceDefault</item>
+
+        <!-- Presentation attributes -->
+        <item name="presentationTheme">@android:style/Theme.DeviceDefault.Dialog.Presentation</item>
 
         <!-- Text selection handle attributes -->
         <item name="textSelectHandleWindowStyle">@android:style/Widget.DeviceDefault.TextSelectHandle</item>
@@ -99,6 +104,7 @@ easier.
         <item name="absListViewStyle">@android:style/Widget.DeviceDefault.AbsListView</item>
         <item name="autoCompleteTextViewStyle">@android:style/Widget.DeviceDefault.AutoCompleteTextView</item>
         <item name="checkboxStyle">@android:style/Widget.DeviceDefault.CompoundButton.CheckBox</item>
+        <item name="checkedTextViewStyle">@android:style/Widget.DeviceDefault.CheckedTextView</item>
         <item name="dropDownListViewStyle">@android:style/Widget.DeviceDefault.ListView.DropDown</item>
         <item name="editTextStyle">@android:style/Widget.DeviceDefault.EditText</item>
         <item name="expandableListViewStyle">@android:style/Widget.DeviceDefault.ExpandableListView</item>
@@ -196,12 +202,20 @@ easier.
 
     <!-- Variant of {@link #Theme_DeviceDefault} with no action bar -->
     <style name="Theme.DeviceDefault.NoActionBar" parent="Theme.Holo.NoActionBar" >
-
     </style>
-    <!-- Variant of {@link #Theme_DeviceDefault} with no action bar and no status bar -->
+
+    <!-- Variant of {@link #Theme_DeviceDefault} with no action bar and no status bar.  This theme
+         sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.DeviceDefault.NoActionBar.Fullscreen" parent="Theme.Holo.NoActionBar.Fullscreen" >
-
     </style>
+
+    <!-- Variant of {@link #Theme_DeviceDefault} with no action bar and no status bar and
+    extending in to overscan region.  This theme
+    sets {@link android.R.attr#windowFullscreen} and {@link android.R.attr#windowOverscan}
+    to true. -->
+    <style name="Theme.DeviceDefault.NoActionBar.Overscan" parent="Theme.Holo.NoActionBar.Overscan" >
+    </style>
+
     <!-- Variant of {@link #Theme_DeviceDefault} with a light-colored style -->
     <style name="Theme.DeviceDefault.Light" parent="Theme.Holo.Light" >
         <!-- Text styles -->
@@ -239,9 +253,14 @@ easier.
         <item name="android:windowAnimationStyle">@android:style/Animation.DeviceDefault.Activity</item>
 
         <!-- Dialog attributes -->
-        <item name="alertDialogStyle">@android:style/AlertDialog.DeviceDefault.Light</item>
         <item name="dialogTheme">@android:style/Theme.DeviceDefault.Light.Dialog</item>
+
+        <!-- AlertDialog attributes -->
         <item name="alertDialogTheme">@android:style/Theme.DeviceDefault.Light.Dialog.Alert</item>
+        <item name="alertDialogStyle">@android:style/AlertDialog.DeviceDefault.Light</item>
+
+        <!-- Presentation attributes -->
+        <item name="presentationTheme">@android:style/Theme.DeviceDefault.Light.Dialog.Presentation</item>
 
         <!-- Text selection handle attributes -->
         <item name="textSelectHandleWindowStyle">@android:style/Widget.DeviceDefault.TextSelectHandle</item>
@@ -251,7 +270,8 @@ easier.
         <item name="absListViewStyle">@android:style/Widget.DeviceDefault.Light.AbsListView</item>
         <item name="autoCompleteTextViewStyle">@android:style/Widget.DeviceDefault.Light.AutoCompleteTextView</item>
         <item name="checkboxStyle">@android:style/Widget.DeviceDefault.Light.CompoundButton.CheckBox</item>
-        <item name="dropDownListViewStyle">@android:style/Widget.DeviceDefault.ListView.DropDown</item>
+        <item name="checkedTextViewStyle">@android:style/Widget.DeviceDefault.Light.CheckedTextView</item>
+        <item name="dropDownListViewStyle">@android:style/Widget.DeviceDefault.Light.ListView.DropDown</item>
         <item name="editTextStyle">@android:style/Widget.DeviceDefault.Light.EditText</item>
         <item name="expandableListViewStyle">@android:style/Widget.DeviceDefault.Light.ExpandableListView</item>
         <item name="expandableListViewWhiteStyle">@android:style/Widget.DeviceDefault.Light.ExpandableListView.White</item>
@@ -286,7 +306,7 @@ easier.
         <item name="webViewStyle">@android:style/Widget.DeviceDefault.Light.WebView</item>
         <item name="dropDownItemStyle">@android:style/Widget.DeviceDefault.Light.DropDownItem</item>
         <item name="spinnerDropDownItemStyle">@android:style/Widget.DeviceDefault.Light.DropDownItem.Spinner</item>
-        <item name="spinnerItemStyle">@android:style/Widget.DeviceDefault.TextView.SpinnerItem</item>
+        <item name="spinnerItemStyle">@android:style/Widget.DeviceDefault.Light.TextView.SpinnerItem</item>
         <item name="dropDownHintAppearance">@android:style/TextAppearance.DeviceDefault.Widget.DropDownHint</item>
         <item name="keyboardViewStyle">@android:style/Widget.DeviceDefault.KeyboardView</item>
         <item name="quickContactBadgeStyleWindowSmall">@android:style/Widget.DeviceDefault.QuickContactBadge.WindowSmall</item>
@@ -344,11 +364,17 @@ easier.
     </style>
     <!-- Variant of {@link #Theme_DeviceDefault_Light} with no action bar -->
     <style name="Theme.DeviceDefault.Light.NoActionBar" parent="Theme.Holo.Light.NoActionBar" >
-
     </style>
-    <!-- Variant of {@link #Theme_DeviceDefault_Light} with no action bar and no status bar -->
+    <!-- Variant of {@link #Theme_DeviceDefault_Light} with no action bar and no status bar.
+         This theme sets {@link android.R.attr#windowFullscreen} to true.  -->
     <style name="Theme.DeviceDefault.Light.NoActionBar.Fullscreen" parent="Theme.Holo.Light.NoActionBar.Fullscreen" >
-
+    </style>
+    <!-- Variant of {@link #Theme_DeviceDefault_Light} with no action bar and no status bar
+    and extending in to overscan region.  This theme
+    sets {@link android.R.attr#windowFullscreen} and {@link android.R.attr#windowOverscan}
+    to true. -->
+    <style name="Theme.DeviceDefault.Light.NoActionBar.Overscan"
+           parent="Theme.Holo.Light.NoActionBar.Overscan" >
     </style>
     <!-- DeviceDefault theme for dialog windows and activities. This changes the window to be
     floating (not fill the entire screen), and puts a frame around its contents. You can set this
@@ -460,6 +486,15 @@ easier.
     <style name="Theme.DeviceDefault.Light.DialogWhenLarge.NoActionBar" parent="Theme.Holo.Light.DialogWhenLarge.NoActionBar" >
 
     </style>
+
+    <!-- DeviceDefault theme for a presentation window on a secondary display. -->
+    <style name="Theme.DeviceDefault.Dialog.Presentation" parent="Theme.Holo.Dialog.Presentation">
+    </style>
+
+    <!-- DeviceDefault light theme for a presentation window on a secondary display. -->
+    <style name="Theme.DeviceDefault.Light.Dialog.Presentation" parent="Theme.Holo.Light.Dialog.Presentation">
+    </style>
+
     <!-- DeviceDefault theme for panel windows. This removes all extraneous window
     decorations, so you basically have an empty rectangle in which to place your content. It makes
     the window floating, with a transparent background, and turns off dimming behind the window. -->

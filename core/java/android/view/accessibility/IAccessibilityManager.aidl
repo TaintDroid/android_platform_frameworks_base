@@ -20,6 +20,7 @@ package android.view.accessibility;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.IAccessibilityServiceConnection;
 import android.accessibilityservice.IAccessibilityServiceClient;
+import android.content.ComponentName;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.IAccessibilityInteractionConnection;
@@ -34,23 +35,26 @@ import android.view.IWindow;
  */
 interface IAccessibilityManager {
 
-    int addClient(IAccessibilityManagerClient client);
+    int addClient(IAccessibilityManagerClient client, int userId);
 
-    boolean sendAccessibilityEvent(in AccessibilityEvent uiEvent);
+    boolean sendAccessibilityEvent(in AccessibilityEvent uiEvent, int userId);
 
-    List<AccessibilityServiceInfo> getInstalledAccessibilityServiceList();
+    List<AccessibilityServiceInfo> getInstalledAccessibilityServiceList(int userId);
 
-    List<AccessibilityServiceInfo> getEnabledAccessibilityServiceList(int feedbackType);
+    List<AccessibilityServiceInfo> getEnabledAccessibilityServiceList(int feedbackType, int userId);
 
-    void interrupt();
+    void interrupt(int userId);
 
     int addAccessibilityInteractionConnection(IWindow windowToken,
-        in IAccessibilityInteractionConnection connection);
+        in IAccessibilityInteractionConnection connection, int userId);
 
     void removeAccessibilityInteractionConnection(IWindow windowToken);
 
-    void registerUiTestAutomationService(IAccessibilityServiceClient client,
+    void registerUiTestAutomationService(IBinder owner, IAccessibilityServiceClient client,
         in AccessibilityServiceInfo info);
 
     void unregisterUiTestAutomationService(IAccessibilityServiceClient client);
+
+    void temporaryEnableAccessibilityStateUntilKeyguardRemoved(in ComponentName service,
+            boolean touchExplorationEnabled);
 }

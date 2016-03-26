@@ -38,10 +38,7 @@ import android.graphics.drawable.shapes.Shape;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.Pool;
-import android.util.Poolable;
-import android.util.PoolableManager;
-import android.util.Pools;
+import android.util.Pools.SynchronizedPool;
 import android.view.Gravity;
 import android.view.RemotableViewMethod;
 import android.view.View;
@@ -187,6 +184,7 @@ import java.util.ArrayList;
  * @attr ref android.R.styleable#ProgressBar_maxWidth
  * @attr ref android.R.styleable#ProgressBar_minHeight
  * @attr ref android.R.styleable#ProgressBar_minWidth
+ * @attr ref android.R.styleable#ProgressBar_mirrorForRtl
  * @attr ref android.R.styleable#ProgressBar_progress
  * @attr ref android.R.styleable#ProgressBar_progressDrawable
  * @attr ref android.R.styleable#ProgressBar_secondaryProgress
@@ -225,6 +223,8 @@ public class ProgressBar extends View {
     private boolean mInDrawing;
     private boolean mAttached;
     private boolean mRefreshIsPosted;
+
+    boolean mMirrorForRtl = false;
 
     private final ArrayList<RefreshData> mRefreshData = new ArrayList<RefreshData>();
 
@@ -304,6 +304,8 @@ public class ProgressBar extends View {
 
         setIndeterminate(mOnlyIndeterminate || a.getBoolean(
                 R.styleable.ProgressBar_indeterminate, mIndeterminate));
+
+        mMirrorForRtl = a.getBoolean(R.styleable.ProgressBar_mirrorForRtl, mMirrorForRtl);
 
         a.recycle();
     }
@@ -478,6 +480,9 @@ public class ProgressBar extends View {
             d.setCallback(this);
         }
         mIndeterminateDrawable = d;
+        if (mIndeterminateDrawable != null && canResolveLayoutDirection()) {
+            mIndeterminateDrawable.setLayoutDirection(getLayoutDirection());
+        }
         if (mIndeterminate) {
             mCurrentDrawable = d;
             postInvalidate();
@@ -517,6 +522,9 @@ public class ProgressBar extends View {
 
         if (d != null) {
             d.setCallback(this);
+            if (canResolveLayoutDirection()) {
+                d.setLayoutDirection(getLayoutDirection());
+            }
 
             // Make sure the ProgressBar is always tall enough
             int drawableHeight = d.getMinimumHeight();
@@ -559,6 +567,23 @@ public class ProgressBar extends View {
         if (mIndeterminateDrawable != null) mIndeterminateDrawable.jumpToCurrentState();
     }
 
+    /**
+     * @hide
+     */
+    @Override
+    public void onResolveDrawables(int layoutDirection) {
+        final Drawable d = mCurrentDrawable;
+        if (d != null) {
+            d.setLayoutDirection(layoutDirection);
+        }
+        if (mIndeterminateDrawable != null) {
+            mIndeterminateDrawable.setLayoutDirection(layoutDirection);
+        }
+        if (mProgressDrawable != null) {
+            mProgressDrawable.setLayoutDirection(layoutDirection);
+        }
+    }
+
     @Override
     public void postInvalidate() {
         if (!mNoInvalidate) {
@@ -581,33 +606,20 @@ public class ProgressBar extends View {
         }
     }
 
-    private static class RefreshData implements Poolable<RefreshData> {
+    private static class RefreshData {
+        private static final int POOL_MAX = 24;
+        private static final SynchronizedPool<RefreshData> sPool =
+                new SynchronizedPool<RefreshData>(POOL_MAX);
+
         public int id;
         public int progress;
         public boolean fromUser;
-        
-        private RefreshData mNext;
-        private boolean mIsPooled;
-        
-        private static final int POOL_MAX = 24;
-        private static final Pool<RefreshData> sPool = Pools.synchronizedPool(
-                Pools.finitePool(new PoolableManager<RefreshData>() {
-                    @Override
-                    public RefreshData newInstance() {
-                        return new RefreshData();
-                    }
-
-                    @Override
-                    public void onAcquired(RefreshData element) {
-                    }
-
-                    @Override
-                    public void onReleased(RefreshData element) {
-                    }
-                }, POOL_MAX));
 
         public static RefreshData obtain(int id, int progress, boolean fromUser) {
             RefreshData rd = sPool.acquire();
+            if (rd == null) {
+                rd = new RefreshData();
+            }
             rd.id = id;
             rd.progress = progress;
             rd.fromUser = fromUser;
@@ -617,28 +629,8 @@ public class ProgressBar extends View {
         public void recycle() {
             sPool.release(this);
         }
-
-        @Override
-        public void setNextPoolable(RefreshData element) {
-            mNext = element;
-        }
-
-        @Override
-        public RefreshData getNextPoolable() {
-            return mNext;
-        }
-
-        @Override
-        public boolean isPooled() {
-            return mIsPooled;
-        }
-
-        @Override
-        public void setPooled(boolean isPooled) {
-            mIsPooled = isPooled;
-        }
     }
-    
+
     private synchronized void doRefreshProgress(int id, int progress, boolean fromUser,
             boolean callBackToApp) {
         float scale = mMax > 0 ? (float) progress / (float) mMax : 0;
@@ -648,6 +640,9 @@ public class ProgressBar extends View {
 
             if (d instanceof LayerDrawable) {
                 progressDrawable = ((LayerDrawable) d).findDrawableByLayerId(id);
+                if (progressDrawable != null && canResolveLayoutDirection()) {
+                    progressDrawable.setLayoutDirection(getLayoutDirection());
+                }
             }
 
             final int level = (int) (scale * MAX_LEVEL);
@@ -975,24 +970,19 @@ public class ProgressBar extends View {
         }
     }
 
-    /**
-     * @hide
-     */
-    @Override
-    public int getResolvedLayoutDirection(Drawable who) {
-        return (who == mProgressDrawable || who == mIndeterminateDrawable) ?
-            getResolvedLayoutDirection() : super.getResolvedLayoutDirection(who);
-    }
-
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         updateDrawableBounds(w, h);
     }
 
     private void updateDrawableBounds(int w, int h) {
-        // onDraw will translate the canvas so we draw starting at 0,0
-        int right = w - mPaddingRight - mPaddingLeft;
-        int bottom = h - mPaddingBottom - mPaddingTop;
+        // onDraw will translate the canvas so we draw starting at 0,0.
+        // Subtract out padding for the purposes of the calculations below.
+        w -= mPaddingRight + mPaddingLeft;
+        h -= mPaddingTop + mPaddingBottom;
+
+        int right = w;
+        int bottom = h;
         int top = 0;
         int left = 0;
 
@@ -1019,6 +1009,11 @@ public class ProgressBar extends View {
                     }
                 }
             }
+            if (isLayoutRtl() && mMirrorForRtl) {
+                int tempLeft = left;
+                left = w - right;
+                right = w - tempLeft;
+            }
             mIndeterminateDrawable.setBounds(left, top, right, bottom);
         }
         
@@ -1036,7 +1031,12 @@ public class ProgressBar extends View {
             // Translate canvas so a indeterminate circular progress bar with padding
             // rotates properly in its animation
             canvas.save();
-            canvas.translate(mPaddingLeft, mPaddingTop);
+            if(isLayoutRtl() && mMirrorForRtl) {
+                canvas.translate(getWidth() - mPaddingRight, mPaddingTop);
+                canvas.scale(-1.0f, 1.0f);
+            } else {
+                canvas.translate(mPaddingLeft, mPaddingTop);
+            }
             long time = getDrawingTime();
             if (mHasAnimation) {
                 mAnimation.getTransformation(time, mTransformation);

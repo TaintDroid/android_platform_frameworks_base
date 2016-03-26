@@ -24,11 +24,10 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
-import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PatternMatcher;
-import android.os.UserId;
+import android.os.UserHandle;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -54,10 +53,9 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 import com.android.internal.util.XmlUtils;
 
@@ -203,11 +201,14 @@ public class PackageParser {
      */
     public static class PackageLite {
         public final String packageName;
+        public final int versionCode;
         public final int installLocation;
         public final VerifierInfo[] verifiers;
 
-        public PackageLite(String packageName, int installLocation, List<VerifierInfo> verifiers) {
+        public PackageLite(String packageName, int versionCode,
+                int installLocation, List<VerifierInfo> verifiers) {
             this.packageName = packageName;
+            this.versionCode = versionCode;
             this.installLocation = installLocation;
             this.verifiers = verifiers.toArray(new VerifierInfo[verifiers.size()]);
         }
@@ -243,14 +244,15 @@ public class PackageParser {
         return name.endsWith(".apk");
     }
 
+    /*
     public static PackageInfo generatePackageInfo(PackageParser.Package p,
             int gids[], int flags, long firstInstallTime, long lastUpdateTime,
             HashSet<String> grantedPermissions) {
-
+        PackageUserState state = new PackageUserState();
         return generatePackageInfo(p, gids, flags, firstInstallTime, lastUpdateTime,
-                grantedPermissions, false, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-                UserId.getCallingUserId());
+                grantedPermissions, state, UserHandle.getCallingUserId());
     }
+    */
 
     /**
      * Generate and return the {@link PackageInfo} for a parsed package.
@@ -260,24 +262,37 @@ public class PackageParser {
      */
     public static PackageInfo generatePackageInfo(PackageParser.Package p,
             int gids[], int flags, long firstInstallTime, long lastUpdateTime,
-            HashSet<String> grantedPermissions, boolean stopped, int enabledState) {
+            HashSet<String> grantedPermissions, PackageUserState state) {
 
         return generatePackageInfo(p, gids, flags, firstInstallTime, lastUpdateTime,
-                grantedPermissions, stopped, enabledState, UserId.getCallingUserId());
+                grantedPermissions, state, UserHandle.getCallingUserId());
+    }
+
+    private static boolean checkUseInstalled(int flags, PackageUserState state) {
+        return state.installed || ((flags & PackageManager.GET_UNINSTALLED_PACKAGES) != 0);
     }
 
     public static PackageInfo generatePackageInfo(PackageParser.Package p,
             int gids[], int flags, long firstInstallTime, long lastUpdateTime,
-            HashSet<String> grantedPermissions, boolean stopped, int enabledState, int userId) {
+            HashSet<String> grantedPermissions, PackageUserState state, int userId) {
 
+        if (!checkUseInstalled(flags, state)) {
+            return null;
+        }
         PackageInfo pi = new PackageInfo();
         pi.packageName = p.packageName;
         pi.versionCode = p.mVersionCode;
         pi.versionName = p.mVersionName;
         pi.sharedUserId = p.mSharedUserId;
         pi.sharedUserLabel = p.mSharedUserLabel;
-        pi.applicationInfo = generateApplicationInfo(p, flags, stopped, enabledState, userId);
+        pi.applicationInfo = generateApplicationInfo(p, flags, state, userId);
         pi.installLocation = p.installLocation;
+        if ((pi.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM) != 0
+                || (pi.applicationInfo.flags&ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
+            pi.requiredForAllUsers = p.mRequiredForAllUsers;
+        }
+        pi.restrictedAccountType = p.mRestrictedAccountType;
+        pi.requiredAccountType = p.mRequiredAccountType;
         pi.firstInstallTime = firstInstallTime;
         pi.lastUpdateTime = lastUpdateTime;
         if ((flags&PackageManager.GET_GIDS) != 0) {
@@ -312,7 +327,7 @@ public class PackageParser {
                     if (activity.info.enabled
                         || (flags&PackageManager.GET_DISABLED_COMPONENTS) != 0) {
                         pi.activities[j++] = generateActivityInfo(p.activities.get(i), flags,
-                                stopped, enabledState, userId);
+                                state, userId);
                     }
                 }
             }
@@ -334,7 +349,7 @@ public class PackageParser {
                     if (activity.info.enabled
                         || (flags&PackageManager.GET_DISABLED_COMPONENTS) != 0) {
                         pi.receivers[j++] = generateActivityInfo(p.receivers.get(i), flags,
-                                stopped, enabledState, userId);
+                                state, userId);
                     }
                 }
             }
@@ -355,8 +370,8 @@ public class PackageParser {
                     final Service service = p.services.get(i);
                     if (service.info.enabled
                         || (flags&PackageManager.GET_DISABLED_COMPONENTS) != 0) {
-                        pi.services[j++] = generateServiceInfo(p.services.get(i), flags, stopped,
-                                enabledState, userId);
+                        pi.services[j++] = generateServiceInfo(p.services.get(i), flags,
+                                state, userId);
                     }
                 }
             }
@@ -377,8 +392,8 @@ public class PackageParser {
                     final Provider provider = p.providers.get(i);
                     if (provider.info.enabled
                         || (flags&PackageManager.GET_DISABLED_COMPONENTS) != 0) {
-                        pi.providers[j++] = generateProviderInfo(p.providers.get(i), flags, stopped,
-                                enabledState, userId);
+                        pi.providers[j++] = generateProviderInfo(p.providers.get(i), flags,
+                                state, userId);
                     }
                 }
             }
@@ -554,6 +569,28 @@ public class PackageParser {
         return pkg;
     }
 
+    /**
+     * Gathers the {@link ManifestDigest} for {@code pkg} if it exists in the
+     * APK. If it successfully scanned the package and found the
+     * {@code AndroidManifest.xml}, {@code true} is returned.
+     */
+    public boolean collectManifestDigest(Package pkg) {
+        try {
+            final JarFile jarFile = new JarFile(mArchiveSourcePath);
+            try {
+                final ZipEntry je = jarFile.getEntry(ANDROID_MANIFEST_FILENAME);
+                if (je != null) {
+                    pkg.manifestDigest = ManifestDigest.fromInputStream(jarFile.getInputStream(je));
+                }
+            } finally {
+                jarFile.close();
+            }
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public boolean collectCertificates(Package pkg, int flags) {
         pkg.mSignatures = null;
 
@@ -605,7 +642,6 @@ public class PackageParser {
                 }
             } else {
                 Enumeration<JarEntry> entries = jarFile.entries();
-                final Manifest manifest = jarFile.getManifest();
                 while (entries.hasMoreElements()) {
                     final JarEntry je = entries.nextElement();
                     if (je.isDirectory()) continue;
@@ -616,8 +652,8 @@ public class PackageParser {
                         continue;
 
                     if (ANDROID_MANIFEST_FILENAME.equals(name)) {
-                        final Attributes attributes = manifest.getAttributes(name);
-                        pkg.manifestDigest = ManifestDigest.fromAttributes(attributes);
+                        pkg.manifestDigest =
+                                ManifestDigest.fromInputStream(jarFile.getInputStream(je));
                     }
 
                     final Certificate[] localCerts = loadCertificates(jarFile, je, readBuffer);
@@ -840,11 +876,19 @@ public class PackageParser {
             return null;
         }
         int installLocation = PARSE_DEFAULT_INSTALL_LOCATION;
+        int versionCode = 0;
+        int numFound = 0;
         for (int i = 0; i < attrs.getAttributeCount(); i++) {
             String attr = attrs.getAttributeName(i);
             if (attr.equals("installLocation")) {
                 installLocation = attrs.getAttributeIntValue(i,
                         PARSE_DEFAULT_INSTALL_LOCATION);
+                numFound++;
+            } else if (attr.equals("versionCode")) {
+                versionCode = attrs.getAttributeIntValue(i, 0);
+                numFound++;
+            }
+            if (numFound >= 2) {
                 break;
             }
         }
@@ -867,7 +911,7 @@ public class PackageParser {
             }
         }
 
-        return new PackageLite(pkgName.intern(), installLocation, verifiers);
+        return new PackageLite(pkgName.intern(), versionCode, installLocation, verifiers);
     }
 
     /**
@@ -996,26 +1040,9 @@ public class PackageParser {
                     return null;
                 }
             } else if (tagName.equals("uses-permission")) {
-                sa = res.obtainAttributes(attrs,
-                        com.android.internal.R.styleable.AndroidManifestUsesPermission);
-
-                // Note: don't allow this value to be a reference to a resource
-                // that may change.
-                String name = sa.getNonResourceString(
-                        com.android.internal.R.styleable.AndroidManifestUsesPermission_name);
-                /* Not supporting optional permissions yet.
-                boolean required = sa.getBoolean(
-                        com.android.internal.R.styleable.AndroidManifestUsesPermission_required, true);
-                */
-
-                sa.recycle();
-
-                if (name != null && !pkg.requestedPermissions.contains(name)) {
-                    pkg.requestedPermissions.add(name.intern());
-                    pkg.requestedPermissionsRequired.add(Boolean.TRUE);
+                if (!parseUsesPermission(pkg, res, parser, attrs, outError)) {
+                    return null;
                 }
-
-                XmlUtils.skipCurrentTag(parser);
 
             } else if (tagName.equals("uses-configuration")) {
                 ConfigurationInfo cPref = new ConfigurationInfo();
@@ -1360,7 +1387,54 @@ public class PackageParser {
             pkg.applicationInfo.flags |= ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES;
         }
 
+        /*
+         * b/8528162: Ignore the <uses-permission android:required> attribute if
+         * targetSdkVersion < JELLY_BEAN_MR2. There are lots of apps in the wild
+         * which are improperly using this attribute, even though it never worked.
+         */
+        if (pkg.applicationInfo.targetSdkVersion < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            for (int i = 0; i < pkg.requestedPermissionsRequired.size(); i++) {
+                pkg.requestedPermissionsRequired.set(i, Boolean.TRUE);
+            }
+        }
+
         return pkg;
+    }
+
+    private boolean parseUsesPermission(Package pkg, Resources res, XmlResourceParser parser,
+                                        AttributeSet attrs, String[] outError)
+            throws XmlPullParserException, IOException {
+        TypedArray sa = res.obtainAttributes(attrs,
+                com.android.internal.R.styleable.AndroidManifestUsesPermission);
+
+        // Note: don't allow this value to be a reference to a resource
+        // that may change.
+        String name = sa.getNonResourceString(
+                com.android.internal.R.styleable.AndroidManifestUsesPermission_name);
+/*
+        boolean required = sa.getBoolean(
+                com.android.internal.R.styleable.AndroidManifestUsesPermission_required, true);
+*/
+        boolean required = true; // Optional <uses-permission> not supported
+
+        sa.recycle();
+
+        if (name != null) {
+            int index = pkg.requestedPermissions.indexOf(name);
+            if (index == -1) {
+                pkg.requestedPermissions.add(name.intern());
+                pkg.requestedPermissionsRequired.add(required ? Boolean.TRUE : Boolean.FALSE);
+            } else {
+                if (pkg.requestedPermissionsRequired.get(index) != required) {
+                    outError[0] = "conflicting <uses-permission> entries";
+                    mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
+                    return false;
+                }
+            }
+        }
+
+        XmlUtils.skipCurrentTag(parser);
+        return true;
     }
 
     private static String buildClassName(String pkg, CharSequence clsSeq,
@@ -1468,7 +1542,8 @@ public class PackageParser {
         perm.info.descriptionRes = sa.getResourceId(
                 com.android.internal.R.styleable.AndroidManifestPermissionGroup_description,
                 0);
-        perm.info.flags = 0;
+        perm.info.flags = sa.getInt(
+                com.android.internal.R.styleable.AndroidManifestPermissionGroup_permissionGroupFlags, 0);
         perm.info.priority = sa.getInt(
                 com.android.internal.R.styleable.AndroidManifestPermissionGroup_priority, 0);
         if (perm.info.priority > 0 && (flags&PARSE_IS_SYSTEM) == 0) {
@@ -1522,6 +1597,9 @@ public class PackageParser {
         perm.info.protectionLevel = sa.getInt(
                 com.android.internal.R.styleable.AndroidManifestPermission_protectionLevel,
                 PermissionInfo.PROTECTION_NORMAL);
+
+        perm.info.flags = sa.getInt(
+                com.android.internal.R.styleable.AndroidManifestPermission_permissionFlags, 0);
 
         sa.recycle();
 
@@ -1740,6 +1818,24 @@ public class PackageParser {
         }
 
         if (sa.getBoolean(
+                com.android.internal.R.styleable.AndroidManifestApplication_requiredForAllUsers,
+                false)) {
+            owner.mRequiredForAllUsers = true;
+        }
+
+        String restrictedAccountType = sa.getString(com.android.internal.R.styleable
+                .AndroidManifestApplication_restrictedAccountType);
+        if (restrictedAccountType != null && restrictedAccountType.length() > 0) {
+            owner.mRestrictedAccountType = restrictedAccountType;
+        }
+
+        String requiredAccountType = sa.getString(com.android.internal.R.styleable
+                .AndroidManifestApplication_requiredAccountType);
+        if (requiredAccountType != null && requiredAccountType.length() > 0) {
+            owner.mRequiredAccountType = requiredAccountType;
+        }
+
+        if (sa.getBoolean(
                 com.android.internal.R.styleable.AndroidManifestApplication_debuggable,
                 false)) {
             ai.flags |= ApplicationInfo.FLAG_DEBUGGABLE;
@@ -1918,6 +2014,28 @@ public class PackageParser {
                     return false;
                 }
 
+            } else if (tagName.equals("library")) {
+                sa = res.obtainAttributes(attrs,
+                        com.android.internal.R.styleable.AndroidManifestLibrary);
+
+                // Note: don't allow this value to be a reference to a resource
+                // that may change.
+                String lname = sa.getNonResourceString(
+                        com.android.internal.R.styleable.AndroidManifestLibrary_name);
+
+                sa.recycle();
+
+                if (lname != null) {
+                    if (owner.libraryNames == null) {
+                        owner.libraryNames = new ArrayList<String>();
+                    }
+                    if (!owner.libraryNames.contains(lname)) {
+                        owner.libraryNames.add(lname.intern());
+                    }
+                }
+
+                XmlUtils.skipCurrentTag(parser);
+
             } else if (tagName.equals("uses-library")) {
                 sa = res.obtainAttributes(attrs,
                         com.android.internal.R.styleable.AndroidManifestUsesLibrary);
@@ -2040,7 +2158,7 @@ public class PackageParser {
             return null;
         }
 
-        final boolean setExported = sa.hasValue(
+        boolean setExported = sa.hasValue(
                 com.android.internal.R.styleable.AndroidManifestActivity_exported);
         if (setExported) {
             a.info.exported = sa.getBoolean(
@@ -2137,11 +2255,17 @@ public class PackageParser {
         }
 
         if (sa.getBoolean(
+                com.android.internal.R.styleable.AndroidManifestActivity_showOnLockScreen,
+                false)) {
+            a.info.flags |= ActivityInfo.FLAG_SHOW_ON_LOCK_SCREEN;
+        }
+
+        if (sa.getBoolean(
                 com.android.internal.R.styleable.AndroidManifestActivity_immersive,
                 false)) {
             a.info.flags |= ActivityInfo.FLAG_IMMERSIVE;
         }
-        
+
         if (!receiver) {
             if (sa.getBoolean(
                     com.android.internal.R.styleable.AndroidManifestActivity_hardwareAccelerated,
@@ -2164,6 +2288,26 @@ public class PackageParser {
         } else {
             a.info.launchMode = ActivityInfo.LAUNCH_MULTIPLE;
             a.info.configChanges = 0;
+        }
+
+        if (receiver) {
+            if (sa.getBoolean(
+                    com.android.internal.R.styleable.AndroidManifestActivity_singleUser,
+                    false)) {
+                a.info.flags |= ActivityInfo.FLAG_SINGLE_USER;
+                if (a.info.exported) {
+                    Slog.w(TAG, "Activity exported request ignored due to singleUser: "
+                            + a.className + " at " + mArchiveSourcePath + " "
+                            + parser.getPositionDescription());
+                    a.info.exported = false;
+                }
+                setExported = true;
+            }
+            if (sa.getBoolean(
+                    com.android.internal.R.styleable.AndroidManifestActivity_primaryUserOnly,
+                    false)) {
+                a.info.flags |= ActivityInfo.FLAG_PRIMARY_USER_ONLY;
+            }
         }
 
         sa.recycle();
@@ -2428,8 +2572,18 @@ public class PackageParser {
             return null;
         }
 
+        boolean providerExportedDefault = false;
+
+        if (owner.applicationInfo.targetSdkVersion < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            // For compatibility, applications targeting API level 16 or lower
+            // should have their content providers exported by default, unless they
+            // specify otherwise.
+            providerExportedDefault = true;
+        }
+
         p.info.exported = sa.getBoolean(
-                com.android.internal.R.styleable.AndroidManifestProvider_exported, true);
+                com.android.internal.R.styleable.AndroidManifestProvider_exported,
+                providerExportedDefault);
 
         String cpname = sa.getNonConfigurationString(
                 com.android.internal.R.styleable.AndroidManifestProvider_authorities, 0);
@@ -2475,6 +2629,20 @@ public class PackageParser {
                 com.android.internal.R.styleable.AndroidManifestProvider_initOrder,
                 0);
 
+        p.info.flags = 0;
+
+        if (sa.getBoolean(
+                com.android.internal.R.styleable.AndroidManifestProvider_singleUser,
+                false)) {
+            p.info.flags |= ProviderInfo.FLAG_SINGLE_USER;
+            if (p.info.exported) {
+                Slog.w(TAG, "Provider exported request ignored due to singleUser: "
+                        + p.className + " at " + mArchiveSourcePath + " "
+                        + parser.getPositionDescription());
+                p.info.exported = false;
+            }
+        }
+
         sa.recycle();
 
         if ((owner.applicationInfo.flags&ApplicationInfo.FLAG_CANT_SAVE_STATE) != 0) {
@@ -2487,7 +2655,7 @@ public class PackageParser {
         }
         
         if (cpname == null) {
-            outError[0] = "<provider> does not incude authorities attribute";
+            outError[0] = "<provider> does not include authorities attribute";
             return null;
         }
         p.info.authority = cpname.intern();
@@ -2703,7 +2871,7 @@ public class PackageParser {
             return null;
         }
 
-        final boolean setExported = sa.hasValue(
+        boolean setExported = sa.hasValue(
                 com.android.internal.R.styleable.AndroidManifestService_exported);
         if (setExported) {
             s.info.exported = sa.getBoolean(
@@ -2728,6 +2896,18 @@ public class PackageParser {
                 com.android.internal.R.styleable.AndroidManifestService_isolatedProcess,
                 false)) {
             s.info.flags |= ServiceInfo.FLAG_ISOLATED_PROCESS;
+        }
+        if (sa.getBoolean(
+                com.android.internal.R.styleable.AndroidManifestService_singleUser,
+                false)) {
+            s.info.flags |= ServiceInfo.FLAG_SINGLE_USER;
+            if (s.info.exported) {
+                Slog.w(TAG, "Service exported request ignored due to singleUser: "
+                        + s.className + " at " + mArchiveSourcePath + " "
+                        + parser.getPositionDescription());
+                s.info.exported = false;
+            }
+            setExported = true;
         }
 
         sa.recycle();
@@ -3080,6 +3260,7 @@ public class PackageParser {
     }
 
     public final static class Package {
+
         public String packageName;
 
         // For now we only support one application per package.
@@ -3097,7 +3278,8 @@ public class PackageParser {
         public final ArrayList<Boolean> requestedPermissionsRequired = new ArrayList<Boolean>();
 
         public ArrayList<String> protectedBroadcasts;
-        
+
+        public ArrayList<String> libraryNames = null;
         public ArrayList<String> usesLibraries = null;
         public ArrayList<String> usesOptionalLibraries = null;
         public String[] usesLibraryFiles = null;
@@ -3162,6 +3344,15 @@ public class PackageParser {
         public ArrayList<FeatureInfo> reqFeatures = null;
 
         public int installLocation;
+
+        /* An app that's required for all users and cannot be uninstalled for a user */
+        public boolean mRequiredForAllUsers;
+
+        /* The restricted account authenticator type that is used by this application */
+        public String mRestrictedAccountType;
+
+        /* The required account type without which this application will not function */
+        public String mRequiredAccountType;
 
         /**
          * Digest suitable for comparing whether this package's manifest is the
@@ -3407,12 +3598,24 @@ public class PackageParser {
         }
     }
 
-    private static boolean copyNeeded(int flags, Package p, int enabledState, Bundle metaData) {
-        if (enabledState != PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
-            boolean enabled = enabledState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+    private static boolean copyNeeded(int flags, Package p,
+            PackageUserState state, Bundle metaData, int userId) {
+        if (userId != 0) {
+            // We always need to copy for other users, since we need
+            // to fix up the uid.
+            return true;
+        }
+        if (state.enabled != PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
+            boolean enabled = state.enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
             if (p.applicationInfo.enabled != enabled) {
                 return true;
             }
+        }
+        if (!state.installed) {
+            return true;
+        }
+        if (state.stopped) {
+            return true;
         }
         if ((flags & PackageManager.GET_META_DATA) != 0
                 && (metaData != null || p.mAppMetaData != null)) {
@@ -3425,39 +3628,57 @@ public class PackageParser {
         return false;
     }
 
-    public static ApplicationInfo generateApplicationInfo(Package p, int flags, boolean stopped,
-            int enabledState) {
-        return generateApplicationInfo(p, flags, stopped, enabledState, UserId.getCallingUserId());
+    public static ApplicationInfo generateApplicationInfo(Package p, int flags,
+            PackageUserState state) {
+        return generateApplicationInfo(p, flags, state, UserHandle.getCallingUserId());
+    }
+
+    private static void updateApplicationInfo(ApplicationInfo ai, int flags,
+            PackageUserState state) {
+        // CompatibilityMode is global state.
+        if (!sCompatibilityModeEnabled) {
+            ai.disableCompatibilityMode();
+        }
+        if (state.installed) {
+            ai.flags |= ApplicationInfo.FLAG_INSTALLED;
+        } else {
+            ai.flags &= ~ApplicationInfo.FLAG_INSTALLED;
+        }
+        if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+            ai.enabled = true;
+        } else if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+            ai.enabled = (flags&PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS) != 0;
+        } else if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                || state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER) {
+            ai.enabled = false;
+        }
+        ai.enabledSetting = state.enabled;
     }
 
     public static ApplicationInfo generateApplicationInfo(Package p, int flags,
-            boolean stopped, int enabledState, int userId) {
+            PackageUserState state, int userId) {
         if (p == null) return null;
-        if (!copyNeeded(flags, p, enabledState, null) && userId == 0) {
-            // CompatibilityMode is global state. It's safe to modify the instance
-            // of the package.
-            if (!sCompatibilityModeEnabled) {
-                p.applicationInfo.disableCompatibilityMode();
-            }
-            if (stopped) {
-                p.applicationInfo.flags |= ApplicationInfo.FLAG_STOPPED;
-            } else {
-                p.applicationInfo.flags &= ~ApplicationInfo.FLAG_STOPPED;
-            }
-            if (enabledState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-                p.applicationInfo.enabled = true;
-            } else if (enabledState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                    || enabledState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER) {
-                p.applicationInfo.enabled = false;
-            }
-            p.applicationInfo.enabledSetting = enabledState;
+        if (!checkUseInstalled(flags, state)) {
+            return null;
+        }
+        if (!copyNeeded(flags, p, state, null, userId)
+                && ((flags&PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS) == 0
+                        || state.enabled != PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED)) {
+            // In this case it is safe to directly modify the internal ApplicationInfo state:
+            // - CompatibilityMode is global state, so will be the same for every call.
+            // - We only come in to here if the app should reported as installed; this is the
+            // default state, and we will do a copy otherwise.
+            // - The enable state will always be reported the same for the application across
+            // calls; the only exception is for the UNTIL_USED mode, and in that case we will
+            // be doing a copy.
+            updateApplicationInfo(p.applicationInfo, flags, state);
             return p.applicationInfo;
         }
 
         // Make shallow copy so we can store the metadata/libraries safely
         ApplicationInfo ai = new ApplicationInfo(p.applicationInfo);
         if (userId != 0) {
-            ai.uid = UserId.getUid(userId, ai.uid);
+            ai.uid = UserHandle.getUid(userId, ai.uid);
             ai.dataDir = PackageManager.getDataDirForUser(userId, ai.packageName);
         }
         if ((flags & PackageManager.GET_META_DATA) != 0) {
@@ -3466,21 +3687,12 @@ public class PackageParser {
         if ((flags & PackageManager.GET_SHARED_LIBRARY_FILES) != 0) {
             ai.sharedLibraryFiles = p.usesLibraryFiles;
         }
-        if (!sCompatibilityModeEnabled) {
-            ai.disableCompatibilityMode();
-        }
-        if (stopped) {
+        if (state.stopped) {
             ai.flags |= ApplicationInfo.FLAG_STOPPED;
         } else {
             ai.flags &= ~ApplicationInfo.FLAG_STOPPED;
         }
-        if (enabledState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
-            ai.enabled = true;
-        } else if (enabledState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                || enabledState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER) {
-            ai.enabled = false;
-        }
-        ai.enabledSetting = enabledState;
+        updateApplicationInfo(ai, flags, state);
         return ai;
     }
 
@@ -3527,16 +3739,19 @@ public class PackageParser {
         }
     }
 
-    public static final ActivityInfo generateActivityInfo(Activity a, int flags, boolean stopped,
-            int enabledState, int userId) {
+    public static final ActivityInfo generateActivityInfo(Activity a, int flags,
+            PackageUserState state, int userId) {
         if (a == null) return null;
-        if (!copyNeeded(flags, a.owner, enabledState, a.metaData) && userId == 0) {
+        if (!checkUseInstalled(flags, state)) {
+            return null;
+        }
+        if (!copyNeeded(flags, a.owner, state, a.metaData, userId)) {
             return a.info;
         }
         // Make shallow copies so we can store the metadata safely
         ActivityInfo ai = new ActivityInfo(a.info);
         ai.metaData = a.metaData;
-        ai.applicationInfo = generateApplicationInfo(a.owner, flags, stopped, enabledState, userId);
+        ai.applicationInfo = generateApplicationInfo(a.owner, flags, state, userId);
         return ai;
     }
 
@@ -3561,17 +3776,19 @@ public class PackageParser {
         }
     }
 
-    public static final ServiceInfo generateServiceInfo(Service s, int flags, boolean stopped,
-            int enabledState, int userId) {
+    public static final ServiceInfo generateServiceInfo(Service s, int flags,
+            PackageUserState state, int userId) {
         if (s == null) return null;
-        if (!copyNeeded(flags, s.owner, enabledState, s.metaData)
-                && userId == UserId.getUserId(s.info.applicationInfo.uid)) {
+        if (!checkUseInstalled(flags, state)) {
+            return null;
+        }
+        if (!copyNeeded(flags, s.owner, state, s.metaData, userId)) {
             return s.info;
         }
         // Make shallow copies so we can store the metadata safely
         ServiceInfo si = new ServiceInfo(s.info);
         si.metaData = s.metaData;
-        si.applicationInfo = generateApplicationInfo(s.owner, flags, stopped, enabledState, userId);
+        si.applicationInfo = generateApplicationInfo(s.owner, flags, state, userId);
         return si;
     }
 
@@ -3604,13 +3821,15 @@ public class PackageParser {
         }
     }
 
-    public static final ProviderInfo generateProviderInfo(Provider p, int flags, boolean stopped,
-            int enabledState, int userId) {
+    public static final ProviderInfo generateProviderInfo(Provider p, int flags,
+            PackageUserState state, int userId) {
         if (p == null) return null;
-        if (!copyNeeded(flags, p.owner, enabledState, p.metaData)
+        if (!checkUseInstalled(flags, state)) {
+            return null;
+        }
+        if (!copyNeeded(flags, p.owner, state, p.metaData, userId)
                 && ((flags & PackageManager.GET_URI_PERMISSION_PATTERNS) != 0
-                        || p.info.uriPermissionPatterns == null)
-                && userId == 0) {
+                        || p.info.uriPermissionPatterns == null)) {
             return p.info;
         }
         // Make shallow copies so we can store the metadata safely
@@ -3619,7 +3838,7 @@ public class PackageParser {
         if ((flags & PackageManager.GET_URI_PERMISSION_PATTERNS) == 0) {
             pi.uriPermissionPatterns = null;
         }
-        pi.applicationInfo = generateApplicationInfo(p.owner, flags, stopped, enabledState, userId);
+        pi.applicationInfo = generateApplicationInfo(p.owner, flags, state, userId);
         return pi;
     }
 

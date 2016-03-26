@@ -101,36 +101,88 @@ public class Handler {
     }
 
     /**
-     * Default constructor associates this handler with the queue for the
+     * Default constructor associates this handler with the {@link Looper} for the
      * current thread.
      *
-     * If there isn't one, this handler won't be able to receive messages.
+     * If this thread does not have a looper, this handler won't be able to receive messages
+     * so an exception is thrown.
      */
     public Handler() {
-        if (FIND_POTENTIAL_LEAKS) {
-            final Class<? extends Handler> klass = getClass();
-            if ((klass.isAnonymousClass() || klass.isMemberClass() || klass.isLocalClass()) &&
-                    (klass.getModifiers() & Modifier.STATIC) == 0) {
-                Log.w(TAG, "The following Handler class should be static or leaks might occur: " +
-                    klass.getCanonicalName());
-            }
-        }
-
-        mLooper = Looper.myLooper();
-        if (mLooper == null) {
-            throw new RuntimeException(
-                "Can't create handler inside thread that has not called Looper.prepare()");
-        }
-        mQueue = mLooper.mQueue;
-        mCallback = null;
+        this(null, false);
     }
 
     /**
-     * Constructor associates this handler with the queue for the
+     * Constructor associates this handler with the {@link Looper} for the
      * current thread and takes a callback interface in which you can handle
      * messages.
+     *
+     * If this thread does not have a looper, this handler won't be able to receive messages
+     * so an exception is thrown.
+     *
+     * @param callback The callback interface in which to handle messages, or null.
      */
     public Handler(Callback callback) {
+        this(callback, false);
+    }
+
+    /**
+     * Use the provided {@link Looper} instead of the default one.
+     *
+     * @param looper The looper, must not be null.
+     */
+    public Handler(Looper looper) {
+        this(looper, null, false);
+    }
+
+    /**
+     * Use the provided {@link Looper} instead of the default one and take a callback
+     * interface in which to handle messages.
+     *
+     * @param looper The looper, must not be null.
+     * @param callback The callback interface in which to handle messages, or null.
+     */
+    public Handler(Looper looper, Callback callback) {
+        this(looper, callback, false);
+    }
+
+    /**
+     * Use the {@link Looper} for the current thread
+     * and set whether the handler should be asynchronous.
+     *
+     * Handlers are synchronous by default unless this constructor is used to make
+     * one that is strictly asynchronous.
+     *
+     * Asynchronous messages represent interrupts or events that do not require global ordering
+     * with represent to synchronous messages.  Asynchronous messages are not subject to
+     * the synchronization barriers introduced by {@link MessageQueue#enqueueSyncBarrier(long)}.
+     *
+     * @param async If true, the handler calls {@link Message#setAsynchronous(boolean)} for
+     * each {@link Message} that is sent to it or {@link Runnable} that is posted to it.
+     *
+     * @hide
+     */
+    public Handler(boolean async) {
+        this(null, async);
+    }
+
+    /**
+     * Use the {@link Looper} for the current thread with the specified callback interface
+     * and set whether the handler should be asynchronous.
+     *
+     * Handlers are synchronous by default unless this constructor is used to make
+     * one that is strictly asynchronous.
+     *
+     * Asynchronous messages represent interrupts or events that do not require global ordering
+     * with represent to synchronous messages.  Asynchronous messages are not subject to
+     * the synchronization barriers introduced by {@link MessageQueue#enqueueSyncBarrier(long)}.
+     *
+     * @param callback The callback interface in which to handle messages, or null.
+     * @param async If true, the handler calls {@link Message#setAsynchronous(boolean)} for
+     * each {@link Message} that is sent to it or {@link Runnable} that is posted to it.
+     *
+     * @hide
+     */
+    public Handler(Callback callback, boolean async) {
         if (FIND_POTENTIAL_LEAKS) {
             final Class<? extends Handler> klass = getClass();
             if ((klass.isAnonymousClass() || klass.isMemberClass() || klass.isLocalClass()) &&
@@ -147,25 +199,33 @@ public class Handler {
         }
         mQueue = mLooper.mQueue;
         mCallback = callback;
+        mAsynchronous = async;
     }
 
     /**
-     * Use the provided queue instead of the default one.
+     * Use the provided {@link Looper} instead of the default one and take a callback
+     * interface in which to handle messages.  Also set whether the handler
+     * should be asynchronous.
+     *
+     * Handlers are synchronous by default unless this constructor is used to make
+     * one that is strictly asynchronous.
+     *
+     * Asynchronous messages represent interrupts or events that do not require global ordering
+     * with represent to synchronous messages.  Asynchronous messages are not subject to
+     * the synchronization barriers introduced by {@link MessageQueue#enqueueSyncBarrier(long)}.
+     *
+     * @param looper The looper, must not be null.
+     * @param callback The callback interface in which to handle messages, or null.
+     * @param async If true, the handler calls {@link Message#setAsynchronous(boolean)} for
+     * each {@link Message} that is sent to it or {@link Runnable} that is posted to it.
+     *
+     * @hide
      */
-    public Handler(Looper looper) {
-        mLooper = looper;
-        mQueue = looper.mQueue;
-        mCallback = null;
-    }
-
-    /**
-     * Use the provided queue instead of the default one and take a callback
-     * interface in which to handle messages.
-     */
-    public Handler(Looper looper, Callback callback) {
+    public Handler(Looper looper, Callback callback, boolean async) {
         mLooper = looper;
         mQueue = looper.mQueue;
         mCallback = callback;
+        mAsynchronous = async;
     }
 
     /**
@@ -352,6 +412,63 @@ public class Handler {
     }
 
     /**
+     * Runs the specified task synchronously.
+     * <p>
+     * If the current thread is the same as the handler thread, then the runnable
+     * runs immediately without being enqueued.  Otherwise, posts the runnable
+     * to the handler and waits for it to complete before returning.
+     * </p><p>
+     * This method is dangerous!  Improper use can result in deadlocks.
+     * Never call this method while any locks are held or use it in a
+     * possibly re-entrant manner.
+     * </p><p>
+     * This method is occasionally useful in situations where a background thread
+     * must synchronously await completion of a task that must run on the
+     * handler's thread.  However, this problem is often a symptom of bad design.
+     * Consider improving the design (if possible) before resorting to this method.
+     * </p><p>
+     * One example of where you might want to use this method is when you just
+     * set up a Handler thread and need to perform some initialization steps on
+     * it before continuing execution.
+     * </p><p>
+     * If timeout occurs then this method returns <code>false</code> but the runnable
+     * will remain posted on the handler and may already be in progress or
+     * complete at a later time.
+     * </p><p>
+     * When using this method, be sure to use {@link Looper#quitSafely} when
+     * quitting the looper.  Otherwise {@link #runWithScissors} may hang indefinitely.
+     * (TODO: We should fix this by making MessageQueue aware of blocking runnables.)
+     * </p>
+     *
+     * @param r The Runnable that will be executed synchronously.
+     * @param timeout The timeout in milliseconds, or 0 to wait indefinitely.
+     *
+     * @return Returns true if the Runnable was successfully executed.
+     *         Returns false on failure, usually because the
+     *         looper processing the message queue is exiting.
+     *
+     * @hide This method is prone to abuse and should probably not be in the API.
+     * If we ever do make it part of the API, we might want to rename it to something
+     * less funny like runUnsafe().
+     */
+    public final boolean runWithScissors(final Runnable r, long timeout) {
+        if (r == null) {
+            throw new IllegalArgumentException("runnable must not be null");
+        }
+        if (timeout < 0) {
+            throw new IllegalArgumentException("timeout must be non-negative");
+        }
+
+        if (Looper.myLooper() == mLooper) {
+            r.run();
+            return true;
+        }
+
+        BlockingRunnable br = new BlockingRunnable(r);
+        return br.postAndWait(this, timeout);
+    }
+
+    /**
      * Remove any pending posts of Runnable r that are in the message queue.
      */
     public final void removeCallbacks(Runnable r)
@@ -464,20 +581,15 @@ public class Handler {
      *         the looper is quit before the delivery time of the message
      *         occurs then the message will be dropped.
      */
-    public boolean sendMessageAtTime(Message msg, long uptimeMillis)
-    {
-        boolean sent = false;
+    public boolean sendMessageAtTime(Message msg, long uptimeMillis) {
         MessageQueue queue = mQueue;
-        if (queue != null) {
-            msg.target = this;
-            sent = queue.enqueueMessage(msg, uptimeMillis);
-        }
-        else {
+        if (queue == null) {
             RuntimeException e = new RuntimeException(
-                this + " sendMessageAtTime() called with no mQueue");
+                    this + " sendMessageAtTime() called with no mQueue");
             Log.w("Looper", e.getMessage(), e);
+            return false;
         }
-        return sent;
+        return enqueueMessage(queue, msg, uptimeMillis);
     }
 
     /**
@@ -492,20 +604,23 @@ public class Handler {
      *         message queue.  Returns false on failure, usually because the
      *         looper processing the message queue is exiting.
      */
-    public final boolean sendMessageAtFrontOfQueue(Message msg)
-    {
-        boolean sent = false;
+    public final boolean sendMessageAtFrontOfQueue(Message msg) {
         MessageQueue queue = mQueue;
-        if (queue != null) {
-            msg.target = this;
-            sent = queue.enqueueMessage(msg, 0);
-        }
-        else {
+        if (queue == null) {
             RuntimeException e = new RuntimeException(
                 this + " sendMessageAtTime() called with no mQueue");
             Log.w("Looper", e.getMessage(), e);
+            return false;
         }
-        return sent;
+        return enqueueMessage(queue, msg, 0);
+    }
+
+    private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMillis) {
+        msg.target = this;
+        if (mAsynchronous) {
+            msg.setAsynchronous(true);
+        }
+        return queue.enqueueMessage(msg, uptimeMillis);
     }
 
     /**
@@ -618,5 +733,57 @@ public class Handler {
     final MessageQueue mQueue;
     final Looper mLooper;
     final Callback mCallback;
+    final boolean mAsynchronous;
     IMessenger mMessenger;
+
+    private static final class BlockingRunnable implements Runnable {
+        private final Runnable mTask;
+        private boolean mDone;
+
+        public BlockingRunnable(Runnable task) {
+            mTask = task;
+        }
+
+        @Override
+        public void run() {
+            try {
+                mTask.run();
+            } finally {
+                synchronized (this) {
+                    mDone = true;
+                    notifyAll();
+                }
+            }
+        }
+
+        public boolean postAndWait(Handler handler, long timeout) {
+            if (!handler.post(this)) {
+                return false;
+            }
+
+            synchronized (this) {
+                if (timeout > 0) {
+                    final long expirationTime = SystemClock.uptimeMillis() + timeout;
+                    while (!mDone) {
+                        long delay = expirationTime - SystemClock.uptimeMillis();
+                        if (delay <= 0) {
+                            return false; // timeout
+                        }
+                        try {
+                            wait(delay);
+                        } catch (InterruptedException ex) {
+                        }
+                    }
+                } else {
+                    while (!mDone) {
+                        try {
+                            wait();
+                        } catch (InterruptedException ex) {
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+    }
 }

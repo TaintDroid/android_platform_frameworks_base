@@ -217,16 +217,19 @@ public class ShapeDrawable extends Drawable {
         int prevAlpha = paint.getAlpha();
         paint.setAlpha(modulateAlpha(prevAlpha, mShapeState.mAlpha));
 
-        if (mShapeState.mShape != null) {
-            // need the save both for the translate, and for the (unknown) Shape
-            int count = canvas.save();
-            canvas.translate(r.left, r.top);
-            onDraw(mShapeState.mShape, canvas, paint);
-            canvas.restoreToCount(count);
-        } else {
-            canvas.drawRect(r, paint);
+        // only draw shape if it may affect output
+        if (paint.getAlpha() != 0 || paint.getXfermode() != null || paint.hasShadow) {
+            if (mShapeState.mShape != null) {
+                // need the save both for the translate, and for the (unknown) Shape
+                int count = canvas.save();
+                canvas.translate(r.left, r.top);
+                onDraw(mShapeState.mShape, canvas, paint);
+                canvas.restoreToCount(count);
+            } else {
+                canvas.drawRect(r, paint);
+            }
         }
-        
+
         // restore
         paint.setAlpha(prevAlpha);
     }
@@ -373,8 +376,16 @@ public class ShapeDrawable extends Drawable {
     @Override
     public Drawable mutate() {
         if (!mMutated && super.mutate() == this) {
-            mShapeState.mPaint = new Paint(mShapeState.mPaint);
-            mShapeState.mPadding = new Rect(mShapeState.mPadding);
+            if (mShapeState.mPaint != null) {
+                mShapeState.mPaint = new Paint(mShapeState.mPaint);
+            } else {
+                mShapeState.mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            }
+            if (mShapeState.mPadding != null) {
+                mShapeState.mPadding = new Rect(mShapeState.mPadding);
+            } else {
+                mShapeState.mPadding = new Rect();
+            }
             try {
                 mShapeState.mShape = mShapeState.mShape.clone();
             } catch (CloneNotSupportedException e) {

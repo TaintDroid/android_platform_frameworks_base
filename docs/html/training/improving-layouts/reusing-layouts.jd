@@ -25,12 +25,9 @@ next.link=loading-ondemand.html
 <!-- other docs (NOT javadocs) -->
 <h2>You should also read</h2>
 <ul>
-  <li><a href="{@docRoot}resources/articles/layout-tricks-reuse.html">Creating Reusable UI
-Components</a></li>
-  <li><a href="{@docRoot}resources/articles/layout-tricks-merge.html">Merging Layouts</a></li>
   <li><a
 href="{@docRoot}guide/topics/resources/layout-resource.html#include-element">Layout
-Resource</a></li>
+Resources</a></li>
 </ul>
 
 </div>
@@ -112,6 +109,10 @@ example:</p>
          layout=”@layout/title”/>
 </pre>
 
+<p>However, if you want to override layout attributes using
+the <code>&lt;include&gt;</code> tag, you must override both
+<code>android:layout_height</code> and <code>android:layout_width</code> in order for
+other layout attributes to take effect.</p>
 
 
 <h2 id="Merge">Use the &lt;merge&gt; Tag</h2>

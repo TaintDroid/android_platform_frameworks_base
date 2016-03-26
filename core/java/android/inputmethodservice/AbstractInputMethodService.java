@@ -126,11 +126,12 @@ public abstract class AbstractInputMethodService extends Service
             mRevoked = true;
             mEnabled = false;
         }
-        
+
         /**
          * Take care of dispatching incoming key events to the appropriate
          * callbacks on the service, and tell the client when this is done.
          */
+        @Override
         public void dispatchKeyEvent(int seq, KeyEvent event, EventCallback callback) {
             boolean handled = event.dispatch(AbstractInputMethodService.this,
                     mDispatcherState, this);
@@ -143,8 +144,21 @@ public abstract class AbstractInputMethodService extends Service
          * Take care of dispatching incoming trackball events to the appropriate
          * callbacks on the service, and tell the client when this is done.
          */
+        @Override
         public void dispatchTrackballEvent(int seq, MotionEvent event, EventCallback callback) {
             boolean handled = onTrackballEvent(event);
+            if (callback != null) {
+                callback.finishedEvent(seq, handled);
+            }
+        }
+
+        /**
+         * Take care of dispatching incoming generic motion events to the appropriate
+         * callbacks on the service, and tell the client when this is done.
+         */
+        @Override
+        public void dispatchGenericMotionEvent(int seq, MotionEvent event, EventCallback callback) {
+            boolean handled = onGenericMotionEvent(event);
             if (callback != null) {
                 callback.finishedEvent(seq, handled);
             }
@@ -189,7 +203,25 @@ public abstract class AbstractInputMethodService extends Service
         return new IInputMethodWrapper(this, mInputMethod);
     }
     
+    /**
+     * Implement this to handle trackball events on your input method.
+     *
+     * @param event The motion event being received.
+     * @return True if the event was handled in this function, false otherwise.
+     * @see View#onTrackballEvent
+     */
     public boolean onTrackballEvent(MotionEvent event) {
+        return false;
+    }
+
+    /**
+     * Implement this to handle generic motion events on your input method.
+     *
+     * @param event The motion event being received.
+     * @return True if the event was handled in this function, false otherwise.
+     * @see View#onGenericMotionEvent
+     */
+    public boolean onGenericMotionEvent(MotionEvent event) {
         return false;
     }
 }

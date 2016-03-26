@@ -16,151 +16,80 @@
 
 package com.android.systemui.statusbar.phone;
 
+import android.app.ActivityManager;
+import android.app.StatusBarManager;
 import android.content.Context;
-import android.content.res.Configuration;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.os.SystemClock;
+import android.content.res.Resources;
+import android.content.res.Resources.NotFoundException;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
+import android.util.EventLog;
+import android.util.Slog;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.FrameLayout;
 
+import com.android.systemui.EventLogTags;
 import com.android.systemui.R;
-import com.android.systemui.statusbar.BaseStatusBar;
-import com.android.systemui.statusbar.policy.FixedSizeDrawable;
 
-public class PhoneStatusBarView extends FrameLayout {
+public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
+    private static final boolean DEBUG = PhoneStatusBar.DEBUG;
+    private static final boolean DEBUG_GESTURES = true;
 
-    static final int DIM_ANIM_TIME = 400;
-    
-    PhoneStatusBar mService;
-    boolean mTracking;
-    int mStartX, mStartY;
-    ViewGroup mNotificationIcons;
-    ViewGroup mStatusIcons;
-    
-    boolean mNightMode = false;
-    int mStartAlpha = 0, mEndAlpha = 0;
-    long mEndTime = 0;
+    PhoneStatusBar mBar;
+    int mScrimColor;
+    float mSettingsPanelDragzoneFrac;
+    float mSettingsPanelDragzoneMin;
 
-    Rect mButtonBounds = new Rect();
-    boolean mCapturingEvents = true;
+    boolean mFullWidthNotifications;
+    PanelView mFadingPanel = null;
+    PanelView mLastFullyOpenedPanel = null;
+    PanelView mNotificationPanel, mSettingsPanel;
+    private boolean mShouldFade;
 
     public PhoneStatusBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        Resources res = getContext().getResources();
+        mScrimColor = res.getColor(R.color.notification_panel_scrim_color);
+        mSettingsPanelDragzoneMin = res.getDimension(R.dimen.settings_panel_dragzone_min);
+        try {
+            mSettingsPanelDragzoneFrac = res.getFraction(R.dimen.settings_panel_dragzone_fraction, 1, 1);
+        } catch (NotFoundException ex) {
+            mSettingsPanelDragzoneFrac = 0f;
+        }
+        mFullWidthNotifications = mSettingsPanelDragzoneFrac <= 0f;
+    }
+
+    public void setBar(PhoneStatusBar bar) {
+        mBar = bar;
+    }
+
+    public boolean hasFullWidthNotifications() {
+        return mFullWidthNotifications;
     }
 
     @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        mNotificationIcons = (ViewGroup)findViewById(R.id.notificationIcons);
-        mStatusIcons = (ViewGroup)findViewById(R.id.statusIcons);
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        //mService.onBarViewAttached();
-    }
-    
-    @Override
-    protected void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mService.updateDisplaySize();
-        boolean nightMode = (newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK)
-                == Configuration.UI_MODE_NIGHT_YES;
-        if (mNightMode != nightMode) {
-            mNightMode = nightMode;
-            mStartAlpha = getCurAlpha();
-            mEndAlpha = mNightMode ? 0x80 : 0x00;
-            mEndTime = SystemClock.uptimeMillis() + DIM_ANIM_TIME;
-            invalidate();
+    public void onAttachedToWindow() {
+        for (PanelView pv : mPanels) {
+            pv.setRubberbandingEnabled(!mFullWidthNotifications);
         }
     }
 
-    int getCurAlpha() {
-        long time = SystemClock.uptimeMillis();
-        if (time > mEndTime) {
-            return mEndAlpha;
-        }
-        return mEndAlpha
-                - (int)(((mEndAlpha-mStartAlpha) * (mEndTime-time) / DIM_ANIM_TIME));
-    }
-    
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        mService.updateExpandedViewPos(BaseStatusBar.EXPANDED_LEAVE_ALONE);
+    public void addPanel(PanelView pv) {
+        super.addPanel(pv);
+        if (pv.getId() == R.id.notification_panel) {
+            mNotificationPanel = pv;
+        } else if (pv.getId() == R.id.settings_panel){
+            mSettingsPanel = pv;
+        }
+        pv.setRubberbandingEnabled(!mFullWidthNotifications);
     }
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-    }
-
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        super.dispatchDraw(canvas);
-        int alpha = getCurAlpha();
-        if (alpha != 0) {
-            canvas.drawARGB(alpha, 0, 0, 0);
-        }
-        if (alpha != mEndAlpha) {
-            invalidate();
-        }
-    }
-
-    /**
-     * Gets the left position of v in this view.  Throws if v is not
-     * a child of this.
-     */
-    private int getViewOffset(View v) {
-        int offset = 0;
-        while (v != this) {
-            offset += v.getLeft();
-            ViewParent p = v.getParent();
-            if (v instanceof View) {
-                v = (View)p;
-            } else {
-                throw new RuntimeException(v + " is not a child of " + this);
-            }
-        }
-        return offset;
-    }
-
-    /**
-     * Ensure that, if there is no target under us to receive the touch,
-     * that we process it ourself.  This makes sure that onInterceptTouchEvent()
-     * is always called for the entire gesture.
-     */
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!mCapturingEvents) {
-            return false;
-        }
-        if (event.getAction() != MotionEvent.ACTION_DOWN) {
-            mService.interceptTouchEvent(event);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (mButtonBounds.contains((int)event.getX(), (int)event.getY())) {
-                mCapturingEvents = false;
-                return false;
-            }
-        }
-        mCapturingEvents = true;
-        return mService.interceptTouchEvent(event)
-                ? true : super.onInterceptTouchEvent(event);
+    public boolean panelsEnabled() {
+        return ((mBar.mDisabled & StatusBarManager.DISABLE_EXPAND) == 0);
     }
 
     @Override
@@ -176,5 +105,137 @@ public class PhoneStatusBarView extends FrameLayout {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public PanelView selectPanelForTouch(MotionEvent touch) {
+        final float x = touch.getX();
+        final boolean isLayoutRtl = isLayoutRtl();
+
+        if (mFullWidthNotifications) {
+            // No double swiping. If either panel is open, nothing else can be pulled down.
+            return ((mSettingsPanel == null ? 0 : mSettingsPanel.getExpandedHeight()) 
+                        + mNotificationPanel.getExpandedHeight() > 0) 
+                    ? null 
+                    : mNotificationPanel;
+        }
+
+        // We split the status bar into thirds: the left 2/3 are for notifications, and the
+        // right 1/3 for quick settings. If you pull the status bar down a second time you'll
+        // toggle panels no matter where you pull it down.
+
+        final float w = getMeasuredWidth();
+        float region = (w * mSettingsPanelDragzoneFrac);
+
+        if (DEBUG) {
+            Slog.v(TAG, String.format(
+                "w=%.1f frac=%.3f region=%.1f min=%.1f x=%.1f w-x=%.1f",
+                w, mSettingsPanelDragzoneFrac, region, mSettingsPanelDragzoneMin, x, (w-x)));
+        }
+
+        if (region < mSettingsPanelDragzoneMin) region = mSettingsPanelDragzoneMin;
+
+        final boolean showSettings = isLayoutRtl ? (x < region) : (w - region < x);
+        return showSettings ? mSettingsPanel : mNotificationPanel;
+    }
+
+    @Override
+    public void onPanelPeeked() {
+        super.onPanelPeeked();
+        mBar.makeExpandedVisible(true);
+    }
+
+    @Override
+    public void startOpeningPanel(PanelView panel) {
+        super.startOpeningPanel(panel);
+        // we only want to start fading if this is the "first" or "last" panel,
+        // which is kind of tricky to determine
+        mShouldFade = (mFadingPanel == null || mFadingPanel.isFullyExpanded());
+        if (DEBUG) {
+            Slog.v(TAG, "start opening: " + panel + " shouldfade=" + mShouldFade);
+        }
+        mFadingPanel = panel;
+    }
+
+    @Override
+    public void onAllPanelsCollapsed() {
+        super.onAllPanelsCollapsed();
+        // give animations time to settle
+        mBar.makeExpandedInvisibleSoon();
+        mFadingPanel = null;
+        mLastFullyOpenedPanel = null;
+    }
+
+    @Override
+    public void onPanelFullyOpened(PanelView openPanel) {
+        super.onPanelFullyOpened(openPanel);
+        if (openPanel != mLastFullyOpenedPanel) {
+            openPanel.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
+        }
+        mFadingPanel = openPanel;
+        mLastFullyOpenedPanel = openPanel;
+        mShouldFade = true; // now you own the fade, mister
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean barConsumedEvent = mBar.interceptTouchEvent(event);
+
+        if (DEBUG_GESTURES) {
+            if (event.getActionMasked() != MotionEvent.ACTION_MOVE) {
+                EventLog.writeEvent(EventLogTags.SYSUI_PANELBAR_TOUCH,
+                        event.getActionMasked(), (int) event.getX(), (int) event.getY(),
+                        barConsumedEvent ? 1 : 0);
+            }
+        }
+
+        return barConsumedEvent || super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        return mBar.interceptTouchEvent(event) || super.onInterceptTouchEvent(event);
+    }
+
+    @Override
+    public void panelExpansionChanged(PanelView panel, float frac) {
+        super.panelExpansionChanged(panel, frac);
+
+        if (DEBUG) {
+            Slog.v(TAG, "panelExpansionChanged: f=" + frac);
+        }
+
+        if (panel == mFadingPanel && mScrimColor != 0 && ActivityManager.isHighEndGfx()) {
+            if (mShouldFade) {
+                frac = mPanelExpandedFractionSum; // don't judge me
+                // let's start this 20% of the way down the screen
+                frac = frac * 1.2f - 0.2f;
+                if (frac <= 0) {
+                    mBar.mStatusBarWindow.setBackgroundColor(0);
+                } else {
+                    // woo, special effects
+                    final float k = (float)(1f-0.5f*(1f-Math.cos(3.14159f * Math.pow(1f-frac, 2f))));
+                    // attenuate background color alpha by k
+                    final int color = (int) ((mScrimColor >>> 24) * k) << 24 | (mScrimColor & 0xFFFFFF);
+                    mBar.mStatusBarWindow.setBackgroundColor(color);
+                }
+            }
+        }
+
+        // fade out the panel as it gets buried into the status bar to avoid overdrawing the
+        // status bar on the last frame of a close animation
+        final int H = mBar.getStatusBarHeight();
+        final float ph = panel.getExpandedHeight() + panel.getPaddingBottom();
+        float alpha = 1f;
+        if (ph < 2*H) {
+            if (ph < H) alpha = 0f;
+            else alpha = (ph - H) / H;
+            alpha = alpha * alpha; // get there faster
+        }
+        if (panel.getAlpha() != alpha) {
+            panel.setAlpha(alpha);
+        }
+
+        mBar.updateCarrierLabelVisibility(false);
     }
 }

@@ -38,7 +38,7 @@ void ResourceCache::logCache() {
 
 ResourceCache::ResourceCache() {
     Mutex::Autolock _l(mLock);
-    mCache = new KeyedVector<void *, ResourceReference *>();
+    mCache = new KeyedVector<void*, ResourceReference*>();
 }
 
 ResourceCache::~ResourceCache() {
@@ -46,14 +46,17 @@ ResourceCache::~ResourceCache() {
     delete mCache;
 }
 
+void ResourceCache::lock() {
+    mLock.lock();
+}
+
+void ResourceCache::unlock() {
+    mLock.unlock();
+}
+
 void ResourceCache::incrementRefcount(void* resource, ResourceType resourceType) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
-    if (ref == NULL || mCache->size() == 0) {
-        ref = new ResourceReference(resourceType);
-        mCache->add(resource, ref);
-    }
-    ref->refCount++;
+    incrementRefcountLocked(resource, resourceType);
 }
 
 void ResourceCache::incrementRefcount(SkBitmap* bitmapResource) {
@@ -76,17 +79,47 @@ void ResourceCache::incrementRefcount(SkiaColorFilter* filterResource) {
     incrementRefcount((void*) filterResource, kColorFilter);
 }
 
+void ResourceCache::incrementRefcount(Layer* layerResource) {
+    incrementRefcount((void*) layerResource, kLayer);
+}
+
+void ResourceCache::incrementRefcountLocked(void* resource, ResourceType resourceType) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
+    if (ref == NULL || mCache->size() == 0) {
+        ref = new ResourceReference(resourceType);
+        mCache->add(resource, ref);
+    }
+    ref->refCount++;
+}
+
+void ResourceCache::incrementRefcountLocked(SkBitmap* bitmapResource) {
+    SkSafeRef(bitmapResource->pixelRef());
+    SkSafeRef(bitmapResource->getColorTable());
+    incrementRefcountLocked((void*) bitmapResource, kBitmap);
+}
+
+void ResourceCache::incrementRefcountLocked(SkPath* pathResource) {
+    incrementRefcountLocked((void*) pathResource, kPath);
+}
+
+void ResourceCache::incrementRefcountLocked(SkiaShader* shaderResource) {
+    SkSafeRef(shaderResource->getSkShader());
+    incrementRefcountLocked((void*) shaderResource, kShader);
+}
+
+void ResourceCache::incrementRefcountLocked(SkiaColorFilter* filterResource) {
+    SkSafeRef(filterResource->getSkColorFilter());
+    incrementRefcountLocked((void*) filterResource, kColorFilter);
+}
+
+void ResourceCache::incrementRefcountLocked(Layer* layerResource) {
+    incrementRefcountLocked((void*) layerResource, kLayer);
+}
+
 void ResourceCache::decrementRefcount(void* resource) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
-    if (ref == NULL) {
-        // Should not get here - shouldn't get a call to decrement if we're not yet tracking it
-        return;
-    }
-    ref->refCount--;
-    if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
-    }
+    decrementRefcountLocked(resource);
 }
 
 void ResourceCache::decrementRefcount(SkBitmap* bitmapResource) {
@@ -109,27 +142,55 @@ void ResourceCache::decrementRefcount(SkiaColorFilter* filterResource) {
     decrementRefcount((void*) filterResource);
 }
 
-void ResourceCache::recycle(SkBitmap* resource) {
-    Mutex::Autolock _l(mLock);
-    if (mCache->indexOfKey(resource) < 0) {
-        // not tracking this resource; just recycle the pixel data
-        resource->setPixels(NULL, NULL);
-        return;
-    }
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
+void ResourceCache::decrementRefcount(Layer* layerResource) {
+    decrementRefcount((void*) layerResource);
+}
+
+void ResourceCache::decrementRefcountLocked(void* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
     if (ref == NULL) {
-        // Should not get here - shouldn't get a call to recycle if we're not yet tracking it
+        // Should not get here - shouldn't get a call to decrement if we're not yet tracking it
         return;
     }
-    ref->recycled = true;
+    ref->refCount--;
     if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
+        deleteResourceReferenceLocked(resource, ref);
     }
+}
+
+void ResourceCache::decrementRefcountLocked(SkBitmap* bitmapResource) {
+    SkSafeUnref(bitmapResource->pixelRef());
+    SkSafeUnref(bitmapResource->getColorTable());
+    decrementRefcountLocked((void*) bitmapResource);
+}
+
+void ResourceCache::decrementRefcountLocked(SkPath* pathResource) {
+    decrementRefcountLocked((void*) pathResource);
+}
+
+void ResourceCache::decrementRefcountLocked(SkiaShader* shaderResource) {
+    SkSafeUnref(shaderResource->getSkShader());
+    decrementRefcountLocked((void*) shaderResource);
+}
+
+void ResourceCache::decrementRefcountLocked(SkiaColorFilter* filterResource) {
+    SkSafeUnref(filterResource->getSkColorFilter());
+    decrementRefcountLocked((void*) filterResource);
+}
+
+void ResourceCache::decrementRefcountLocked(Layer* layerResource) {
+    decrementRefcountLocked((void*) layerResource);
 }
 
 void ResourceCache::destructor(SkPath* resource) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
+    destructorLocked(resource);
+}
+
+void ResourceCache::destructorLocked(SkPath* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
     if (ref == NULL) {
         // If we're not tracking this resource, just delete it
         if (Caches::hasInstance()) {
@@ -140,13 +201,18 @@ void ResourceCache::destructor(SkPath* resource) {
     }
     ref->destroyed = true;
     if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
+        deleteResourceReferenceLocked(resource, ref);
     }
 }
 
 void ResourceCache::destructor(SkBitmap* resource) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
+    destructorLocked(resource);
+}
+
+void ResourceCache::destructorLocked(SkBitmap* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
     if (ref == NULL) {
         // If we're not tracking this resource, just delete it
         if (Caches::hasInstance()) {
@@ -157,13 +223,18 @@ void ResourceCache::destructor(SkBitmap* resource) {
     }
     ref->destroyed = true;
     if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
+        deleteResourceReferenceLocked(resource, ref);
     }
 }
 
 void ResourceCache::destructor(SkiaShader* resource) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
+    destructorLocked(resource);
+}
+
+void ResourceCache::destructorLocked(SkiaShader* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
     if (ref == NULL) {
         // If we're not tracking this resource, just delete it
         delete resource;
@@ -171,13 +242,18 @@ void ResourceCache::destructor(SkiaShader* resource) {
     }
     ref->destroyed = true;
     if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
+        deleteResourceReferenceLocked(resource, ref);
     }
 }
 
 void ResourceCache::destructor(SkiaColorFilter* resource) {
     Mutex::Autolock _l(mLock);
-    ResourceReference* ref = mCache->indexOfKey(resource) >= 0 ? mCache->valueFor(resource) : NULL;
+    destructorLocked(resource);
+}
+
+void ResourceCache::destructorLocked(SkiaColorFilter* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    ResourceReference* ref = index >= 0 ? mCache->valueAt(index) : NULL;
     if (ref == NULL) {
         // If we're not tracking this resource, just delete it
         delete resource;
@@ -185,19 +261,53 @@ void ResourceCache::destructor(SkiaColorFilter* resource) {
     }
     ref->destroyed = true;
     if (ref->refCount == 0) {
-        deleteResourceReference(resource, ref);
+        deleteResourceReferenceLocked(resource, ref);
     }
+}
+
+/**
+ * Return value indicates whether resource was actually recycled, which happens when RefCnt
+ * reaches 0.
+ */
+bool ResourceCache::recycle(SkBitmap* resource) {
+    Mutex::Autolock _l(mLock);
+    return recycleLocked(resource);
+}
+
+/**
+ * Return value indicates whether resource was actually recycled, which happens when RefCnt
+ * reaches 0.
+ */
+bool ResourceCache::recycleLocked(SkBitmap* resource) {
+    ssize_t index = mCache->indexOfKey(resource);
+    if (index < 0) {
+        // not tracking this resource; just recycle the pixel data
+        resource->setPixels(NULL, NULL);
+        return true;
+    }
+    ResourceReference* ref = mCache->valueAt(index);
+    if (ref == NULL) {
+        // Should not get here - shouldn't get a call to recycle if we're not yet tracking it
+        return true;
+    }
+    ref->recycled = true;
+    if (ref->refCount == 0) {
+        deleteResourceReferenceLocked(resource, ref);
+        return true;
+    }
+    // Still referring to resource, don't recycle yet
+    return false;
 }
 
 /**
  * This method should only be called while the mLock mutex is held (that mutex is grabbed
  * by the various destructor() and recycle() methods which call this method).
  */
-void ResourceCache::deleteResourceReference(void* resource, ResourceReference* ref) {
+void ResourceCache::deleteResourceReferenceLocked(void* resource, ResourceReference* ref) {
     if (ref->recycled && ref->resourceType == kBitmap) {
         ((SkBitmap*) resource)->setPixels(NULL, NULL);
     }
-    if (ref->destroyed) {
+    if (ref->destroyed || ref->resourceType == kLayer) {
         switch (ref->resourceType) {
             case kBitmap: {
                 SkBitmap* bitmap = (SkBitmap*) resource;
@@ -223,6 +333,11 @@ void ResourceCache::deleteResourceReference(void* resource, ResourceReference* r
             case kColorFilter: {
                 SkiaColorFilter* filter = (SkiaColorFilter*) resource;
                 delete filter;
+            }
+            break;
+            case kLayer: {
+                Layer* layer = (Layer*) resource;
+                Caches::getInstance().deleteLayerDeferred(layer);
             }
             break;
         }

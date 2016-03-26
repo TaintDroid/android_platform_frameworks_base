@@ -74,7 +74,6 @@ public class MobileDataStateTracker implements NetworkStateTracker {
 
     private Handler mHandler;
     private AsyncChannel mDataConnectionTrackerAc;
-    private Messenger mMessenger;
 
     /**
      * Create a new MobileDataStateTracker
@@ -103,7 +102,6 @@ public class MobileDataStateTracker implements NetworkStateTracker {
         IntentFilter filter = new IntentFilter();
         filter.addAction(TelephonyIntents.ACTION_ANY_DATA_CONNECTION_STATE_CHANGED);
         filter.addAction(TelephonyIntents.ACTION_DATA_CONNECTION_FAILED);
-        filter.addAction(DctConstants.ACTION_DATA_CONNECTION_TRACKER_MESSENGER);
 
         mContext.registerReceiver(new MobileDataStateReceiver(), filter);
         mMobileDataState = PhoneConstants.DataState.DISCONNECTED;
@@ -285,13 +283,6 @@ public class MobileDataStateTracker implements NetworkStateTracker {
                                 " broadcast" + reason == null ? "" : "(" + reason + ")");
                 }
                 setDetailedState(DetailedState.FAILED, reason, apnName);
-            } else if (intent.getAction().equals(DctConstants
-                    .ACTION_DATA_CONNECTION_TRACKER_MESSENGER)) {
-                if (VDBG) log(mApnType + " got ACTION_DATA_CONNECTION_TRACKER_MESSENGER");
-                mMessenger =
-                    intent.getParcelableExtra(DctConstants.EXTRA_MESSENGER);
-                AsyncChannel ac = new AsyncChannel();
-                ac.connect(mContext, MobileDataStateTracker.this.mHandler, mMessenger);
             } else {
                 if (DBG) log("Broadcast received: ignore " + intent.getAction());
             }
@@ -381,11 +372,16 @@ public class MobileDataStateTracker implements NetworkStateTracker {
         return (setEnableApn(mApnType, false) != PhoneConstants.APN_REQUEST_FAILED);
     }
 
+    @Override
+    public void captivePortalCheckComplete() {
+        // not implemented
+    }
+
     /**
      * Record the detailed state of a network, and if it is a
      * change from the previous state, send a notification to
      * any listeners.
-     * @param state the new @{code DetailedState}
+     * @param state the new {@code DetailedState}
      * @param reason a {@code String} indicating a reason for the state change,
      * if one was supplied. May be {@code null}.
      * @param extraInfo optional {@code String} providing extra information about the state change
@@ -517,6 +513,16 @@ public class MobileDataStateTracker implements NetworkStateTracker {
     }
 
     @Override
+    public void addStackedLink(LinkProperties link) {
+        mLinkProperties.addStackedLink(link);
+    }
+
+    @Override
+    public void removeStackedLink(LinkProperties link) {
+        mLinkProperties.removeStackedLink(link);
+    }
+
+    @Override
     public String toString() {
         final CharArrayWriter writer = new CharArrayWriter();
         final PrintWriter pw = new PrintWriter(writer);
@@ -596,6 +602,12 @@ public class MobileDataStateTracker implements NetworkStateTracker {
      */
     public LinkCapabilities getLinkCapabilities() {
         return new LinkCapabilities(mLinkCapabilities);
+    }
+
+    public void supplyMessenger(Messenger messenger) {
+        if (VDBG) log(mApnType + " got supplyMessenger");
+        AsyncChannel ac = new AsyncChannel();
+        ac.connect(mContext, MobileDataStateTracker.this.mHandler, messenger);
     }
 
     private void log(String s) {

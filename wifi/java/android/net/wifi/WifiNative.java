@@ -18,14 +18,10 @@ package android.net.wifi;
 
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pGroup;
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.text.TextUtils;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
-import android.net.wifi.p2p.nsd.WifiP2pServiceRequest;
 import android.util.Log;
 
-import java.io.InputStream;
-import java.lang.Process;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,13 +38,17 @@ public class WifiNative {
 
     private static final boolean DBG = false;
     private final String mTAG;
-    private static final int DEFAULT_GROUP_OWNER_INTENT = 7;
+    private static final int DEFAULT_GROUP_OWNER_INTENT     = 6;
 
-    static final int BLUETOOTH_COEXISTENCE_MODE_ENABLED = 0;
-    static final int BLUETOOTH_COEXISTENCE_MODE_DISABLED = 1;
-    static final int BLUETOOTH_COEXISTENCE_MODE_SENSE = 2;
+    static final int BLUETOOTH_COEXISTENCE_MODE_ENABLED     = 0;
+    static final int BLUETOOTH_COEXISTENCE_MODE_DISABLED    = 1;
+    static final int BLUETOOTH_COEXISTENCE_MODE_SENSE       = 2;
+
+    static final int SCAN_WITHOUT_CONNECTION_SETUP          = 1;
+    static final int SCAN_WITH_CONNECTION_SETUP             = 2;
 
     String mInterface = "";
+    private boolean mSuspendOptEnabled = false;
 
     public native static boolean loadDriver();
 
@@ -60,7 +60,7 @@ public class WifiNative {
 
     /* Sends a kill signal to supplicant. To be used when we have lost connection
        or when the supplicant is hung */
-    public native static boolean killSupplicant();
+    public native static boolean killSupplicant(boolean p2pSupported);
 
     private native boolean connectToSupplicant(String iface);
 
@@ -115,15 +115,13 @@ public class WifiNative {
         return (pong != null && pong.equals("PONG"));
     }
 
-    public boolean scan() {
-       return doBooleanCommand("SCAN");
-    }
-
-    public boolean setScanMode(boolean setActive) {
-        if (setActive) {
-            return doBooleanCommand("DRIVER SCAN-ACTIVE");
+    public boolean scan(int type) {
+        if (type == SCAN_WITHOUT_CONNECTION_SETUP) {
+            return doBooleanCommand("SCAN TYPE=ONLY");
+        } else if (type == SCAN_WITH_CONNECTION_SETUP) {
+            return doBooleanCommand("SCAN");
         } else {
-            return doBooleanCommand("DRIVER SCAN-PASSIVE");
+            throw new IllegalArgumentException("Invalid scan type");
         }
     }
 
@@ -197,8 +195,23 @@ public class WifiNative {
         return null;
     }
 
+    /**
+     * Format of results:
+     * =================
+     * bssid=68:7f:74:d7:1b:6e
+     * freq=2412
+     * level=-43
+     * tsf=1344621975160944
+     * age=2623
+     * flags=[WPA2-PSK-CCMP][WPS][ESS]
+     * ssid=zubyb
+     * ====
+     *
+     * RANGE=ALL gets all scan results
+     * MASK=<N> see wpa_supplicant/src/common/wpa_ctrl.h for details
+     */
     public String scanResults() {
-        return doStringCommand("SCAN_RESULTS");
+        return doStringCommand("BSS RANGE=ALL MASK=0x21987");
     }
 
     public boolean startDriver() {
@@ -317,12 +330,7 @@ public class WifiNative {
     }
 
     public boolean saveConfig() {
-        // Make sure we never write out a value for AP_SCAN other than 1
-        return doBooleanCommand("AP_SCAN 1") && doBooleanCommand("SAVE_CONFIG");
-    }
-
-    public boolean setScanResultHandling(int mode) {
-        return doBooleanCommand("AP_SCAN " + mode);
+        return doBooleanCommand("SAVE_CONFIG");
     }
 
     public boolean addToBlacklist(String bssid) {
@@ -335,6 +343,8 @@ public class WifiNative {
     }
 
     public boolean setSuspendOptimizations(boolean enabled) {
+        if (mSuspendOptEnabled == enabled) return true;
+        mSuspendOptEnabled = enabled;
         if (enabled) {
             return doBooleanCommand("DRIVER SETSUSPENDMODE 1");
         } else {
@@ -366,6 +376,14 @@ public class WifiNative {
      */
     public String signalPoll() {
         return doStringCommand("SIGNAL_POLL");
+    }
+
+    /** Example outout:
+     * TXGOOD=396
+     * TXBAD=1
+     */
+    public String pktcntPoll() {
+        return doStringCommand("PKTCNT_POLL");
     }
 
     public boolean startWpsPbc(String bssid) {
@@ -476,6 +494,14 @@ public class WifiNative {
         } else {
             return doBooleanCommand("P2P_SET interface=" + iface + " ps 0");
         }
+    }
+
+    public boolean setWfdEnable(boolean enable) {
+        return doBooleanCommand("SET wifi_display " + (enable ? "1" : "0"));
+    }
+
+    public boolean setWfdDeviceInfo(String hex) {
+        return doBooleanCommand("WFD_SUBELEM_SET 0 " + hex);
     }
 
     /**
@@ -764,5 +790,15 @@ public class WifiNative {
 
     public boolean p2pServDiscCancelReq(String id) {
         return doBooleanCommand("P2P_SERV_DISC_CANCEL_REQ " + id);
+    }
+
+    /* Set the current mode of miracast operation.
+     *  0 = disabled
+     *  1 = operating as source
+     *  2 = operating as sink
+     */
+    public void setMiracastMode(int mode) {
+        // Note: optional feature on the driver. It is ok for this to fail.
+        doBooleanCommand("DRIVER MIRACAST " + mode);
     }
 }

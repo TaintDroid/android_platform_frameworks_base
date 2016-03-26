@@ -31,6 +31,7 @@ public class WebViewClient {
      * proper handler for the url. If WebViewClient is provided, return true
      * means the host application handles the url, while return false means the
      * current WebView handles the url.
+     * This method is not called for requests using the POST "method".
      *
      * @param view The WebView that is initiating the callback.
      * @param url The url to be loaded.
@@ -82,9 +83,9 @@ public class WebViewClient {
      * Notify the host application of a resource request and allow the
      * application to return the data.  If the return value is null, the WebView
      * will continue to load the resource as usual.  Otherwise, the return
-     * response and data will be used.  NOTE: This method is called by the
-     * network thread so clients should exercise caution when accessing private
-     * data.
+     * response and data will be used.  NOTE: This method is called on a thread
+     * other than the UI thread so clients should exercise caution
+     * when accessing private data or the view system.
      *
      * @param view The {@link android.webkit.WebView} that is requesting the
      *             resource.
@@ -204,43 +205,16 @@ public class WebViewClient {
     }
 
     /**
-     * Notify the host application that an SSL error occurred while loading a
-     * resource, but the WebView chose to proceed anyway based on a
-     * decision retained from a previous response to onReceivedSslError().
-     * @hide
-     */
-    public void onProceededAfterSslError(WebView view, SslError error) {
-    }
-
-    /**
-     * Notify the host application to handle a SSL client certificate
-     * request (display the request to the user and ask whether to
-     * proceed with a client certificate or not). The host application
-     * has to call either handler.cancel() or handler.proceed() as the
-     * connection is suspended and waiting for the response. The
-     * default behavior is to cancel, returning no client certificate.
+     * Notifies the host application that the WebView received an HTTP
+     * authentication request. The host application can use the supplied
+     * {@link HttpAuthHandler} to set the WebView's response to the request.
+     * The default behavior is to cancel the request.
      *
-     * @param view The WebView that is initiating the callback.
-     * @param handler A ClientCertRequestHandler object that will
-     *            handle the user's response.
-     * @param host_and_port The host and port of the requesting server.
-     *
-     * @hide
-     */
-    public void onReceivedClientCertRequest(WebView view,
-            ClientCertRequestHandler handler, String host_and_port) {
-        handler.cancel();
-    }
-
-    /**
-     * Notify the host application to handle an authentication request. The
-     * default behavior is to cancel the request.
-     *
-     * @param view The WebView that is initiating the callback.
-     * @param handler The HttpAuthHandler that will handle the user's response.
-     * @param host The host requiring authentication.
-     * @param realm A description to help store user credentials for future
-     *            visits.
+     * @param view the WebView that is initiating the callback
+     * @param handler the HttpAuthHandler used to set the WebView's response
+     * @param host the host requiring authentication
+     * @param realm the realm for which authentication is required
+     * @see WebView#getHttpAuthUsernamePassword
      */
     public void onReceivedHttpAuthRequest(WebView view,
             HttpAuthHandler handler, String host, String realm) {

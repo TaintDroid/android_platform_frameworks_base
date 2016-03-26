@@ -16,6 +16,7 @@
 
 package com.android.server.am;
 
+import android.app.AppOpsManager;
 import android.content.IIntentReceiver;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -37,6 +38,7 @@ import java.util.List;
  */
 class BroadcastRecord extends Binder {
     final Intent intent;    // the original intent that generated us
+    final ComponentName targetComp; // original component name set on the intent
     final ProcessRecord callerApp; // process that sent this
     final String callerPackage; // who sent this
     final int callingPid;   // the pid of who sent this
@@ -44,7 +46,9 @@ class BroadcastRecord extends Binder {
     final boolean ordered;  // serialize the send to receivers?
     final boolean sticky;   // originated from existing sticky data?
     final boolean initialSticky; // initial broadcast from register to sticky?
+    final int userId;       // user id this broadcast was for
     final String requiredPermission; // a permission the caller has required
+    final int appOp;        // an app op that is associated with this broadcast
     final List receivers;   // contains BroadcastFilter and ResolveInfo
     IIntentReceiver resultTo; // who receives final result if non-null
     long dispatchTime;      // when dispatch started on this set of receivers
@@ -79,20 +83,22 @@ class BroadcastRecord extends Binder {
     void dump(PrintWriter pw, String prefix) {
         final long now = SystemClock.uptimeMillis();
 
-        pw.print(prefix); pw.println(this);
-        pw.print(prefix); pw.println(intent);
-        if (sticky) {
-            Bundle bundle = intent.getExtras();
-            if (bundle != null) {
-                pw.print(prefix); pw.print("extras: "); pw.println(bundle.toString());
-            }
+        pw.print(prefix); pw.print(this); pw.print(" to user "); pw.println(userId);
+        pw.print(prefix); pw.println(intent.toInsecureString());
+        if (targetComp != null && targetComp != intent.getComponent()) {
+            pw.print(prefix); pw.print("  targetComp: "); pw.println(targetComp.toShortString());
+        }
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            pw.print(prefix); pw.print("  extras: "); pw.println(bundle.toString());
         }
         pw.print(prefix); pw.print("caller="); pw.print(callerPackage); pw.print(" ");
                 pw.print(callerApp != null ? callerApp.toShortString() : "null");
                 pw.print(" pid="); pw.print(callingPid);
                 pw.print(" uid="); pw.println(callingUid);
-        if (requiredPermission != null) {
-            pw.print(prefix); pw.print("requiredPermission="); pw.println(requiredPermission);
+        if (requiredPermission != null || appOp != AppOpsManager.OP_NONE) {
+            pw.print(prefix); pw.print("requiredPermission="); pw.print(requiredPermission);
+                    pw.print("  appOp="); pw.println(appOp);
         }
         pw.print(prefix); pw.print("dispatchClockTime=");
                 pw.println(new Date(dispatchClockTime));
@@ -140,14 +146,15 @@ class BroadcastRecord extends Binder {
                         pw.println(curReceiver.applicationInfo.sourceDir);
             }
         }
-        String stateStr = " (?)";
-        switch (state) {
-            case IDLE:              stateStr=" (IDLE)"; break;
-            case APP_RECEIVE:       stateStr=" (APP_RECEIVE)"; break;
-            case CALL_IN_RECEIVE:   stateStr=" (CALL_IN_RECEIVE)"; break;
-            case CALL_DONE_RECEIVE: stateStr=" (CALL_DONE_RECEIVE)"; break;
+        if (state != IDLE) {
+            String stateStr = " (?)";
+            switch (state) {
+                case APP_RECEIVE:       stateStr=" (APP_RECEIVE)"; break;
+                case CALL_IN_RECEIVE:   stateStr=" (CALL_IN_RECEIVE)"; break;
+                case CALL_DONE_RECEIVE: stateStr=" (CALL_DONE_RECEIVE)"; break;
+            }
+            pw.print(prefix); pw.print("state="); pw.print(state); pw.println(stateStr);
         }
-        pw.print(prefix); pw.print("state="); pw.print(state); pw.println(stateStr);
         final int N = receivers != null ? receivers.size() : 0;
         String p2 = prefix + "  ";
         PrintWriterPrinter printer = new PrintWriterPrinter(pw);
@@ -164,17 +171,20 @@ class BroadcastRecord extends Binder {
 
     BroadcastRecord(BroadcastQueue _queue,
             Intent _intent, ProcessRecord _callerApp, String _callerPackage,
-            int _callingPid, int _callingUid, String _requiredPermission,
+            int _callingPid, int _callingUid, String _requiredPermission, int _appOp,
             List _receivers, IIntentReceiver _resultTo, int _resultCode,
             String _resultData, Bundle _resultExtras, boolean _serialized,
-            boolean _sticky, boolean _initialSticky) {
+            boolean _sticky, boolean _initialSticky,
+            int _userId) {
         queue = _queue;
         intent = _intent;
+        targetComp = _intent.getComponent();
         callerApp = _callerApp;
         callerPackage = _callerPackage;
         callingPid = _callingPid;
         callingUid = _callingUid;
         requiredPermission = _requiredPermission;
+        appOp = _appOp;
         receivers = _receivers;
         resultTo = _resultTo;
         resultCode = _resultCode;
@@ -183,6 +193,7 @@ class BroadcastRecord extends Binder {
         ordered = _serialized;
         sticky = _sticky;
         initialSticky = _initialSticky;
+        userId = _userId;
         nextReceiver = 0;
         state = IDLE;
     }
@@ -190,6 +201,6 @@ class BroadcastRecord extends Binder {
     public String toString() {
         return "BroadcastRecord{"
             + Integer.toHexString(System.identityHashCode(this))
-            + " " + intent.getAction() + "}";
+            + " u" + userId + " " + intent.getAction() + "}";
     }
 }

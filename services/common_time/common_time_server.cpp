@@ -53,9 +53,9 @@
 
 namespace android {
 
-const char*    CommonTimeServer::kDefaultMasterElectionAddr = "239.195.128.88";
-const uint16_t CommonTimeServer::kDefaultMasterElectionPort = 8887;
-const uint64_t CommonTimeServer::kDefaultSyncGroupID = 0;
+const char*    CommonTimeServer::kDefaultMasterElectionAddr = "255.255.255.255";
+const uint16_t CommonTimeServer::kDefaultMasterElectionPort = 8886;
+const uint64_t CommonTimeServer::kDefaultSyncGroupID = 1;
 const uint8_t  CommonTimeServer::kDefaultMasterPriority = 1;
 const uint32_t CommonTimeServer::kDefaultMasterAnnounceIntervalMs = 10000;
 const uint32_t CommonTimeServer::kDefaultSyncRequestIntervalMs = 1000;
@@ -107,6 +107,9 @@ CommonTimeServer::CommonTimeServer()
     , mTimelineID(ICommonClock::kInvalidTimelineID)
     , mClockSynced(false)
     , mCommonClockHasClients(false)
+    , mStateChangeLog("Recent State Change Events", 30)
+    , mElectionLog("Recent Master Election Traffic", 30)
+    , mBadPktLog("Recent Bad Packet RX Info", 8)
     , mInitial_WhoIsMasterRequestTimeouts(0)
     , mClient_MasterDeviceID(0)
     , mClient_MasterDevicePriority(0)
@@ -202,9 +205,11 @@ bool CommonTimeServer::runStateMachine_l() {
     // run the state machine
     while (!exitPending()) {
         struct pollfd pfds[2];
-        int rc;
+        int rc, timeout;
         int eventCnt = 0;
         int64_t wakeupTime;
+        uint32_t t1, t2;
+        bool needHandleTimeout = false;
 
         // We are always interested in our wakeup FD.
         pfds[eventCnt].fd      = mWakeupThreadFD;
@@ -221,10 +226,14 @@ bool CommonTimeServer::runStateMachine_l() {
             eventCnt++;
         }
 
+        t1 = static_cast<uint32_t>(mCurTimeout.msecTillTimeout());
+        t2 = static_cast<uint32_t>(mClockRecovery.applyRateLimitedSlew());
+        timeout = static_cast<int>(t1 < t2 ? t1 : t2);
+
         // Note, we were holding mLock when this function was called.  We
         // release it only while we are blocking and hold it at all other times.
         mLock.unlock();
-        rc          = poll(pfds, eventCnt, mCurTimeout.msecTillTimeout());
+        rc          = poll(pfds, eventCnt, timeout);
         wakeupTime  = mLocalClock.getLocalTime();
         mLock.lock();
 
@@ -238,8 +247,11 @@ bool CommonTimeServer::runStateMachine_l() {
             return false;
         }
 
-        if (rc == 0)
-            mCurTimeout.setTimeout(kInfiniteTimeout);
+        if (rc == 0) {
+            needHandleTimeout = !mCurTimeout.msecTillTimeout();
+            if (needHandleTimeout)
+                mCurTimeout.setTimeout(kInfiniteTimeout);
+        }
 
         // Were we woken up on purpose?  If so, clear the eventfd with a read.
         if (pfds[0].revents)
@@ -321,10 +333,11 @@ bool CommonTimeServer::runStateMachine_l() {
             // we are in any other state (CLIENT, RONIN or WAIT_FOR_ELECTION),
             // then transition to either INITIAL or MASTER depending on whether
             // or not our timeline is valid.
-            ALOGI("Entering networkless mode interface is %s, "
-                 "shouldAutoDisable = %s",
-                 mBindIfaceValid ? "valid" : "invalid",
-                 shouldAutoDisable() ? "true" : "false");
+            mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+                    "Entering networkless mode interface is %s, "
+                    "shouldAutoDisable = %s",
+                    mBindIfaceValid ? "valid" : "invalid",
+                    shouldAutoDisable() ? "true" : "false");
             if ((mState != ICommonClock::STATE_INITIAL) &&
                 (mState != ICommonClock::STATE_MASTER)) {
                 if (mTimelineID == ICommonClock::kInvalidTimelineID)
@@ -336,9 +349,8 @@ bool CommonTimeServer::runStateMachine_l() {
             continue;
         }
 
-        // Did we wakeup with no signalled events across all of our FDs?  If so,
-        // we must have hit our timeout.
-        if (rc == 0) {
+        // Time to handle the timeouts?
+        if (needHandleTimeout) {
             if (!handleTimeout())
                 ALOGE("handleTimeout failed");
             continue;
@@ -407,20 +419,23 @@ bool CommonTimeServer::setupSocket_l() {
 
     sockaddrToString(mMasterElectionEP, true, masterElectionEPStr,
                      sizeof(masterElectionEPStr));
-    ALOGI("Building socket :: bind = %s master election = %s",
-         mBindIface.string(), masterElectionEPStr);
+    mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+                        "Building socket :: bind = %s master election = %s",
+                        mBindIface.string(), masterElectionEPStr);
 
     // TODO: add proper support for IPv6.  Right now, we block IPv6 addresses at
     // the configuration interface level.
     if (AF_INET != mMasterElectionEP.ss_family) {
-        ALOGW("TODO: add proper IPv6 support");
+        mStateChangeLog.log(ANDROID_LOG_WARN, LOG_TAG,
+                            "TODO: add proper IPv6 support");
         goto bailout;
     }
 
     // open a UDP socket for the timeline serivce
     mSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (mSocket < 0) {
-        ALOGE("Failed to create socket (errno = %d)", errno);
+        mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                            "Failed to create socket (errno = %d)", errno);
         goto bailout;
     }
 
@@ -432,8 +447,9 @@ bool CommonTimeServer::setupSocket_l() {
     rc = setsockopt(mSocket, SOL_SOCKET, SO_BINDTODEVICE,
                     (void *)&ifr, sizeof(ifr));
     if (rc) {
-        ALOGE("Failed to bind socket at to interface %s (errno = %d)",
-              ifr.ifr_name, errno);
+        mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                            "Failed to bind socket at to interface %s "
+                            "(errno = %d)", ifr.ifr_name, errno);
         goto bailout;
     }
 
@@ -451,8 +467,9 @@ bool CommonTimeServer::setupSocket_l() {
               reinterpret_cast<const sockaddr *>(&bindAddr),
               sizeof(bindAddr));
     if (rc) {
-        ALOGE("Failed to bind socket to port %hu (errno = %d)",
-              ntohs(bindAddr.sin_port), errno);
+        mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                            "Failed to bind socket to port %hu (errno = %d)",
+                            ntohs(bindAddr.sin_port), errno);
         goto bailout;
     }
 
@@ -475,11 +492,23 @@ bool CommonTimeServer::setupSocket_l() {
         rc = setsockopt(mSocket, IPPROTO_IP, IP_MULTICAST_LOOP,
                         &zero, sizeof(zero));
         if (rc == -1) {
-            ALOGE("Failed to disable multicast loopback (errno = %d)", errno);
+            mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                                "Failed to disable multicast loopback "
+                                "(errno = %d)", errno);
             goto bailout;
         }
     } else
-    if (ntohl(ipv4_addr->sin_addr.s_addr) != 0xFFFFFFFF) {
+    if (ntohl(ipv4_addr->sin_addr.s_addr) == 0xFFFFFFFF) {
+        // If the master election address is the broadcast address, then enable
+        // the broadcast socket option
+        rc = setsockopt(mSocket, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
+        if (rc == -1) {
+            mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                                "Failed to enable broadcast (errno = %d)",
+                                errno);
+            goto bailout;
+        }
+    } else {
         // If the master election address is neither broadcast, nor multicast,
         // then we are misconfigured.  The config API layer should prevent this
         // from ever happening.
@@ -490,7 +519,8 @@ bool CommonTimeServer::setupSocket_l() {
     // the local subnet)
     rc = setsockopt(mSocket, IPPROTO_IP, IP_TTL, &one, sizeof(one));
     if (rc == -1) {
-        ALOGE("Failed to set TTL to %d (errno = %d)", one, errno);
+        mStateChangeLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                            "Failed to set TTL to %d (errno = %d)", one, errno);
         goto bailout;
     }
 
@@ -552,6 +582,31 @@ bool CommonTimeServer::arbitrateMaster(
            ((devicePrio1 == devicePrio2) && (deviceID1 > deviceID2)));
 }
 
+static void hexDumpToString(const uint8_t* src, size_t src_len,
+                            char* dst, size_t dst_len) {
+    size_t offset = 0;
+    size_t i;
+
+    for (i = 0; (i < src_len) && (offset < dst_len); ++i) {
+        int res;
+        if (0 == (i % 16)) {
+            res = snprintf(dst + offset, dst_len - offset, "\n%04x :", i);
+            if (res < 0)
+                break;
+            offset += res;
+            if (offset >= dst_len)
+                break;
+        }
+
+        res = snprintf(dst + offset, dst_len - offset, " %02x", src[i]);
+        if (res < 0)
+            break;
+        offset += res;
+    }
+
+    dst[dst_len - 1] = 0;
+}
+
 bool CommonTimeServer::handlePacket() {
     uint8_t buf[256];
     struct sockaddr_storage srcAddr;
@@ -562,14 +617,24 @@ bool CommonTimeServer::handlePacket() {
             reinterpret_cast<const sockaddr *>(&srcAddr), &srcAddrLen);
 
     if (recvBytes < 0) {
-        ALOGE("%s:%d recvfrom failed", __PRETTY_FUNCTION__, __LINE__);
+        mBadPktLog.log(ANDROID_LOG_ERROR, LOG_TAG,
+                       "recvfrom failed (res %d, errno %d)",
+                       recvBytes, errno);
         return false;
     }
 
     UniversalTimeServicePacket pkt;
-    recvBytes = pkt.deserializePacket(buf, recvBytes, mSyncGroupID);
-    if (recvBytes < 0)
+    if (pkt.deserializePacket(buf, recvBytes, mSyncGroupID) < 0) {
+        char hex[256];
+        char srcEPStr[64];
+
+        hexDumpToString(buf, static_cast<size_t>(recvBytes), hex, sizeof(hex));
+        sockaddrToString(srcAddr, true, srcEPStr, sizeof(srcEPStr));
+
+        mBadPktLog.log("Failed to parse %d byte packet from %s.%s",
+                       recvBytes, srcEPStr, hex);
         return false;
+    }
 
     bool result;
     switch (pkt.packetType) {
@@ -597,8 +662,13 @@ bool CommonTimeServer::handlePacket() {
             break;
 
         default: {
-            ALOGD("%s:%d unknown packet type(%d)",
-                    __PRETTY_FUNCTION__, __LINE__, pkt.packetType);
+            char srcEPStr[64];
+            sockaddrToString(srcAddr, true, srcEPStr, sizeof(srcEPStr));
+
+            mBadPktLog.log(ANDROID_LOG_WARN, LOG_TAG,
+                           "unknown packet type (%d) from %s",
+                           pkt.packetType, srcEPStr);
+
             result = false;
         } break;
     }
@@ -682,6 +752,17 @@ bool CommonTimeServer::handleTimeoutWaitForElection() {
 bool CommonTimeServer::handleWhoIsMasterRequest(
         const WhoIsMasterRequestPacket* request,
         const sockaddr_storage& srcAddr) {
+    // Skip our own messages which come back via broadcast loopback.
+    if (request->senderDeviceID == mDeviceID)
+        return true;
+
+    char srcEPStr[64];
+    sockaddrToString(srcAddr, true, srcEPStr, sizeof(srcEPStr));
+    mElectionLog.log("RXed WhoIs master request while in state %s.  "
+                     "src %s reqTID %016llx ourTID %016llx",
+                     stateToString(mState), srcEPStr,
+                     request->timelineID, mTimelineID);
+
     if (mState == ICommonClock::STATE_MASTER) {
         // is this request related to this master's timeline?
         if (request->timelineID != ICommonClock::kInvalidTimelineID &&
@@ -692,6 +773,13 @@ bool CommonTimeServer::handleWhoIsMasterRequest(
         pkt.initHeader(mTimelineID, mSyncGroupID);
         pkt.deviceID = mDeviceID;
         pkt.devicePriority = effectivePriority();
+
+        mElectionLog.log("TXing WhoIs master resp to %s while in state %s.  "
+                         "ourTID %016llx ourGID %016llx ourDID %016llx "
+                         "ourPrio %u",
+                         srcEPStr, stateToString(mState),
+                         mTimelineID, mSyncGroupID,
+                         pkt.deviceID, pkt.devicePriority);
 
         uint8_t buf[256];
         ssize_t bufSz = pkt.serializePacket(buf, sizeof(buf));
@@ -744,6 +832,21 @@ bool CommonTimeServer::handleWhoIsMasterRequest(
 bool CommonTimeServer::handleWhoIsMasterResponse(
         const WhoIsMasterResponsePacket* response,
         const sockaddr_storage& srcAddr) {
+    // Skip our own messages which come back via broadcast loopback.
+    if (response->deviceID == mDeviceID)
+        return true;
+
+    char srcEPStr[64];
+    sockaddrToString(srcAddr, true, srcEPStr, sizeof(srcEPStr));
+    mElectionLog.log("RXed WhoIs master response while in state %s.  "
+                     "src %s respTID %016llx respDID %016llx respPrio %u "
+                     "ourTID %016llx",
+                     stateToString(mState), srcEPStr,
+                     response->timelineID,
+                     response->deviceID,
+                     static_cast<uint32_t>(response->devicePriority),
+                     mTimelineID);
+
     if (mState == ICommonClock::STATE_INITIAL || mState == ICommonClock::STATE_RONIN) {
         return becomeClient(srcAddr,
                             response->deviceID,
@@ -900,6 +1003,18 @@ bool CommonTimeServer::handleMasterAnnouncement(
     uint8_t  newDevicePrio = packet->devicePriority;
     uint64_t newTimelineID = packet->timelineID;
 
+    // Skip our own messages which come back via broadcast loopback.
+    if (newDeviceID == mDeviceID)
+        return true;
+
+    char srcEPStr[64];
+    sockaddrToString(srcAddr, true, srcEPStr, sizeof(srcEPStr));
+    mElectionLog.log("RXed master announcement while in state %s.  "
+                     "src %s srcDevID %lld srcPrio %u srcTID %016llx",
+                     stateToString(mState), srcEPStr,
+                     newDeviceID, static_cast<uint32_t>(newDevicePrio),
+                     newTimelineID);
+
     if (mState == ICommonClock::STATE_INITIAL ||
         mState == ICommonClock::STATE_RONIN ||
         mState == ICommonClock::STATE_WAIT_FOR_ELECTION) {
@@ -956,6 +1071,15 @@ bool CommonTimeServer::sendWhoIsMasterRequest() {
     uint8_t buf[256];
     ssize_t bufSz = pkt.serializePacket(buf, sizeof(buf));
     if (bufSz >= 0) {
+        char dstEPStr[64];
+        sockaddrToString(mMasterElectionEP, true, dstEPStr, sizeof(dstEPStr));
+        mElectionLog.log("TXing WhoIs master request to %s while in state %s.  "
+                         "ourTID %016llx ourGID %016llx ourDID %016llx "
+                         "ourPrio %u",
+                         dstEPStr, stateToString(mState),
+                         mTimelineID, mSyncGroupID,
+                         pkt.senderDeviceID, pkt.senderDevicePriority);
+
         ssize_t sendBytes = sendto(
                 mSocket, buf, bufSz, 0,
                 reinterpret_cast<const sockaddr *>(&mMasterElectionEP),
@@ -1032,6 +1156,15 @@ bool CommonTimeServer::sendMasterAnnouncement() {
     uint8_t buf[256];
     ssize_t bufSz = pkt.serializePacket(buf, sizeof(buf));
     if (bufSz >= 0) {
+        char dstEPStr[64];
+        sockaddrToString(mMasterElectionEP, true, dstEPStr, sizeof(dstEPStr));
+        mElectionLog.log("TXing Master announcement to %s while in state %s.  "
+                         "ourTID %016llx ourGID %016llx ourDID %016llx "
+                         "ourPrio %u",
+                         dstEPStr, stateToString(mState),
+                         mTimelineID, mSyncGroupID,
+                         pkt.deviceID, pkt.devicePriority);
+
         ssize_t sendBytes = sendto(
                 mSocket, buf, bufSz, 0,
                 reinterpret_cast<const sockaddr *>(&mMasterElectionEP),
@@ -1054,15 +1187,16 @@ bool CommonTimeServer::becomeClient(const sockaddr_storage& masterEP,
     sockaddrToString(masterEP, true, newEPStr, sizeof(newEPStr));
     sockaddrToString(mMasterEP, mMasterEPValid, oldEPStr, sizeof(oldEPStr));
 
-    ALOGI("%s --> CLIENT (%s) :%s"
-         " OldMaster: %02x-%014llx::%016llx::%s"
-         " NewMaster: %02x-%014llx::%016llx::%s",
-         stateToString(mState), cause,
-         (mTimelineID != timelineID) ? " (new timeline)" : "",
-         mClient_MasterDevicePriority, mClient_MasterDeviceID,
-         mTimelineID, oldEPStr,
-         masterDevicePriority, masterDeviceID,
-         timelineID, newEPStr);
+    mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+            "%s --> CLIENT (%s) :%s"
+            " OldMaster: %02x-%014llx::%016llx::%s"
+            " NewMaster: %02x-%014llx::%016llx::%s",
+            stateToString(mState), cause,
+            (mTimelineID != timelineID) ? " (new timeline)" : "",
+            mClient_MasterDevicePriority, mClient_MasterDeviceID,
+            mTimelineID, oldEPStr,
+            masterDevicePriority, masterDeviceID,
+            timelineID, newEPStr);
 
     if (mTimelineID != timelineID) {
         // start following a new timeline
@@ -1115,11 +1249,12 @@ bool CommonTimeServer::becomeMaster(const char* cause) {
         notifyClockSync();
     }
 
-    ALOGI("%s --> MASTER (%s) : %s timeline %016llx",
-         stateToString(mState), cause,
-         (oldTimelineID == mTimelineID) ? "taking ownership of"
-                                        : "creating new",
-         mTimelineID);
+    mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+            "%s --> MASTER (%s) : %s timeline %016llx",
+            stateToString(mState), cause,
+            (oldTimelineID == mTimelineID) ? "taking ownership of"
+                                           : "creating new",
+            mTimelineID);
 
     memset(&mMasterEP, 0, sizeof(mMasterEP));
     mMasterEPValid = false;
@@ -1148,7 +1283,8 @@ bool CommonTimeServer::becomeRonin(const char* cause) {
     mMasterEPValid = false;
 
     if (mCommonClock.isValid()) {
-        ALOGI("%s --> RONIN (%s) : lost track of previously valid timeline "
+        mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+             "%s --> RONIN (%s) : lost track of previously valid timeline "
              "%02x-%014llx::%016llx::%s (%d TXed %d RXed %d RXExpired)",
              stateToString(mState), cause,
              mClient_MasterDevicePriority, mClient_MasterDeviceID,
@@ -1161,7 +1297,8 @@ bool CommonTimeServer::becomeRonin(const char* cause) {
         setState(ICommonClock::STATE_RONIN);
         return sendWhoIsMasterRequest();
     } else {
-        ALOGI("%s --> INITIAL (%s) : never synced timeline "
+        mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+             "%s --> INITIAL (%s) : never synced timeline "
              "%02x-%014llx::%016llx::%s (%d TXed %d RXed %d RXExpired)",
              stateToString(mState), cause,
              mClient_MasterDevicePriority, mClient_MasterDeviceID,
@@ -1175,7 +1312,8 @@ bool CommonTimeServer::becomeRonin(const char* cause) {
 }
 
 bool CommonTimeServer::becomeWaitForElection(const char* cause) {
-    ALOGI("%s --> WAIT_FOR_ELECTION (%s) : dropping out of election,"
+    mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+         "%s --> WAIT_FOR_ELECTION (%s) : dropping out of election,"
          " waiting %d mSec for completion.",
          stateToString(mState), cause, kWaitForElection_TimeoutMs);
 
@@ -1185,7 +1323,9 @@ bool CommonTimeServer::becomeWaitForElection(const char* cause) {
 }
 
 bool CommonTimeServer::becomeInitial(const char* cause) {
-    ALOGI("Entering INITIAL (%s), total reset.", cause);
+    mStateChangeLog.log(ANDROID_LOG_INFO, LOG_TAG,
+                        "Entering INITIAL (%s), total reset.",
+                        cause);
 
     setState(ICommonClock::STATE_INITIAL);
 
@@ -1324,29 +1464,6 @@ bool CommonTimeServer::sockaddrMatch(const sockaddr_storage& a1,
         // default to a no-match decision.
         default: return false;
     }
-}
-
-void CommonTimeServer::TimeoutHelper::setTimeout(int msec) {
-    mTimeoutValid = (msec >= 0);
-    if (mTimeoutValid)
-        mEndTime = systemTime() +
-                   (static_cast<nsecs_t>(msec) * 1000000);
-}
-
-int CommonTimeServer::TimeoutHelper::msecTillTimeout() {
-    if (!mTimeoutValid)
-        return kInfiniteTimeout;
-
-    nsecs_t now = systemTime();
-    if (now >= mEndTime)
-        return 0;
-
-    uint64_t deltaMsec = (((mEndTime - now) + 999999) / 1000000);
-
-    if (deltaMsec > static_cast<uint64_t>(MAX_INT))
-        return MAX_INT;
-
-    return static_cast<int>(deltaMsec);
 }
 
 bool CommonTimeServer::shouldPanicNotGettingGoodData() {

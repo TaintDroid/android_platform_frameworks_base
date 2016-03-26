@@ -48,7 +48,7 @@ class WindowToken {
     AppWindowToken appWindowToken;
 
     // All of the windows associated with this token.
-    final ArrayList<WindowState> windows = new ArrayList<WindowState>();
+    final WindowList windows = new WindowList();
 
     // Is key dispatching paused for this token?
     boolean paused = false;
@@ -79,7 +79,6 @@ class WindowToken {
     }
 
     void dump(PrintWriter pw, String prefix) {
-        pw.print(prefix); pw.print("token="); pw.println(token);
         pw.print(prefix); pw.print("windows="); pw.println(windows);
         pw.print(prefix); pw.print("windowType="); pw.print(windowType);
                 pw.print(" hidden="); pw.print(hidden);
@@ -97,7 +96,7 @@ class WindowToken {
             StringBuilder sb = new StringBuilder();
             sb.append("WindowToken{");
             sb.append(Integer.toHexString(System.identityHashCode(this)));
-            sb.append(" token="); sb.append(token); sb.append('}');
+            sb.append(" "); sb.append(token); sb.append('}');
             stringName = sb.toString();
         }
         return stringName;

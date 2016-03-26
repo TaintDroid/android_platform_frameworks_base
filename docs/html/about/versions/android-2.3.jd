@@ -1,4 +1,5 @@
-page.title=Android 2.3 Platform
+page.title=Android 2.3 APIs
+excludeFromSuggestions=true
 sdk.platform.version=2.3
 sdk.platform.apiLevel=9
 
@@ -27,7 +28,8 @@ Differences Report &raquo;</a> </li>
 <p>
 <em>API Level:</em>&nbsp;<strong>{@sdkPlatformApiLevel}</strong></p>
 
-<p>For developers, the Android {@sdkPlatformVersion} platform is available as a
+<p>For developers, the Android {@sdkPlatformVersion}
+({@link android.os.Build.VERSION_CODES#GINGERBREAD})platform is available as a
 downloadable component for the Android SDK. The downloadable platform includes
 an Android library and system image, as well as a set of emulator skins and
 more. To get started developing or testing against Android {@sdkPlatformVersion},
@@ -76,8 +78,8 @@ android:name="android.software.sip"
 android:required="true"&gt;</code> and <code>&lt;uses-feature
 android:name="android.software.sip.voip"&gt;</code> to the application manifest.</p>
 
-<p class="note">To look at a sample application that uses the SIP API, see <a
-href="{@docRoot}resources/samples/SipDemo/index.html">SIP Demo</a>.</p>
+<p class="note">For more information, read the <a
+href="{@docRoot}guide/topics/connectivity/sip.html">SIP</a> developer guide.</p>
 
 <h3 id="nfc">Near Field Communications (NFC)</h3>
 
@@ -405,17 +407,6 @@ TextAppearance.StatusBar.Title} for managing
 notification style.</li>
 </ul>
 </li>
-
-<li>WebView
-<ul>
-<li>New {@link
-android.webkit.WebSettings#setUseWebViewBackgroundForOverscrollBackground(
-boolean) setUseWebViewBackgroundForOverscrollBackground()} method lets a {@link
-android.webkit.WebView} specify whether to use its own background for the
-overscroll background. </li>
-</ul>
-</li>
-</ul>
 
 <h3 id="extralargescreens">Extra Large Screens</h3>
 

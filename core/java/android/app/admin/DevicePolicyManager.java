@@ -29,6 +29,7 @@ import android.os.Handler;
 import android.os.RemoteCallback;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.UserHandle;
 import android.util.Log;
 
 import java.io.IOException;
@@ -131,7 +132,7 @@ public class DevicePolicyManager {
     public boolean isAdminActive(ComponentName who) {
         if (mService != null) {
             try {
-                return mService.isAdminActive(who);
+                return mService.isAdminActive(who, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -147,7 +148,7 @@ public class DevicePolicyManager {
     public List<ComponentName> getActiveAdmins() {
         if (mService != null) {
             try {
-                return mService.getActiveAdmins();
+                return mService.getActiveAdmins(UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -156,12 +157,14 @@ public class DevicePolicyManager {
     }
 
     /**
+     * Used by package administration code to determine if a package can be stopped
+     * or uninstalled.
      * @hide
      */
     public boolean packageHasActiveAdmins(String packageName) {
         if (mService != null) {
             try {
-                return mService.packageHasActiveAdmins(packageName);
+                return mService.packageHasActiveAdmins(packageName, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -178,7 +181,7 @@ public class DevicePolicyManager {
     public void removeActiveAdmin(ComponentName who) {
         if (mService != null) {
             try {
-                mService.removeActiveAdmin(who);
+                mService.removeActiveAdmin(who, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -197,7 +200,7 @@ public class DevicePolicyManager {
     public boolean hasGrantedPolicy(ComponentName admin, int usesPolicy) {
         if (mService != null) {
             try {
-                return mService.hasGrantedPolicy(admin, usesPolicy);
+                return mService.hasGrantedPolicy(admin, usesPolicy, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -289,7 +292,7 @@ public class DevicePolicyManager {
     public void setPasswordQuality(ComponentName admin, int quality) {
         if (mService != null) {
             try {
-                mService.setPasswordQuality(admin, quality);
+                mService.setPasswordQuality(admin, quality, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -303,9 +306,14 @@ public class DevicePolicyManager {
      * all admins.
      */
     public int getPasswordQuality(ComponentName admin) {
+        return getPasswordQuality(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordQuality(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordQuality(admin);
+                return mService.getPasswordQuality(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -337,7 +345,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumLength(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumLength(admin, length);
+                mService.setPasswordMinimumLength(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -351,9 +359,14 @@ public class DevicePolicyManager {
      * all admins.
      */
     public int getPasswordMinimumLength(ComponentName admin) {
+        return getPasswordMinimumLength(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumLength(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumLength(admin);
+                return mService.getPasswordMinimumLength(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -386,7 +399,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumUpperCase(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumUpperCase(admin, length);
+                mService.setPasswordMinimumUpperCase(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -406,9 +419,14 @@ public class DevicePolicyManager {
      *         password.
      */
     public int getPasswordMinimumUpperCase(ComponentName admin) {
+        return getPasswordMinimumUpperCase(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumUpperCase(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumUpperCase(admin);
+                return mService.getPasswordMinimumUpperCase(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -441,7 +459,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumLowerCase(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumLowerCase(admin, length);
+                mService.setPasswordMinimumLowerCase(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -461,9 +479,14 @@ public class DevicePolicyManager {
      *         password.
      */
     public int getPasswordMinimumLowerCase(ComponentName admin) {
+        return getPasswordMinimumLowerCase(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumLowerCase(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumLowerCase(admin);
+                return mService.getPasswordMinimumLowerCase(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -495,7 +518,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumLetters(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumLetters(admin, length);
+                mService.setPasswordMinimumLetters(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -514,9 +537,14 @@ public class DevicePolicyManager {
      * @return The minimum number of letters required in the password.
      */
     public int getPasswordMinimumLetters(ComponentName admin) {
+        return getPasswordMinimumLetters(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumLetters(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumLetters(admin);
+                return mService.getPasswordMinimumLetters(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -548,7 +576,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumNumeric(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumNumeric(admin, length);
+                mService.setPasswordMinimumNumeric(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -567,9 +595,14 @@ public class DevicePolicyManager {
      * @return The minimum number of numerical digits required in the password.
      */
     public int getPasswordMinimumNumeric(ComponentName admin) {
+        return getPasswordMinimumNumeric(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumNumeric(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumNumeric(admin);
+                return mService.getPasswordMinimumNumeric(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -601,7 +634,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumSymbols(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumSymbols(admin, length);
+                mService.setPasswordMinimumSymbols(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -620,9 +653,14 @@ public class DevicePolicyManager {
      * @return The minimum number of symbols required in the password.
      */
     public int getPasswordMinimumSymbols(ComponentName admin) {
+        return getPasswordMinimumSymbols(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumSymbols(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumSymbols(admin);
+                return mService.getPasswordMinimumSymbols(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -654,7 +692,7 @@ public class DevicePolicyManager {
     public void setPasswordMinimumNonLetter(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordMinimumNonLetter(admin, length);
+                mService.setPasswordMinimumNonLetter(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -673,9 +711,14 @@ public class DevicePolicyManager {
      * @return The minimum number of letters required in the password.
      */
     public int getPasswordMinimumNonLetter(ComponentName admin) {
+        return getPasswordMinimumNonLetter(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordMinimumNonLetter(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordMinimumNonLetter(admin);
+                return mService.getPasswordMinimumNonLetter(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -708,7 +751,7 @@ public class DevicePolicyManager {
     public void setPasswordHistoryLength(ComponentName admin, int length) {
         if (mService != null) {
             try {
-                mService.setPasswordHistoryLength(admin, length);
+                mService.setPasswordHistoryLength(admin, length, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -737,7 +780,7 @@ public class DevicePolicyManager {
     public void setPasswordExpirationTimeout(ComponentName admin, long timeout) {
         if (mService != null) {
             try {
-                mService.setPasswordExpirationTimeout(admin, timeout);
+                mService.setPasswordExpirationTimeout(admin, timeout, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -756,7 +799,7 @@ public class DevicePolicyManager {
     public long getPasswordExpirationTimeout(ComponentName admin) {
         if (mService != null) {
             try {
-                return mService.getPasswordExpirationTimeout(admin);
+                return mService.getPasswordExpirationTimeout(admin, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -776,7 +819,7 @@ public class DevicePolicyManager {
     public long getPasswordExpiration(ComponentName admin) {
         if (mService != null) {
             try {
-                return mService.getPasswordExpiration(admin);
+                return mService.getPasswordExpiration(admin, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -792,9 +835,14 @@ public class DevicePolicyManager {
      * @return The length of the password history
      */
     public int getPasswordHistoryLength(ComponentName admin) {
+        return getPasswordHistoryLength(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getPasswordHistoryLength(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getPasswordHistoryLength(admin);
+                return mService.getPasswordHistoryLength(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -828,7 +876,7 @@ public class DevicePolicyManager {
     public boolean isActivePasswordSufficient() {
         if (mService != null) {
             try {
-                return mService.isActivePasswordSufficient();
+                return mService.isActivePasswordSufficient(UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -847,7 +895,7 @@ public class DevicePolicyManager {
     public int getCurrentFailedPasswordAttempts() {
         if (mService != null) {
             try {
-                return mService.getCurrentFailedPasswordAttempts();
+                return mService.getCurrentFailedPasswordAttempts(UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -877,7 +925,7 @@ public class DevicePolicyManager {
     public void setMaximumFailedPasswordsForWipe(ComponentName admin, int num) {
         if (mService != null) {
             try {
-                mService.setMaximumFailedPasswordsForWipe(admin, num);
+                mService.setMaximumFailedPasswordsForWipe(admin, num, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -892,9 +940,14 @@ public class DevicePolicyManager {
      * all admins.
      */
     public int getMaximumFailedPasswordsForWipe(ComponentName admin) {
+        return getMaximumFailedPasswordsForWipe(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getMaximumFailedPasswordsForWipe(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getMaximumFailedPasswordsForWipe(admin);
+                return mService.getMaximumFailedPasswordsForWipe(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -933,7 +986,7 @@ public class DevicePolicyManager {
     public boolean resetPassword(String password, int flags) {
         if (mService != null) {
             try {
-                return mService.resetPassword(password, flags);
+                return mService.resetPassword(password, flags, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -957,7 +1010,7 @@ public class DevicePolicyManager {
     public void setMaximumTimeToLock(ComponentName admin, long timeMs) {
         if (mService != null) {
             try {
-                mService.setMaximumTimeToLock(admin, timeMs);
+                mService.setMaximumTimeToLock(admin, timeMs, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -971,9 +1024,14 @@ public class DevicePolicyManager {
      * all admins.
      */
     public long getMaximumTimeToLock(ComponentName admin) {
+        return getMaximumTimeToLock(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public long getMaximumTimeToLock(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getMaximumTimeToLock(admin);
+                return mService.getMaximumTimeToLock(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1021,7 +1079,7 @@ public class DevicePolicyManager {
     public void wipeData(int flags) {
         if (mService != null) {
             try {
-                mService.wipeData(flags);
+                mService.wipeData(flags, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1090,7 +1148,7 @@ public class DevicePolicyManager {
                     }
                     android.net.Proxy.validate(hostName, Integer.toString(port), exclSpec);
                 }
-                return mService.setGlobalProxy(admin, hostSpec, exclSpec);
+                return mService.setGlobalProxy(admin, hostSpec, exclSpec, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1107,7 +1165,7 @@ public class DevicePolicyManager {
     public ComponentName getGlobalProxyAdmin() {
         if (mService != null) {
             try {
-                return mService.getGlobalProxyAdmin();
+                return mService.getGlobalProxyAdmin(UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1155,6 +1213,26 @@ public class DevicePolicyManager {
             = "android.app.action.START_ENCRYPTION";
 
     /**
+     * Widgets are enabled in keyguard
+     */
+    public static final int KEYGUARD_DISABLE_FEATURES_NONE = 0;
+
+    /**
+     * Disable all keyguard widgets
+     */
+    public static final int KEYGUARD_DISABLE_WIDGETS_ALL = 1 << 0;
+
+    /**
+     * Disable the camera on secure keyguard screens (e.g. PIN/Pattern/Password)
+     */
+    public static final int KEYGUARD_DISABLE_SECURE_CAMERA = 1 << 1;
+
+    /**
+     * Disable all current and future keyguard customizations.
+     */
+    public static final int KEYGUARD_DISABLE_FEATURES_ALL = 0x7fffffff;
+
+    /**
      * Called by an application that is administering the device to
      * request that the storage system be encrypted.
      *
@@ -1189,7 +1267,7 @@ public class DevicePolicyManager {
     public int setStorageEncryption(ComponentName admin, boolean encrypt) {
         if (mService != null) {
             try {
-                return mService.setStorageEncryption(admin, encrypt);
+                return mService.setStorageEncryption(admin, encrypt, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1209,7 +1287,7 @@ public class DevicePolicyManager {
     public boolean getStorageEncryption(ComponentName admin) {
         if (mService != null) {
             try {
-                return mService.getStorageEncryption(admin);
+                return mService.getStorageEncryption(admin, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1234,9 +1312,14 @@ public class DevicePolicyManager {
      * {@link #ENCRYPTION_STATUS_ACTIVATING}, or{@link #ENCRYPTION_STATUS_ACTIVE}.
      */
     public int getStorageEncryptionStatus() {
+        return getStorageEncryptionStatus(UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getStorageEncryptionStatus(int userHandle) {
         if (mService != null) {
             try {
-                return mService.getStorageEncryptionStatus();
+                return mService.getStorageEncryptionStatus(userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1259,7 +1342,7 @@ public class DevicePolicyManager {
     public void setCameraDisabled(ComponentName admin, boolean disabled) {
         if (mService != null) {
             try {
-                mService.setCameraDisabled(admin, disabled);
+                mService.setCameraDisabled(admin, disabled, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1273,9 +1356,14 @@ public class DevicePolicyManager {
      * have disabled the camera
      */
     public boolean getCameraDisabled(ComponentName admin) {
+        return getCameraDisabled(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public boolean getCameraDisabled(ComponentName admin, int userHandle) {
         if (mService != null) {
             try {
-                return mService.getCameraDisabled(admin);
+                return mService.getCameraDisabled(admin, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1284,12 +1372,60 @@ public class DevicePolicyManager {
     }
 
     /**
+     * Called by an application that is administering the device to disable keyguard customizations,
+     * such as widgets. After setting this, keyguard features will be disabled according to the
+     * provided feature list.
+     *
+     * <p>The calling device admin must have requested
+     * {@link DeviceAdminInfo#USES_POLICY_DISABLE_KEYGUARD_FEATURES} to be able to call
+     * this method; if it has not, a security exception will be thrown.
+     *
+     * @param admin Which {@link DeviceAdminReceiver} this request is associated with.
+     * @param which {@link #KEYGUARD_DISABLE_FEATURES_NONE} (default),
+     * {@link #KEYGUARD_DISABLE_WIDGETS_ALL}, {@link #KEYGUARD_DISABLE_SECURE_CAMERA},
+     * {@link #KEYGUARD_DISABLE_FEATURES_ALL}
+     */
+    public void setKeyguardDisabledFeatures(ComponentName admin, int which) {
+        if (mService != null) {
+            try {
+                mService.setKeyguardDisabledFeatures(admin, which, UserHandle.myUserId());
+            } catch (RemoteException e) {
+                Log.w(TAG, "Failed talking with device policy service", e);
+            }
+        }
+    }
+
+    /**
+     * Determine whether or not features have been disabled in keyguard either by the current
+     * admin, if specified, or all admins.
+     * @param admin The name of the admin component to check, or null to check if any admins
+     * have disabled features in keyguard.
+     * @return bitfield of flags. See {@link #setKeyguardDisabledFeatures(ComponentName, int)}
+     * for a list.
+     */
+    public int getKeyguardDisabledFeatures(ComponentName admin) {
+        return getKeyguardDisabledFeatures(admin, UserHandle.myUserId());
+    }
+
+    /** @hide per-user version */
+    public int getKeyguardDisabledFeatures(ComponentName admin, int userHandle) {
+        if (mService != null) {
+            try {
+                return mService.getKeyguardDisabledFeatures(admin, userHandle);
+            } catch (RemoteException e) {
+                Log.w(TAG, "Failed talking with device policy service", e);
+            }
+        }
+        return KEYGUARD_DISABLE_FEATURES_NONE;
+    }
+
+    /**
      * @hide
      */
     public void setActiveAdmin(ComponentName policyReceiver, boolean refreshing) {
         if (mService != null) {
             try {
-                mService.setActiveAdmin(policyReceiver, refreshing);
+                mService.setActiveAdmin(policyReceiver, refreshing, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1330,7 +1466,7 @@ public class DevicePolicyManager {
     public void getRemoveWarning(ComponentName admin, RemoteCallback result) {
         if (mService != null) {
             try {
-                mService.getRemoveWarning(admin, result);
+                mService.getRemoveWarning(admin, result, UserHandle.myUserId());
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1341,11 +1477,11 @@ public class DevicePolicyManager {
      * @hide
      */
     public void setActivePasswordState(int quality, int length, int letters, int uppercase,
-            int lowercase, int numbers, int symbols, int nonletter) {
+            int lowercase, int numbers, int symbols, int nonletter, int userHandle) {
         if (mService != null) {
             try {
                 mService.setActivePasswordState(quality, length, letters, uppercase, lowercase,
-                        numbers, symbols, nonletter);
+                        numbers, symbols, nonletter, userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1355,10 +1491,10 @@ public class DevicePolicyManager {
     /**
      * @hide
      */
-    public void reportFailedPasswordAttempt() {
+    public void reportFailedPasswordAttempt(int userHandle) {
         if (mService != null) {
             try {
-                mService.reportFailedPasswordAttempt();
+                mService.reportFailedPasswordAttempt(userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
@@ -1368,14 +1504,81 @@ public class DevicePolicyManager {
     /**
      * @hide
      */
-    public void reportSuccessfulPasswordAttempt() {
+    public void reportSuccessfulPasswordAttempt(int userHandle) {
         if (mService != null) {
             try {
-                mService.reportSuccessfulPasswordAttempt();
+                mService.reportSuccessfulPasswordAttempt(userHandle);
             } catch (RemoteException e) {
                 Log.w(TAG, "Failed talking with device policy service", e);
             }
         }
     }
 
+    /**
+     * @hide
+     * Sets the given package as the device owner. The package must already be installed and there
+     * shouldn't be an existing device owner registered, for this call to succeed. Also, this
+     * method must be called before the device is provisioned.
+     * @param packageName the package name of the application to be registered as the device owner.
+     * @return whether the package was successfully registered as the device owner.
+     * @throws IllegalArgumentException if the package name is null or invalid
+     * @throws IllegalStateException if a device owner is already registered or the device has
+     *         already been provisioned.
+     */
+    public boolean setDeviceOwner(String packageName) throws IllegalArgumentException,
+            IllegalStateException {
+        if (mService != null) {
+            try {
+                return mService.setDeviceOwner(packageName);
+            } catch (RemoteException re) {
+                Log.w(TAG, "Failed to set device owner");
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Used to determine if a particular package has been registered as a Device Owner app.
+     * A device owner app is a special device admin that cannot be deactivated by the user, once
+     * activated as a device admin. It also cannot be uninstalled. To check if a particular
+     * package is currently registered as the device owner app, pass in the package name from
+     * {@link Context#getPackageName()} to this method.<p/>This is useful for device
+     * admin apps that want to check if they are also registered as the device owner app. The
+     * exact mechanism by which a device admin app is registered as a device owner app is defined by
+     * the setup process.
+     * @param packageName the package name of the app, to compare with the registered device owner
+     * app, if any.
+     * @return whether or not the package is registered as the device owner app.
+     */
+    public boolean isDeviceOwnerApp(String packageName) {
+        if (mService != null) {
+            try {
+                return mService.isDeviceOwner(packageName);
+            } catch (RemoteException re) {
+                Log.w(TAG, "Failed to check device owner");
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @hide
+     * Redirect to isDeviceOwnerApp.
+     */
+    public boolean isDeviceOwner(String packageName) {
+        return isDeviceOwnerApp(packageName);
+    }
+
+    /** @hide */
+    public String getDeviceOwner() {
+        if (mService != null) {
+            try {
+                return mService.getDeviceOwner();
+            } catch (RemoteException re) {
+                Log.w(TAG, "Failed to get device owner");
+            }
+        }
+        return null;
+    }
 }

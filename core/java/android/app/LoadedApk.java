@@ -37,10 +37,11 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.Trace;
-import android.os.UserId;
+import android.os.UserHandle;
 import android.util.AndroidRuntimeException;
 import android.util.Slog;
 import android.view.CompatibilityInfoHolder;
+import android.view.Display;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,8 +121,8 @@ public final class LoadedApk {
         final int myUid = Process.myUid();
         mResDir = aInfo.uid == myUid ? aInfo.sourceDir
                 : aInfo.publicSourceDir;
-        if (!UserId.isSameUser(aInfo.uid, myUid) && !Process.isIsolated()) {
-            aInfo.dataDir = PackageManager.getDataDirForUser(UserId.getUserId(myUid),
+        if (!UserHandle.isSameUser(aInfo.uid, myUid) && !Process.isIsolated()) {
+            aInfo.dataDir = PackageManager.getDataDirForUser(UserHandle.getUserId(myUid),
                     mPackageName);
         }
         mSharedLibraries = aInfo.sharedLibraryFiles;
@@ -139,7 +140,8 @@ public final class LoadedApk {
                     ContextImpl.createSystemContext(mainThread);
                 ActivityThread.mSystemContext.getResources().updateConfiguration(
                          mainThread.getConfiguration(),
-                         mainThread.getDisplayMetricsLocked(compatInfo, false),
+                         mainThread.getDisplayMetricsLocked(
+                                 Display.DEFAULT_DISPLAY, compatInfo),
                          compatInfo);
                 //Slog.i(TAG, "Created system resources "
                 //        + mSystemContext.getResources() + ": "
@@ -195,7 +197,7 @@ public final class LoadedApk {
         ApplicationInfo ai = null;
         try {
             ai = ActivityThread.getPackageManager().getApplicationInfo(packageName,
-                    PackageManager.GET_SHARED_LIBRARY_FILES, UserId.myUserId());
+                    PackageManager.GET_SHARED_LIBRARY_FILES, UserHandle.myUserId());
         } catch (RemoteException e) {
             throw new AssertionError(e);
         }
@@ -358,9 +360,14 @@ public final class LoadedApk {
         IPackageManager pm = ActivityThread.getPackageManager();
         android.content.pm.PackageInfo pi;
         try {
-            pi = pm.getPackageInfo(mPackageName, 0, UserId.myUserId());
+            pi = pm.getPackageInfo(mPackageName, 0, UserHandle.myUserId());
         } catch (RemoteException e) {
-            throw new AssertionError(e);
+            throw new IllegalStateException("Unable to get package info for "
+                    + mPackageName + "; is system dying?", e);
+        }
+        if (pi == null) {
+            throw new IllegalStateException("Unable to get package info for "
+                    + mPackageName + "; is package not installed?");
         }
         /*
          * Two possible indications that this package could be
@@ -471,7 +478,8 @@ public final class LoadedApk {
 
     public Resources getResources(ActivityThread mainThread) {
         if (mResources == null) {
-            mResources = mainThread.getTopLevelResources(mResDir, this);
+            mResources = mainThread.getTopLevelResources(mResDir,
+                    Display.DEFAULT_DISPLAY, null, this);
         }
         return mResources;
     }
@@ -667,8 +675,8 @@ public final class LoadedApk {
                 mDispatcher = new WeakReference<LoadedApk.ReceiverDispatcher>(rd);
                 mStrongRef = strong ? rd : null;
             }
-            public void performReceive(Intent intent, int resultCode,
-                    String data, Bundle extras, boolean ordered, boolean sticky) {
+            public void performReceive(Intent intent, int resultCode, String data,
+                    Bundle extras, boolean ordered, boolean sticky, int sendingUser) {
                 LoadedApk.ReceiverDispatcher rd = mDispatcher.get();
                 if (ActivityThread.DEBUG_BROADCAST) {
                     int seq = intent.getIntExtra("seq", -1);
@@ -677,7 +685,7 @@ public final class LoadedApk {
                 }
                 if (rd != null) {
                     rd.performReceive(intent, resultCode, data, extras,
-                            ordered, sticky);
+                            ordered, sticky, sendingUser);
                 } else {
                     // The activity manager dispatched a broadcast to a registered
                     // receiver in this process, but before it could be delivered the
@@ -713,10 +721,10 @@ public final class LoadedApk {
             private final boolean mOrdered;
 
             public Args(Intent intent, int resultCode, String resultData, Bundle resultExtras,
-                    boolean ordered, boolean sticky) {
+                    boolean ordered, boolean sticky, int sendingUser) {
                 super(resultCode, resultData, resultExtras,
                         mRegistered ? TYPE_REGISTERED : TYPE_UNREGISTERED,
-                        ordered, sticky, mIIntentReceiver.asBinder());
+                        ordered, sticky, mIIntentReceiver.asBinder(), sendingUser);
                 mCurIntent = intent;
                 mOrdered = ordered;
             }
@@ -827,14 +835,15 @@ public final class LoadedApk {
             return mUnregisterLocation;
         }
 
-        public void performReceive(Intent intent, int resultCode,
-                String data, Bundle extras, boolean ordered, boolean sticky) {
+        public void performReceive(Intent intent, int resultCode, String data,
+                Bundle extras, boolean ordered, boolean sticky, int sendingUser) {
             if (ActivityThread.DEBUG_BROADCAST) {
                 int seq = intent.getIntExtra("seq", -1);
                 Slog.i(ActivityThread.TAG, "Enqueueing broadcast " + intent.getAction() + " seq=" + seq
                         + " to " + mReceiver);
             }
-            Args args = new Args(intent, resultCode, data, extras, ordered, sticky);
+            Args args = new Args(intent, resultCode, data, extras, ordered,
+                    sticky, sendingUser);
             if (!mActivityThread.post(args)) {
                 if (mRegistered && ordered) {
                     IActivityManager mgr = ActivityManagerNative.getDefault();

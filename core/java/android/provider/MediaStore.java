@@ -120,7 +120,39 @@ public final class MediaStore {
      */
     public static final String INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH =
             "android.media.action.MEDIA_PLAY_FROM_SEARCH";
-    
+
+    /**
+     * An intent to perform a search for readable media and automatically play content from the
+     * result when possible. This can be fired, for example, by the result of a voice recognition
+     * command to read a book or magazine.
+     * <p>
+     * Contains the {@link android.app.SearchManager#QUERY} extra, which is a string that can
+     * contain any type of unstructured text search, like the name of a book or magazine, an author
+     * a genre, a publisher, or any combination of these.
+     * <p>
+     * Because this intent includes an open-ended unstructured search string, it makes the most
+     * sense for apps that can support large-scale search of text media, such as services connected
+     * to an online database of books and/or magazines which can be read on the device.
+     */
+    public static final String INTENT_ACTION_TEXT_OPEN_FROM_SEARCH =
+            "android.media.action.TEXT_OPEN_FROM_SEARCH";
+
+    /**
+     * An intent to perform a search for video media and automatically play content from the
+     * result when possible. This can be fired, for example, by the result of a voice recognition
+     * command to play movies.
+     * <p>
+     * Contains the {@link android.app.SearchManager#QUERY} extra, which is a string that can
+     * contain any type of unstructured video search, like the name of a movie, one or more actors,
+     * a genre, or any combination of these.
+     * <p>
+     * Because this intent includes an open-ended unstructured search string, it makes the most
+     * sense for apps that can support large-scale search of video, such as services connected to an
+     * online database of videos which can be streamed and played on the device.
+     */
+    public static final String INTENT_ACTION_VIDEO_PLAY_FROM_SEARCH =
+            "android.media.action.VIDEO_PLAY_FROM_SEARCH";
+
     /**
      * The name of the Intent-extra used to define the artist
      */
@@ -173,6 +205,21 @@ public final class MediaStore {
     public static final String INTENT_ACTION_STILL_IMAGE_CAMERA = "android.media.action.STILL_IMAGE_CAMERA";
 
     /**
+     * The name of the Intent action used to launch a camera in still image mode
+     * for use when the device is secured (e.g. with a pin, password, pattern,
+     * or face unlock). Applications responding to this intent must not expose
+     * any personal content like existing photos or videos on the device. The
+     * applications should be careful not to share any photo or video with other
+     * applications or internet. The activity should use {@link
+     * android.view.WindowManager.LayoutParams#FLAG_SHOW_WHEN_LOCKED} to display
+     * on top of the lock screen while secured. There is no activity stack when
+     * this flag is used, so launching more than one activity is strongly
+     * discouraged.
+     */
+    public static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
+            "android.media.action.STILL_IMAGE_CAMERA_SECURE";
+
+    /**
      * The name of the Intent action used to launch a camera in video mode.
      */
     public static final String INTENT_ACTION_VIDEO_CAMERA = "android.media.action.VIDEO_CAMERA";
@@ -189,6 +236,28 @@ public final class MediaStore {
      * @see #EXTRA_OUTPUT
      */
     public final static String ACTION_IMAGE_CAPTURE = "android.media.action.IMAGE_CAPTURE";
+
+    /**
+     * Intent action that can be sent to have the camera application capture an image and return
+     * it when the device is secured (e.g. with a pin, password, pattern, or face unlock).
+     * Applications responding to this intent must not expose any personal content like existing
+     * photos or videos on the device. The applications should be careful not to share any photo
+     * or video with other applications or internet. The activity should use {@link
+     * android.view.WindowManager.LayoutParams#FLAG_SHOW_WHEN_LOCKED} to display on top of the
+     * lock screen while secured. There is no activity stack when this flag is used, so
+     * launching more than one activity is strongly discouraged.
+     * <p>
+     * The caller may pass an extra EXTRA_OUTPUT to control where this image will be written.
+     * If the EXTRA_OUTPUT is not present, then a small sized image is returned as a Bitmap
+     * object in the extra field. This is useful for applications that only need a small image.
+     * If the EXTRA_OUTPUT is present, then the full-sized image will be written to the Uri
+     * value of EXTRA_OUTPUT.
+     *
+     * @see #ACTION_IMAGE_CAPTURE
+     * @see #EXTRA_OUTPUT
+     */
+    public static final String ACTION_IMAGE_CAPTURE_SECURE =
+            "android.media.action.IMAGE_CAPTURE_SECURE";
 
     /**
      * Standard Intent action that can be sent to have the camera application
@@ -1255,6 +1324,18 @@ public final class MediaStore {
         }
 
         public static final class Media implements AudioColumns {
+
+            private static final String[] EXTERNAL_PATHS;
+
+            static {
+                String secondary_storage = System.getenv("SECONDARY_STORAGE");
+                if (secondary_storage != null) {
+                    EXTERNAL_PATHS = secondary_storage.split(":");
+                } else {
+                    EXTERNAL_PATHS = new String[0];
+                }
+            }
+
             /**
              * Get the content:// style URI for the audio media table on the
              * given volume.
@@ -1268,6 +1349,12 @@ public final class MediaStore {
             }
 
             public static Uri getContentUriForPath(String path) {
+                for (String ep : EXTERNAL_PATHS) {
+                    if (path.startsWith(ep)) {
+                        return EXTERNAL_CONTENT_URI;
+                    }
+                }
+
                 return (path.startsWith(Environment.getExternalStorageDirectory().getPath()) ?
                         EXTERNAL_CONTENT_URI : INTERNAL_CONTENT_URI);
             }

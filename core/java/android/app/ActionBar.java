@@ -132,6 +132,12 @@ public abstract class ActionBar {
     public static final int DISPLAY_SHOW_CUSTOM = 0x10;
 
     /**
+     * Allow the title to wrap onto multiple lines if space is available
+     * @hide pending API approval
+     */
+    public static final int DISPLAY_TITLE_MULTIPLE_LINES = 0x20;
+
+    /**
      * Set the action bar into custom navigation mode, supplying a view
      * for custom navigation.
      *
@@ -680,6 +686,95 @@ public abstract class ActionBar {
     public Context getThemedContext() { return null; }
 
     /**
+     * Returns true if the Title field has been truncated during layout for lack
+     * of available space.
+     *
+     * @return true if the Title field has been truncated
+     * @hide pending API approval
+     */
+    public boolean isTitleTruncated() { return false; }
+
+    /**
+     * Set an alternate drawable to display next to the icon/logo/title
+     * when {@link #DISPLAY_HOME_AS_UP} is enabled. This can be useful if you are using
+     * this mode to display an alternate selection for up navigation, such as a sliding drawer.
+     *
+     * <p>If you pass <code>null</code> to this method, the default drawable from the theme
+     * will be used.</p>
+     *
+     * <p>If you implement alternate or intermediate behavior around Up, you should also
+     * call {@link #setHomeActionContentDescription(int) setHomeActionContentDescription()}
+     * to provide a correct description of the action for accessibility support.</p>
+     *
+     * @param indicator A drawable to use for the up indicator, or null to use the theme's default
+     *
+     * @see #setDisplayOptions(int, int)
+     * @see #setDisplayHomeAsUpEnabled(boolean)
+     * @see #setHomeActionContentDescription(int)
+     */
+    public void setHomeAsUpIndicator(Drawable indicator) { }
+
+    /**
+     * Set an alternate drawable to display next to the icon/logo/title
+     * when {@link #DISPLAY_HOME_AS_UP} is enabled. This can be useful if you are using
+     * this mode to display an alternate selection for up navigation, such as a sliding drawer.
+     *
+     * <p>If you pass <code>0</code> to this method, the default drawable from the theme
+     * will be used.</p>
+     *
+     * <p>If you implement alternate or intermediate behavior around Up, you should also
+     * call {@link #setHomeActionContentDescription(int) setHomeActionContentDescription()}
+     * to provide a correct description of the action for accessibility support.</p>
+     *
+     * @param resId Resource ID of a drawable to use for the up indicator, or null
+     *              to use the theme's default
+     *
+     * @see #setDisplayOptions(int, int)
+     * @see #setDisplayHomeAsUpEnabled(boolean)
+     * @see #setHomeActionContentDescription(int)
+     */
+    public void setHomeAsUpIndicator(int resId) { }
+
+    /**
+     * Set an alternate description for the Home/Up action, when enabled.
+     *
+     * <p>This description is commonly used for accessibility/screen readers when
+     * the Home action is enabled. (See {@link #setDisplayHomeAsUpEnabled(boolean)}.)
+     * Examples of this are, "Navigate Home" or "Navigate Up" depending on the
+     * {@link #DISPLAY_HOME_AS_UP} display option. If you have changed the home-as-up
+     * indicator using {@link #setHomeAsUpIndicator(int)} to indicate more specific
+     * functionality such as a sliding drawer, you should also set this to accurately
+     * describe the action.</p>
+     *
+     * <p>Setting this to <code>null</code> will use the system default description.</p>
+     *
+     * @param description New description for the Home action when enabled
+     * @see #setHomeAsUpIndicator(int)
+     * @see #setHomeAsUpIndicator(android.graphics.drawable.Drawable)
+     */
+    public void setHomeActionContentDescription(CharSequence description) { }
+
+    /**
+     * Set an alternate description for the Home/Up action, when enabled.
+     *
+     * <p>This description is commonly used for accessibility/screen readers when
+     * the Home action is enabled. (See {@link #setDisplayHomeAsUpEnabled(boolean)}.)
+     * Examples of this are, "Navigate Home" or "Navigate Up" depending on the
+     * {@link #DISPLAY_HOME_AS_UP} display option. If you have changed the home-as-up
+     * indicator using {@link #setHomeAsUpIndicator(int)} to indicate more specific
+     * functionality such as a sliding drawer, you should also set this to accurately
+     * describe the action.</p>
+     *
+     * <p>Setting this to <code>0</code> will use the system default description.</p>
+     *
+     * @param resId Resource ID of a string to use as the new description
+     *              for the Home action when enabled
+     * @see #setHomeAsUpIndicator(int)
+     * @see #setHomeAsUpIndicator(android.graphics.drawable.Drawable)
+     */
+    public void setHomeActionContentDescription(int resId) { }
+
+    /**
      * Listener interface for ActionBar navigation events.
      */
     public interface OnNavigationListener {
@@ -918,6 +1013,8 @@ public abstract class ActionBar {
             @ViewDebug.IntToString(from = Gravity.BOTTOM,            to = "BOTTOM"),
             @ViewDebug.IntToString(from = Gravity.LEFT,              to = "LEFT"),
             @ViewDebug.IntToString(from = Gravity.RIGHT,             to = "RIGHT"),
+            @ViewDebug.IntToString(from = Gravity.START,             to = "START"),
+            @ViewDebug.IntToString(from = Gravity.END,               to = "END"),
             @ViewDebug.IntToString(from = Gravity.CENTER_VERTICAL,   to = "CENTER_VERTICAL"),
             @ViewDebug.IntToString(from = Gravity.FILL_VERTICAL,     to = "FILL_VERTICAL"),
             @ViewDebug.IntToString(from = Gravity.CENTER_HORIZONTAL, to = "CENTER_HORIZONTAL"),
@@ -925,7 +1022,7 @@ public abstract class ActionBar {
             @ViewDebug.IntToString(from = Gravity.CENTER,            to = "CENTER"),
             @ViewDebug.IntToString(from = Gravity.FILL,              to = "FILL")
         })
-        public int gravity = -1;
+        public int gravity = Gravity.NO_GRAVITY;
 
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
@@ -933,13 +1030,14 @@ public abstract class ActionBar {
             TypedArray a = c.obtainStyledAttributes(attrs,
                     com.android.internal.R.styleable.ActionBar_LayoutParams);
             gravity = a.getInt(
-                    com.android.internal.R.styleable.ActionBar_LayoutParams_layout_gravity, -1);
+                    com.android.internal.R.styleable.ActionBar_LayoutParams_layout_gravity,
+                    Gravity.NO_GRAVITY);
             a.recycle();
         }
 
         public LayoutParams(int width, int height) {
             super(width, height);
-            this.gravity = Gravity.CENTER_VERTICAL | Gravity.LEFT;
+            this.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
         }
 
         public LayoutParams(int width, int height, int gravity) {

@@ -45,8 +45,9 @@ oneway interface IWindow {
      */
     void executeCommand(String command, String parameters, in ParcelFileDescriptor descriptor);
 
-    void resized(int w, int h, in Rect contentInsets,
+    void resized(in Rect frame, in Rect overscanInsets, in Rect contentInsets,
             in Rect visibleInsets, boolean reportDraw, in Configuration newConfig);
+    void moved(int newX, int newY);
     void dispatchAppVisibility(boolean visible);
     void dispatchGetNewSurface();
     void dispatchScreenState(boolean on);

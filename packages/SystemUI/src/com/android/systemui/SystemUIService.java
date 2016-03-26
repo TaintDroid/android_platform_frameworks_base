@@ -31,6 +31,8 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.util.Slog;
 import android.view.IWindowManager;
+import android.view.WindowManagerGlobal;
+import android.view.accessibility.AccessibilityManager;
 
 public class SystemUIService extends Service {
     static final String TAG = "SystemUIService";
@@ -42,6 +44,7 @@ public class SystemUIService extends Service {
             0, // system bar or status bar, filled in below.
             com.android.systemui.power.PowerUI.class,
             com.android.systemui.media.RingtonePlayer.class,
+            com.android.systemui.settings.SettingsUI.class,
         };
 
     /**
@@ -66,9 +69,12 @@ public class SystemUIService extends Service {
 
     @Override
     public void onCreate() {
+        // Tell the accessibility layer that this process will
+        // run as the current user, i.e. run across users.
+        AccessibilityManager.createAsSharedAcrossUsers(this);
+
         // Pick status bar or system bar.
-        IWindowManager wm = IWindowManager.Stub.asInterface(
-                ServiceManager.getService(Context.WINDOW_SERVICE));
+        IWindowManager wm = WindowManagerGlobal.getWindowManagerService();
         try {
             SERVICES[0] = wm.hasSystemNavBar()
                     ? R.string.config_systemBarComponent

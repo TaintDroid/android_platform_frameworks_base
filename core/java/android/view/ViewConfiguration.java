@@ -20,6 +20,7 @@ import android.app.AppGlobals;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Point;
 import android.os.RemoteException;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -29,24 +30,6 @@ import android.util.SparseArray;
  * Contains methods to standard constants used in the UI for timeouts, sizes, and distances.
  */
 public class ViewConfiguration {
-    /**
-     * Expected bit depth of the display panel.
-     *
-     * @hide
-     */
-    public static final float PANEL_BIT_DEPTH = 24;
-
-    /**
-     * Minimum alpha required for a view to draw.
-     *
-     * @hide
-     */
-    public static final float ALPHA_THRESHOLD = 0.5f / PANEL_BIT_DEPTH;
-    /**
-     * @hide
-     */
-    public static final float ALPHA_THRESHOLD_INT = 0x7f / PANEL_BIT_DEPTH;
-
     /**
      * Defines the width of the horizontal scrollbar and the height of the vertical scrollbar in
      * dips
@@ -295,15 +278,18 @@ public class ViewConfiguration {
         mDoubleTapSlop = (int) (sizeAndDensity * DOUBLE_TAP_SLOP + 0.5f);
         mWindowTouchSlop = (int) (sizeAndDensity * WINDOW_TOUCH_SLOP + 0.5f);
 
-        final Display display = WindowManagerImpl.getDefault().getDefaultDisplay();
         // Size of the screen in bytes, in ARGB_8888 format
-        mMaximumDrawingCacheSize = 4 * display.getRawWidth() * display.getRawHeight();
+        final WindowManager win = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        final Display display = win.getDefaultDisplay();
+        final Point size = new Point();
+        display.getRealSize(size);
+        mMaximumDrawingCacheSize = 4 * size.x * size.y;
 
         mOverscrollDistance = (int) (sizeAndDensity * OVERSCROLL_DISTANCE + 0.5f);
         mOverflingDistance = (int) (sizeAndDensity * OVERFLING_DISTANCE + 0.5f);
 
         if (!sHasPermanentMenuKeySet) {
-            IWindowManager wm = Display.getWindowManager();
+            IWindowManager wm = WindowManagerGlobal.getWindowManagerService();
             try {
                 sHasPermanentMenuKey = !wm.hasSystemNavBar() && !wm.hasNavigationBar();
                 sHasPermanentMenuKeySet = true;

@@ -17,11 +17,16 @@
 package com.android.server;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
@@ -43,9 +48,6 @@ import android.util.Slog;
  * <p>This class was modeled after the script in
  * <a href="http://www.kernel.org/doc/man-pages/online/pages/man4/random.4.html">man
  * 4 random</a>.
- *
- * <p>TODO: Investigate attempting to write entropy data at shutdown time
- * instead of periodically.
  */
 public class EntropyMixer extends Binder {
     private static final String TAG = "EntropyMixer";
@@ -72,12 +74,19 @@ public class EntropyMixer extends Binder {
         }
     };
 
-    public EntropyMixer() {
-        this(getSystemDir() + "/entropy.dat", "/dev/urandom");
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            writeEntropy();
+        }
+    };
+
+    public EntropyMixer(Context context) {
+        this(context, getSystemDir() + "/entropy.dat", "/dev/urandom");
     }
 
     /** Test only interface, not for public use */
-    public EntropyMixer(String entropyFile, String randomDevice) {
+    public EntropyMixer(Context context, String entropyFile, String randomDevice) {
         if (randomDevice == null) { throw new NullPointerException("randomDevice"); }
         if (entropyFile == null) { throw new NullPointerException("entropyFile"); }
 
@@ -87,6 +96,10 @@ public class EntropyMixer extends Binder {
         addDeviceSpecificEntropy();
         writeEntropy();
         scheduleEntropyWriter();
+        IntentFilter broadcastFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
+        broadcastFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+        broadcastFilter.addAction(Intent.ACTION_REBOOT);
+        context.registerReceiver(mBroadcastReceiver, broadcastFilter);
     }
 
     private void scheduleEntropyWriter() {
@@ -97,16 +110,19 @@ public class EntropyMixer extends Binder {
     private void loadInitialEntropy() {
         try {
             RandomBlock.fromFile(entropyFile).toFile(randomDevice, false);
+        } catch (FileNotFoundException e) {
+            Slog.w(TAG, "No existing entropy file -- first boot?");
         } catch (IOException e) {
-            Slog.w(TAG, "unable to load initial entropy (first boot?)", e);
+            Slog.w(TAG, "Failure loading existing entropy file", e);
         }
     }
 
     private void writeEntropy() {
         try {
+            Slog.i(TAG, "Writing entropy...");
             RandomBlock.fromFile(randomDevice).toFile(entropyFile, true);
         } catch (IOException e) {
-            Slog.w(TAG, "unable to write entropy", e);
+            Slog.w(TAG, "Unable to write entropy", e);
         }
     }
 
@@ -139,6 +155,7 @@ public class EntropyMixer extends Binder {
             out.println(SystemProperties.get("ro.bootloader"));
             out.println(SystemProperties.get("ro.hardware"));
             out.println(SystemProperties.get("ro.revision"));
+            out.println(SystemProperties.get("ro.build.fingerprint"));
             out.println(new Object().hashCode());
             out.println(System.currentTimeMillis());
             out.println(System.nanoTime());

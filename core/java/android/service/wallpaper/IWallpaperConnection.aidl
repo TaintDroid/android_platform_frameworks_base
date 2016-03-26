@@ -24,5 +24,6 @@ import android.service.wallpaper.IWallpaperEngine;
  */
 interface IWallpaperConnection {
 	void attachEngine(IWallpaperEngine engine);
+	void engineShown(IWallpaperEngine engine);
     ParcelFileDescriptor setWallpaper(String name);
 }

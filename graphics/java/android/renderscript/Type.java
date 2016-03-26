@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package android.renderscript;
 
 
 import java.lang.reflect.Field;
+
+import android.graphics.ImageFormat;
 import android.util.Log;
 
 /**
@@ -38,7 +40,7 @@ import android.util.Log;
  * <div class="special reference">
  * <h3>Developer Guides</h3>
  * <p>For more information about creating an application that uses Renderscript, read the
- * <a href="{@docRoot}guide/topics/graphics/renderscript.html">Renderscript</a> developer guide.</p>
+ * <a href="{@docRoot}guide/topics/renderscript/index.html">Renderscript</a> developer guide.</p>
  * </div>
  **/
 public class Type extends BaseObj {
@@ -47,6 +49,7 @@ public class Type extends BaseObj {
     int mDimZ;
     boolean mDimMipmaps;
     boolean mDimFaces;
+    int mDimYuv;
     int mElementCount;
     Element mElement;
 
@@ -104,6 +107,16 @@ public class Type extends BaseObj {
      */
     public int getZ() {
         return mDimZ;
+    }
+
+    /**
+     * Get the YUV format
+     *
+     *
+     * @return int
+     */
+    public int getYuv() {
+        return mDimYuv;
     }
 
     /**
@@ -207,6 +220,7 @@ public class Type extends BaseObj {
         int mDimZ;
         boolean mDimMipmaps;
         boolean mDimFaces;
+        int mYuv;
 
         Element mElement;
 
@@ -244,6 +258,14 @@ public class Type extends BaseObj {
             return this;
         }
 
+        public Builder setZ(int value) {
+            if(value < 1) {
+                throw new RSIllegalArgumentException("Values of less than 1 for Dimension Z are not valid.");
+            }
+            mDimZ = value;
+            return this;
+        }
+
         public Builder setMipmaps(boolean value) {
             mDimMipmaps = value;
             return this;
@@ -251,6 +273,27 @@ public class Type extends BaseObj {
 
         public Builder setFaces(boolean value) {
             mDimFaces = value;
+            return this;
+        }
+
+        /**
+         * Set the YUV layout for a Type.  This controls how the memory is
+         * interpreted.  Generally and application should not need to call this
+         * function and it would be set by the Camera.
+         *
+         * only NV21, YV12.  Enums from ImageFormat
+         */
+        public Builder setYuvFormat(int yuvFormat) {
+            switch (yuvFormat) {
+            case android.graphics.ImageFormat.NV21:
+            case android.graphics.ImageFormat.YV12:
+                break;
+
+            default:
+                throw new RSIllegalArgumentException("Only NV21 and YV12 are supported..");
+            }
+
+            mYuv = yuvFormat;
             return this;
         }
 
@@ -280,8 +323,14 @@ public class Type extends BaseObj {
                 }
             }
 
+            if (mYuv != 0) {
+                if ((mDimZ != 0) || mDimFaces || mDimMipmaps) {
+                    throw new RSInvalidStateException("YUV only supports basic 2D.");
+                }
+            }
+
             int id = mRS.nTypeCreate(mElement.getID(mRS),
-                                     mDimX, mDimY, mDimZ, mDimMipmaps, mDimFaces);
+                                     mDimX, mDimY, mDimZ, mDimMipmaps, mDimFaces, mYuv);
             Type t = new Type(id, mRS);
             t.mElement = mElement;
             t.mDimX = mDimX;
@@ -289,6 +338,7 @@ public class Type extends BaseObj {
             t.mDimZ = mDimZ;
             t.mDimMipmaps = mDimMipmaps;
             t.mDimFaces = mDimFaces;
+            t.mDimYuv = mYuv;
 
             t.calcElementCount();
             return t;

@@ -27,10 +27,6 @@ import android.util.FloatMath;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
@@ -78,6 +74,17 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
         if (mRecycledViews.size() < mNumItemsInOneScreenful) {
             mRecycledViews.add(v);
         }
+    }
+
+    public View findViewForTask(int persistentTaskId) {
+        for (int i = 0; i < mLinearLayout.getChildCount(); i++) {
+            View v = mLinearLayout.getChildAt(i);
+            RecentsPanelView.ViewHolder holder = (RecentsPanelView.ViewHolder) v.getTag();
+            if (holder.taskDescription.persistentTaskId == persistentTaskId) {
+                return v;
+            }
+        }
+        return null;
     }
 
     private void update() {
@@ -149,19 +156,19 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
         }
         setLayoutTransition(transitioner);
 
-        // Scroll to end after layout.
-        final ViewTreeObserver observer = getViewTreeObserver();
+        // Scroll to end after initial layout.
 
         final OnGlobalLayoutListener updateScroll = new OnGlobalLayoutListener() {
                 public void onGlobalLayout() {
                     mLastScrollPosition = scrollPositionOfMostRecent();
                     scrollTo(mLastScrollPosition, 0);
+                    final ViewTreeObserver observer = getViewTreeObserver();
                     if (observer.isAlive()) {
                         observer.removeOnGlobalLayoutListener(this);
                     }
                 }
             };
-        observer.addOnGlobalLayoutListener(updateScroll);
+        getViewTreeObserver().addOnGlobalLayoutListener(updateScroll);
     }
 
     @Override
@@ -249,7 +256,7 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
             mPerformanceHelper.drawCallback(canvas,
                     left, right, top, bottom, mScrollX, mScrollY,
                     0, 0,
-                    getLeftFadingEdgeStrength(), getRightFadingEdgeStrength());
+                    getLeftFadingEdgeStrength(), getRightFadingEdgeStrength(), mPaddingTop);
         }
     }
 
@@ -327,19 +334,6 @@ public class RecentsHorizontalScrollView extends HorizontalScrollView
                 }
             }
         });
-    }
-
-    @Override
-    protected void onVisibilityChanged(View changedView, int visibility) {
-        super.onVisibilityChanged(changedView, visibility);
-        // scroll to bottom after reloading
-        if (visibility == View.VISIBLE && changedView == this) {
-            post(new Runnable() {
-                public void run() {
-                    update();
-                }
-            });
-        }
     }
 
     public void setAdapter(TaskDescriptionAdapter adapter) {

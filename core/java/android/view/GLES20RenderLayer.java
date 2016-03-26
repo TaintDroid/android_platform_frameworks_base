@@ -54,8 +54,8 @@ class GLES20RenderLayer extends GLES20Layer {
     }
 
     @Override
-    void resize(int width, int height) {
-        if (!isValid() || width <= 0 || height <= 0) return;
+    boolean resize(int width, int height) {
+        if (!isValid() || width <= 0 || height <= 0) return false;
 
         mWidth = width;
         mHeight = height;
@@ -63,11 +63,23 @@ class GLES20RenderLayer extends GLES20Layer {
         if (width != mLayerWidth || height != mLayerHeight) {
             int[] layerInfo = new int[2];
 
-            GLES20Canvas.nResizeLayer(mLayer, width, height, layerInfo);
-
-            mLayerWidth = layerInfo[0];
-            mLayerHeight = layerInfo[1];
+            if (GLES20Canvas.nResizeLayer(mLayer, width, height, layerInfo)) {
+                mLayerWidth = layerInfo[0];
+                mLayerHeight = layerInfo[1];
+            } else {
+                // Failure: not enough GPU resources for requested size
+                mLayer = 0;
+                mLayerWidth = 0;
+                mLayerHeight = 0;
+            }
         }
+        return isValid();
+    }
+
+    @Override
+    void setOpaque(boolean isOpaque) {
+        mOpaque = isOpaque;
+        GLES20Canvas.nSetOpaqueLayer(mLayer, isOpaque);
     }
 
     @Override
@@ -77,6 +89,10 @@ class GLES20RenderLayer extends GLES20Layer {
 
     @Override
     void end(Canvas currentCanvas) {
+        HardwareCanvas canvas = getCanvas();
+        if (canvas != null) {
+            canvas.onPostDraw();
+        }
         if (currentCanvas instanceof GLES20Canvas) {
             ((GLES20Canvas) currentCanvas).resume();
         }
@@ -87,7 +103,10 @@ class GLES20RenderLayer extends GLES20Layer {
         if (currentCanvas instanceof GLES20Canvas) {
             ((GLES20Canvas) currentCanvas).interrupt();
         }
-        return getCanvas();
+        HardwareCanvas canvas = getCanvas();
+        canvas.setViewport(mWidth, mHeight);
+        canvas.onPreDraw(null);
+        return canvas;
     }
 
     /**
@@ -98,7 +117,7 @@ class GLES20RenderLayer extends GLES20Layer {
     }
 
     @Override
-    void redraw(DisplayList displayList, Rect dirtyRect) {
+    void redrawLater(DisplayList displayList, Rect dirtyRect) {
         GLES20Canvas.nUpdateRenderLayer(mLayer, mCanvas.getRenderer(),
                 ((GLES20DisplayList) displayList).getNativeDisplayList(),
                 dirtyRect.left, dirtyRect.top, dirtyRect.right, dirtyRect.bottom);

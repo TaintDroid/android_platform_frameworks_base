@@ -1,6 +1,5 @@
 page.title=Handling Runtime Changes
-parent.title=Application Resources
-parent.link=index.html
+page.tags="activity","lifecycle"
 @jd:body
 
 <div id="qv-wrapper">
@@ -16,8 +15,8 @@ parent.link=index.html
   <ol>
     <li><a href="providing-resources.html">Providing Resources</a></li>
     <li><a href="accessing-resources.html">Accessing Resources</a></li>
-    <li><a href="{@docRoot}resources/articles/faster-screen-orientation-change.html">Faster Screen
-Orientation Change</a></li>
+    <li><a href="http://android-developers.blogspot.com/2009/02/faster-screen-orientation-change.html">Faster
+        Screen Orientation Change</a></li>
   </ol>
 </div>
 </div>

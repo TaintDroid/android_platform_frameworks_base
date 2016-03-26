@@ -138,7 +138,7 @@
     <string name="turn_on_radio" msgid="3912793092339962371">"Washa mtandao-hewa"</string>
     <string name="turn_off_radio" msgid="8198784949987062346">"Zima pasiwaya"</string>
     <string name="screen_lock" msgid="799094655496098153">"Funga skrini"</string>
-    <string name="power_off" msgid="4266614107412865048">"Nishati imezimwa"</string>
+    <string name="power_off" msgid="4266614107412865048">"Zima simu"</string>
     <string name="silent_mode_silent" msgid="319298163018473078">"Programu ya milio imezimwa"</string>
     <string name="silent_mode_vibrate" msgid="7072043388581551395">"Mtetemo wa programu ya milio"</string>
     <string name="silent_mode_ring" msgid="8592241816194074353">"Programu ya milio imewashwa"</string>
@@ -153,7 +153,10 @@
     <string name="global_actions" product="tablet" msgid="408477140088053665">"Chaguo za kompyuta ndogo"</string>
     <string name="global_actions" product="default" msgid="2406416831541615258">"Chaguo za simu"</string>
     <string name="global_action_lock" msgid="2844945191792119712">"Funga skrini"</string>
-    <string name="global_action_power_off" msgid="4471879440839879722">"Nishati imezimwa"</string>
+    <string name="global_action_power_off" msgid="4471879440839879722">"Zima simu"</string>
+    <string name="global_action_bug_report" msgid="7934010578922304799">"Ripoti ya hitilafu"</string>
+    <string name="bugreport_title" msgid="2667494803742548533">"Chukua ripoti ya hitilafu"</string>
+    <string name="bugreport_message" msgid="398447048750350456">"Hii itakusanya maelezo kuhusu hali ya kifaa chako kwa sasa, na itume kama barua pepe. Itachukua muda mfupi tangu ripoti ya hitilafu ianze kuzalishwa hadi iwe tayari kutumwa; vumilia."</string>
     <string name="global_action_toggle_silent_mode" msgid="8219525344246810925">"Mtindo wa kimya"</string>
     <string name="global_action_silent_mode_on_status" msgid="3289841937003758806">"Sauti Imezimwa"</string>
     <string name="global_action_silent_mode_off_status" msgid="1506046579177066419">"Sauti imewashwa"</string>
@@ -166,14 +169,49 @@
     <string name="permgrouplab_costMoney" msgid="5429808217861460401">"Huduma ambazo zinakugharimu pesa"</string>
     <string name="permgroupdesc_costMoney" msgid="3293301903409869495">"Fanya mambo ambayo yanaweza kukugharimu pesa."</string>
     <string name="permgrouplab_messages" msgid="7521249148445456662">"Ujumbe wako"</string>
-    <string name="permgroupdesc_messages" msgid="7821999071003699236">"Soma na kuandika SMS, barua pepe, na jumbe zako zingine."</string>
+    <string name="permgroupdesc_messages" msgid="7821999071003699236">"Soma na uandike SMS, barua pepe, na mawasiliano mengine."</string>
     <string name="permgrouplab_personalInfo" msgid="3519163141070533474">"Maelezo yako ya kibinafsi"</string>
-    <string name="permgroupdesc_personalInfo" product="tablet" msgid="6975389054186265786">"Ufikiaji wa moja kwa moja wa anwani zako na kalenda iliyohifadhiwa kwenye kompyuta ndogo."</string>
-    <string name="permgroupdesc_personalInfo" product="default" msgid="5488050357388806068">"Ufikiaji wa moja kwa moja wa anwani zako na kalenda zilizohifadhiwa kwenye simu."</string>
+    <string name="permgroupdesc_personalInfo" msgid="8426453129788861338">"Kufikia moja kwa moja taarifa kukuhusu, iliyoakibishwa kwenye kadi yako ya anwani."</string>
+    <string name="permgrouplab_socialInfo" msgid="5799096623412043791">"Taarifa yako ya kijamii"</string>
+    <string name="permgroupdesc_socialInfo" msgid="7129842457611643493">"Kufikia moja kwa moja taarifa kuhusu anwani zako na miunganisho ya kijamii."</string>
     <string name="permgrouplab_location" msgid="635149742436692049">"Mahali pako"</string>
     <string name="permgroupdesc_location" msgid="5704679763124170100">"Fuatilia eneo lako halisi."</string>
     <string name="permgrouplab_network" msgid="5808983377727109831">"Mawasiliano ya mtandao"</string>
     <string name="permgroupdesc_network" msgid="4478299413241861987">"Fikia vipengele mbalimbali vya mtandao."</string>
+    <string name="permgrouplab_bluetoothNetwork" msgid="1585403544162128109">"Bluetooth"</string>
+    <string name="permgroupdesc_bluetoothNetwork" msgid="5625288577164282391">"Fikia vifaa na mitandao kupitia Bluetooth."</string>
+    <string name="permgrouplab_audioSettings" msgid="8329261670151871235">"Mipangilio ya Sauti"</string>
+    <string name="permgroupdesc_audioSettings" msgid="2641515403347568130">"Badilisha mipangilio ya sauti."</string>
+    <string name="permgrouplab_affectsBattery" msgid="6209246653424798033">"Huathiri Betri"</string>
+    <string name="permgroupdesc_affectsBattery" msgid="6441275320638916947">"Tumia vipengele vinaweza kumaliza betri haraka."</string>
+    <string name="permgrouplab_calendar" msgid="5863508437783683902">"Kalenda"</string>
+    <string name="permgroupdesc_calendar" msgid="5777534316982184416">"Kufikia moja kwa moja kalenda na matukio."</string>
+    <string name="permgrouplab_dictionary" msgid="4148597128843641379">"Soma Kamuzi ya Mtumiaji"</string>
+    <string name="permgroupdesc_dictionary" msgid="7921166355964764490">"Soma maneno katika kamusi ya mtumiaji."</string>
+    <string name="permgrouplab_writeDictionary" msgid="8090237702432576788">"Andika Kamusi ya Mtumiaji"</string>
+    <string name="permgroupdesc_writeDictionary" msgid="2711561994497361646">"Ongeza maneno katika kamusi mtumiaji."</string>
+    <string name="permgrouplab_bookmarks" msgid="1949519673103968229">"Alamisho na Historia"</string>
+    <string name="permgroupdesc_bookmarks" msgid="4169771606257963028">"Kufikia, moja kwa moja, alamisho na historia ya kivinjari."</string>
+    <string name="permgrouplab_deviceAlarms" msgid="6117704629728824101">"Kengele"</string>
+    <string name="permgroupdesc_deviceAlarms" msgid="4769356362251641175">"Weka saa ya kengele."</string>
+    <string name="permgrouplab_voicemail" msgid="4162237145027592133">"Barua ya sauti"</string>
+    <string name="permgroupdesc_voicemail" msgid="2498403969862951393">"Fikia barua ya sauti moja kwa moja."</string>
+    <string name="permgrouplab_microphone" msgid="171539900250043464">"Kipokea sauti"</string>
+    <string name="permgroupdesc_microphone" msgid="7106618286905738408">"Kufikia moja kwa moja kipokea sauti ili kurekodi sauti."</string>
+    <string name="permgrouplab_camera" msgid="4820372495894586615">"Kamera"</string>
+    <string name="permgroupdesc_camera" msgid="2933667372289567714">"Kufikia moja kwa moja kamera ya kunasa taswira au video."</string>
+    <string name="permgrouplab_screenlock" msgid="8275500173330718168">"Funga skrini"</string>
+    <string name="permgroupdesc_screenlock" msgid="7067497128925499401">"Uwezo wa kuathiri tabia ya skrini iliyofungwa kwenye kifaa chako."</string>
+    <string name="permgrouplab_appInfo" msgid="8028789762634147725">"Taarifa ya programu zako"</string>
+    <string name="permgroupdesc_appInfo" msgid="3950378538049625907">"Uwezo wa kuathiri tabia ya programu nyingine kwenye kifaa chako."</string>
+    <string name="permgrouplab_wallpaper" msgid="3850280158041175998">"Taswira"</string>
+    <string name="permgroupdesc_wallpaper" msgid="5630417854750540154">"Badilisha mipangilio taswira ya kifaa."</string>
+    <string name="permgrouplab_systemClock" msgid="406535759236612992">"Saa"</string>
+    <string name="permgroupdesc_systemClock" msgid="3944359833624094992">"Badilisha muda wa kifaa au ukanda wa saa."</string>
+    <string name="permgrouplab_statusBar" msgid="2095862568113945398">"Hali Upau"</string>
+    <string name="permgroupdesc_statusBar" msgid="6242593432226807171">"Badilisha mipangilio ya upau wa hali ya kifaa."</string>
+    <string name="permgrouplab_syncSettings" msgid="3341990986147826541">"Mipangilio ya Upatanishi"</string>
+    <string name="permgroupdesc_syncSettings" msgid="7603195265129031797">"Kufikia mipangilio ya upatanishi."</string>
     <string name="permgrouplab_accounts" msgid="3359646291125325519">"Akaunti zako"</string>
     <string name="permgroupdesc_accounts" msgid="4948732641827091312">"Fikia akaunti zinazopatikana."</string>
     <string name="permgrouplab_hardwareControls" msgid="7998214968791599326">"Vidhibiti vya maunzi"</string>
@@ -184,10 +222,22 @@
     <string name="permgroupdesc_systemTools" msgid="8162102602190734305">"Ufikiaji wa kiwango cha chini na udhibiti wa mfumo."</string>
     <string name="permgrouplab_developmentTools" msgid="3446164584710596513">"Zana za utengenezaji"</string>
     <string name="permgroupdesc_developmentTools" msgid="7058828032358142018">"Vipengee vinahitajika tu na wasinidi wa programu."</string>
+    <string name="permgrouplab_display" msgid="4279909676036402636">"Programu Nyingine ya UI"</string>
+    <string name="permgroupdesc_display" msgid="6051002031933013714">"Ruhusu UI ya programu nyungine."</string>
     <string name="permgrouplab_storage" msgid="1971118770546336966">"Hifadhi"</string>
     <string name="permgroupdesc_storage" product="nosdcard" msgid="7442318502446874999">"Fikia hifadhi ya USB."</string>
     <string name="permgroupdesc_storage" product="default" msgid="9203302214915355774">"Fikia kadi ya SD."</string>
-    <string name="permlab_statusBar" msgid="7417192629601890791">"lemaza au rekebisha mwambaa hali"</string>
+    <string name="permgrouplab_accessibilityFeatures" msgid="7919025602283593907">"Vipengele vya ufikiaji"</string>
+    <string name="permgroupdesc_accessibilityFeatures" msgid="4205196881678144335">"Vipengee ambavyo teknolojia saidizi inaweza kuomba."</string>
+    <string name="capability_title_canRetrieveWindowContent" msgid="3901717936930170320">"Rejesha maudhui ya dirisha"</string>
+    <string name="capability_desc_canRetrieveWindowContent" msgid="3772225008605310672">"Chunguza maudhui ya dirisha unaloingiliana nalo."</string>
+    <string name="capability_title_canRequestTouchExploration" msgid="3108723364676667320">"Washa Chunguza kwa Mguso"</string>
+    <string name="capability_desc_canRequestTouchExploration" msgid="5800552516779249356">"Vipengee vilivyoguswa vitatamkwa kwa sauti na skrini inaweza kuchunguzwa kwa kutumia ishara."</string>
+    <string name="capability_title_canRequestEnhancedWebAccessibility" msgid="1739881766522594073">"Washa ufikiaji wa wavuti ulioboreshwa"</string>
+    <string name="capability_desc_canRequestEnhancedWebAccessibility" msgid="7881063961507511765">"Hati zinaweza kusakinishwa ili kuyafanya maudhui ya programu kufikiwa zaidi."</string>
+    <string name="capability_title_canRequestFilterKeyEvents" msgid="2103440391902412174">"Angalia maandishi unayoyacharaza"</string>
+    <string name="capability_desc_canRequestFilterKeyEvents" msgid="7463135292204152818">"Inajumuisha data binafsi kama vile nambari za kadi ya mkopo na manenosiri."</string>
+    <string name="permlab_statusBar" msgid="7417192629601890791">"zima au rekebisha mwambaa hali"</string>
     <string name="permdesc_statusBar" msgid="8434669549504290975">"Inaruhusu programu kulemaza upau wa hali au kuongeza na kutoa ikoni za mfumo."</string>
     <string name="permlab_statusBarService" msgid="7247281911387931485">"mwamba hali"</string>
     <string name="permdesc_statusBarService" msgid="716113660795976060">"Inaruhusu programu kuwa upau wa hali."</string>
@@ -195,28 +245,34 @@
     <string name="permdesc_expandStatusBar" msgid="6917549437129401132">"Inaruhusu programu kupanua au kukunja upau wa hali."</string>
     <string name="permlab_processOutgoingCalls" msgid="3906007831192990946">"panga upya simu zinazotoka"</string>
     <string name="permdesc_processOutgoingCalls" msgid="5331318931937402040">"Inaruhusu programu kuchakata simu zinazotoka nje na kubadilisha nambari ya kupigwa. Idhini hii inaruhusu programu kuchunguza, kuelekeza upya, au kuzuia simu zinazotoka nje."</string>
-    <string name="permlab_receiveSms" msgid="8673471768947895082">"pokea jumbe za maandishi (SMS)"</string>
+    <string name="permlab_receiveSms" msgid="8673471768947895082">"pokea ujumbe wa maandishi wa SMS"</string>
     <string name="permdesc_receiveSms" msgid="6424387754228766939">"Inaruhusu programu kupokea na kuchakata ujumbe wa SMS. Hii inamaanisha programu hii inaweza kuchunguza na kufuta ujumbe uliotumwa katika kifaa chako bila ya kukuonyesha."</string>
-    <string name="permlab_receiveMms" msgid="1821317344668257098">"pokea jumbe za maandishi (MMS)"</string>
+    <string name="permlab_receiveMms" msgid="1821317344668257098">"pokea ujumbe wa maandishi wa MMS"</string>
     <string name="permdesc_receiveMms" msgid="533019437263212260">"Inaruhusu programu kupokea na kuchakata ujumbe medianwai (MMS). Hii inamaanisha uwezo wa kuchunguza na kufuta ujumbe uliotumwa kwa kifaa chako bila ya kukuonyesha."</string>
     <string name="permlab_receiveEmergencyBroadcast" msgid="1803477660846288089">"Pokea matangazo ya dharura"</string>
-    <string name="permdesc_receiveEmergencyBroadcast" msgid="848524070262431974">"Inaruhusu programu kupokea na kuchakata jumbe za dharura. Ruhusa hii inapatikana tu kwa programu za mfumo."</string>
-    <string name="permlab_readCellBroadcasts" msgid="1598328843619646166">"soma jumbe za matangazo ya simu"</string>
-    <string name="permdesc_readCellBroadcasts" msgid="6361972776080458979">"Huruhusu programu kusoma jumbe za matangazo ya simu zilizopokewa na kifaa chako. Taarifa za matangazo ya simu huwasilishwa katika maeneo mengine ili kukuonya juu ya hali za dharura. Huenda programu hasidi zikatatiza utendajikazi au shughuli ya kifaa chako wakati matangazo ya simu ya dharura yamepokewa."</string>
+    <string name="permdesc_receiveEmergencyBroadcast" msgid="848524070262431974">"Huruhusu programu kupokea na kuchakata mawasiliano ya dharura. Idhini hii inapatikana tu kwa programu za mfumo."</string>
+    <string name="permlab_readCellBroadcasts" msgid="1598328843619646166">"soma mawasiliano ya matangazo ya simu"</string>
+    <string name="permdesc_readCellBroadcasts" msgid="6361972776080458979">"Huruhusu programu kusoma mawasiliano ya matangazo ya simu yaliyoingia kwenye kifaa chako. Arifa za matangazo ya simu huwasilishwa katika maeneo mengine ili kukuonya juu ya hali za dharura. Huenda programu hasidi zikatatiza utendajikazi au shughuli ya kifaa chako wakati matangazo ya simu ya dharura yameingia."</string>
     <string name="permlab_sendSms" msgid="5600830612147671529">"tuma ujumbe wa SMS"</string>
     <string name="permdesc_sendSms" msgid="7094729298204937667">"Inaruhusu programu kutuma ujumbe wa SMS. Hii inaweza ikasababisha malipo yasiyotarajiwa. Programu hasidi zinaweza kukugharimu pesa kwa kutuma ujumbe bila uthibitisho wako."</string>
-    <string name="permlab_sendSmsNoConfirmation" msgid="4781483105951730228">"Tuma ujumbe wa SMS bila ya thibitisho"</string>
-    <string name="permdesc_sendSmsNoConfirmation" msgid="402569800862935907">"Inaruhusu programu kutuma ujumbe wa SMS. Hii inaweza ikasababisha malipo yasiyotarajiwa. Programu hasidi zinaweza kukugharimu pesa kwa kutuma ujumbe bila uthibitisho wako."</string>
-    <string name="permlab_readSms" msgid="8745086572213270480">"soma jumbe zako za maandishi (SMS au MMS)"</string>
+    <string name="permlab_sendRespondViaMessageRequest" msgid="8713889105305943200">"tuma matukio ya kujibu-kupitia-ujumbe"</string>
+    <string name="permdesc_sendRespondViaMessageRequest" msgid="7107648548468778734">"Inaruhusu programu kutuma maombi kwa programu nyingine za ujumbe ili kushughulikia matukio ya kujibu-kupitia-ujumbe kwa simu zinazoingia."</string>
+    <string name="permlab_readSms" msgid="8745086572213270480">"soma SMS au MMS zako"</string>
     <string name="permdesc_readSms" product="tablet" msgid="2467981548684735522">"Inaruhusu programu kusoma ujumbe wa SMS uliohifadhiwa kwenye kompyuta kibao yako au SIM kadi. Hii inaruhusu programu kusoma ujumbe wote wa SMS, bila kujali maudhui au usiri."</string>
     <string name="permdesc_readSms" product="default" msgid="3695967533457240550">"Inaruhusu programu kusoma ujumbe wa SMS uliohifadhiwa kwenye simu yako au SIM kadi. Hii inaruhusu programu kusoma ujumbe wote wa SMS, bila kujali maudhui au usiri."</string>
-    <string name="permlab_writeSms" msgid="3216950472636214774">"Hariri jumbe zako za maandishi (SMS au MMS)"</string>
-    <string name="permdesc_writeSms" product="tablet" msgid="5160413947794501538">"Inaruhusu programu kuandikia jumbe za SMS zinazohifadhiwa kwenye kompyuta yako kibao au SIM kadi. Programu hasidi zinaweza kufuta jumbe zako."</string>
-    <string name="permdesc_writeSms" product="default" msgid="7268668709052328567">"Inaruhusu programu kuandika jumbe za SMS zinazohifadhiwa kwenye simu yako au SIM kadi. programu hasidi zinaweza kufuta ujumbe zako."</string>
-    <string name="permlab_receiveWapPush" msgid="5991398711936590410">"pokea jumbe za maandishi (WAP)"</string>
+    <string name="permlab_writeSms" msgid="3216950472636214774">"Hariri SMS au MMS zako"</string>
+    <string name="permdesc_writeSms" product="tablet" msgid="5160413947794501538">"Huruhusu programu kuandikia SMS zinazohifadhiwa kwenye kompyuta yako kibao au SIM kadi. Programu hasidi zinaweza kufuta SMS zako."</string>
+    <string name="permdesc_writeSms" product="default" msgid="7268668709052328567">"Huruhusu programu kuandika SMS zinazohifadhiwa kwenye simu yako au SIM kadi. programu hasidi zinaweza kufuta SMS zako."</string>
+    <string name="permlab_receiveWapPush" msgid="5991398711936590410">"pokea ujumbe wa maandishi wa WAP"</string>
     <string name="permdesc_receiveWapPush" msgid="748232190220583385">"Inaruhusu programu kupokea na kuchakata ujumbe wa WAP. Idhini hii inajumuisha uwezo wa kuchunguza na kufuta ujumbe uliotumwa kwako bila ya kukuonyesha."</string>
     <string name="permlab_getTasks" msgid="6466095396623933906">"rudisha programu zinazoendeshwa"</string>
     <string name="permdesc_getTasks" msgid="7454215995847658102">"Inaruhusu programu kurudisha taarifa kuhusu kazi zinazoendeshwa sasa na hivi karibuni. Hii inaweza kuruhusu programu kugundua taarifa kuhusu ni programu zipi zinazotumika kwenye kifaa."</string>
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"Tagusana na watumiaji"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"Inaruhusu programu kutenda vitendo kwa watumiaji tofauti kwenye kifaa. Programu hasidi huenda zikatumia hii ili kukiuka ulinzi kati ya watumiaji."</string>
+    <string name="permlab_interactAcrossUsersFull" msgid="2567734285545074105">"leseni kamili ili kushirikiana na watumiaji"</string>
+    <string name="permdesc_interactAcrossUsersFull" msgid="376841368395502366">"Inaruhusu miingialiano yote inayowezekana kwa watumiaji."</string>
+    <string name="permlab_manageUsers" msgid="1676150911672282428">"dhibiti watumiaji"</string>
+    <string name="permdesc_manageUsers" msgid="8409306667645355638">"Inaruhusu programu kudhibiti watumiaji kwenye kifaa, pamoja na hoji, uundaji na ufutaji."</string>
     <string name="permlab_getDetailedTasks" msgid="6229468674753529501">"epua maelezo ya programu zinazoendeshwa"</string>
     <string name="permdesc_getDetailedTasks" msgid="153824741440717599">"Huruhusu programu kuepua maelezo tondoti kuhusu kazi za sasa na zinazoendelea hivi karibuni. Programu hasidi huenda zikagundua maelezo ya kibinafsi kuhusu programu zingine."</string>
     <string name="permlab_reorderTasks" msgid="2018575526934422779">"Agiza tena programu za kuendeshwa"</string>
@@ -243,36 +299,54 @@
     <string name="permdesc_dump" msgid="1778299088692290329">"Inaruhusu programu kutoa hali ya ndani ya mfumo. Programu hasidi zinaweza kutoa aina nyingi za taarifa za faragha na salama ambazo kwa kawaida hazihitaji."</string>
     <string name="permlab_retrieve_window_content" msgid="8022588608994589938">"epua maudhui ya skrini"</string>
     <string name="permdesc_retrieve_window_content" msgid="3193269069469700265">"Inaruhusu programu kutoa maudhui ya dirisha amilifu. Programu hasidi zinaweza kutoa maudhui yote ya dirisha na kuchunguza maandishi yake yote isipokuwa nenosiri."</string>
+    <string name="permlab_temporary_enable_accessibility" msgid="2312612135127310254">"wezesha ufikivu kwa muda"</string>
+    <string name="permdesc_temporary_enable_accessibility" msgid="8079456293182975464">"Inaruhusu programu kuwezesha kwa muda ufikivu kwenye kifaa. Huenda programu hasidi zikawezesha ufikivu bila kibali cha mtumiaji."</string>
+    <string name="permlab_retrieve_window_info" msgid="8532295199112519378">"okoa maelezo ya dirisha"</string>
+    <string name="permdesc_retrieve_window_info" msgid="4998836370424186849">"Huruhusu programu kuokoa maelezo kuhusu madirisha kutoka kwenye kidhibiti dirisha. Huenda programu hasidi ikakusanya maelezo ambayo yamekusudiwa kwa matumizi ya mfumo wa ndani."</string>
+    <string name="permlab_filter_events" msgid="8675535648807427389">"chuja matukio"</string>
+    <string name="permdesc_filter_events" msgid="8006236315888347680">"Huruhusu programu kusajili kichujio ingizo kinachochuja mkondo wa matukio ya mtumiaji kabla ya kutumwa. Huenda programu hasidi ikadhibiti mfumo wa UI bila mtumiaji kuingilia kati."</string>
+    <string name="permlab_magnify_display" msgid="5973626738170618775">"kuza oneysho"</string>
+    <string name="permdesc_magnify_display" msgid="7121235684515003792">"Inaruhusu programu kukuza maudhui ya onyesho. Programu hasidi zinaweza kubadili maudhui kwa njia ambayo inaweza kukifanya kifaa kutotumika."</string>
     <string name="permlab_shutdown" msgid="7185747824038909016">"Zima nusu"</string>
     <string name="permdesc_shutdown" msgid="7046500838746291775">"Huweka kisimamia shughuli katika hali ya kuzima. Haiadhiri uzimaji kamili"</string>
     <string name="permlab_stopAppSwitches" msgid="4138608610717425573">"zuia swichi za app"</string>
     <string name="permdesc_stopAppSwitches" msgid="8262195802582255021">"Huzuia mtumiaji dhidi ya kubadilisha na kwenda kwa programu nyingine."</string>
+    <string name="permlab_getTopActivityInfo" msgid="2537922311411546016">"pata maelezo ya sasa kuhusu programu"</string>
+    <string name="permdesc_getTopActivityInfo" msgid="2512448855496067131">"Huruhusu mmiliki kurejesha maelezo ya faragha kuhusu programu ya sasa katika mandharimbele ya skrini."</string>
     <string name="permlab_runSetActivityWatcher" msgid="892239094867182656">"Fuatilia na kudhibiti uzinduzi wote wa programu"</string>
     <string name="permdesc_runSetActivityWatcher" msgid="6003603162578577406">"Inaruhusu programu kufuatilia na kudhibiti jinsi mfumo unazindua shughuli. Programu hasidi zinaweza kutia mfumo hatarini. Ruhusa inahitajika tu kwa usanidi, kamwe sio kwa matumizi ya kawaida."</string>
     <string name="permlab_broadcastPackageRemoved" msgid="2576333434893532475">"furushi lililotumwa limeondoa tangazo"</string>
     <string name="permdesc_broadcastPackageRemoved" msgid="6621901216207931089">"Inaruhusu programu kutangaza taarifa kwamba furushi ya programu imetolewa. Programu hasidi zinaweza kutumia hii kuua programu yoyote inayoendeshwa."</string>
     <string name="permlab_broadcastSmsReceived" msgid="5689095009030336593">"tuma matanazo yaliyopokewa ya SMS"</string>
-    <string name="permdesc_broadcastSmsReceived" msgid="4152037720034365492">"Inaruhusu programu kutangaza taarifa kwamba ujumbe wa SMS umepokewa. Programu hasidi zinaweza tumia hii kubuni jumbe za SMS zinazoingia."</string>
+    <string name="permdesc_broadcastSmsReceived" msgid="4152037720034365492">"Huruhusu programu kutangaza taarifa kwamba ujumbe wa SMS umeingia. Programu hasidi zinaweza kutumia hii kubuni SMS zinazoingia."</string>
     <string name="permlab_broadcastWapPush" msgid="3145347413028582371">"tuma tangazo lililopokewa la MSUKUMO WA WAP"</string>
     <string name="permdesc_broadcastWapPush" msgid="4783402525039442729">"Inaruhusu programu kutangaza taarifa kwamba ujumbe wa WAP PUSH umepokewa. Programu hasidi zinaweza kutumia hii kubuni risiti ya ujumbe wa MMS au polepole kubadilisha maudhui yoyote ya ukurasa wa tovuti na vibadala vibovu."</string>
     <string name="permlab_setProcessLimit" msgid="2451873664363662666">"zuia idadi ya michakato inayoendeshwa"</string>
     <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"Inaruhusu programu kudhibiti upeo wa idadi ya michakato ambayo itaendeshwa. Kamwe hazihitajiki kwa programu za kwaida."</string>
     <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"lazimisha programu za usuli kufunga"</string>
     <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"Inaruhusu programu kudhibiti kama daima shughuli zinamalizwa wakati ziendapo kwa mandhari-nyuma. Kamwe hazihitajiki kwa programu za kawaida."</string>
-    <string name="permlab_batteryStats" msgid="7863923071360031652">"rekebisha takwimu za betri"</string>
-    <string name="permdesc_batteryStats" msgid="6835186932305744068">"Inaruhusu programu kurekebisha takwimu za betri zilizokusanywa. Si kwa matumizi ya programu za kawaida."</string>
-    <string name="permlab_backup" msgid="470013022865453920">"Dhibiti chelezo la mfumo na rejesha"</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"soma takwimu za betri"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"Inaruhusu programu kusoma data ya sasa ya matumizi ya kiwango cha chini cha betri. Huenda ikaruhusu kupata maelezo ya kina kuhusu programu unazozitumia."</string>
+    <string name="permlab_updateBatteryStats" msgid="3719689764536379557">"rekebisha takwimu za betri"</string>
+    <string name="permdesc_updateBatteryStats" msgid="6862817857178025002">"Inaruhusu programu kurekebisha takwimu za betri zilizokusanywa. Si ya kutumiwa na programu za kawaida."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"epua takwimu za oparesheni ya programu"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"Inaruhusu programu kuepua takwimu za matumizi ya programu zilizokusanywa. Si ya kutumiwa na programu za kawaida."</string>
+    <string name="permlab_updateAppOpsStats" msgid="8829097373851521505">"rekebisha takwimu za oparesheni ya programu"</string>
+    <string name="permdesc_updateAppOpsStats" msgid="50784596594403483">"Inaruhusu programu kurekebisha takwimu za matumizi ya programu zilizokusanywa. Si ya kutumiwa na programu za kawaida."</string>
+    <string name="permlab_backup" msgid="470013022865453920">"Dhibiti kuhifadhi nakala na kurejesha kwa mfumo"</string>
     <string name="permdesc_backup" msgid="6912230525140589891">"Inaruhusu programu kudhibiti utaratibu wa kucheleza na kurejesha wa mfumo. Si kwa matumizi na programu za kawaida."</string>
     <string name="permlab_confirm_full_backup" msgid="5557071325804469102">"thibitisha chelezo kamilifu au rejesha upya uendeshaji"</string>
     <string name="permdesc_confirm_full_backup" msgid="1748762171637699562">"Inaruhusu programu kuzindua UI ya kuthibitisha chelezo kamili. Si ya kutumiwa na programu yoyote."</string>
     <string name="permlab_internalSystemWindow" msgid="2148563628140193231">"onyesha madirisha yasiyoidhinishwa"</string>
     <string name="permdesc_internalSystemWindow" msgid="7458387759461466397">"Huruhusu programu kuunda madirisha ambayo yananuiwa kutumiwa na kusano ya mtumiaji ya mfumo wa ndani. Sio ya matumizi na programu za kawaida."</string>
     <string name="permlab_systemAlertWindow" msgid="3543347980839518613">"chora juu ya programu zingine"</string>
-    <string name="permdesc_systemAlertWindow" msgid="4460454022797261814">"Inaruhusu programu kuonyesha madirisha ya tahadhari za mfumo. Baadhi ya madirisha ya tahadhari ya mfumo yanaweza kujaa kwenye skrini nzima."</string>
+    <string name="permdesc_systemAlertWindow" msgid="8584678381972820118">"Inaruhusu programu kuchora juu ya programu nyingine au sehemu za kiolesura cha mtumiaji. Huenda zikahitilafiana na utumiaji wako wa kiolesura katika programu yoyote, au kubadilisha unachofikiri unakiona katika programu nyingine."</string>
     <string name="permlab_setAnimationScale" msgid="2805103241153907174">"rekebisha kasi ya jumla ya uhuisho"</string>
     <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"Huruhusu programu kubadilisha kasi ya uhuishaji kijumla (uhuisho wa haraka zaidi au wa polepole zaidi) wakati wowote."</string>
     <string name="permlab_manageAppTokens" msgid="1286505717050121370">"Dhibiti shuhuda za programu"</string>
     <string name="permdesc_manageAppTokens" msgid="8043431713014395671">"Inaruhusu programu kuunda na kudhibiti shuhuda zake, kukwepa mipangilio yao ya kawaida. Haitahitajika kamwe na programu za kawaida."</string>
+    <string name="permlab_freezeScreen" msgid="4708181184441880175">"lemaza skrini"</string>
+    <string name="permdesc_freezeScreen" msgid="8558923789222670064">"Inaruhusu programu kulemaza kwa muda skrini kwa ajili ya mpito kamili wa skrinimaombi kwa muda kufungia screen kwa ajili ya mpito full-screen."</string>
     <string name="permlab_injectEvents" msgid="1378746584023586600">"bonyeza vitufe na vitufe vya kudhibiti"</string>
     <string name="permdesc_injectEvents" product="tablet" msgid="206352565599968632">"Huruhusu programu kuwasilisha matukio yake ya ingizo (mibonyezo ya vitufe, nk.) kwa programu zingine. programu hasidi zinaweza kutumia hii ili kutawala kompyuta kibao."</string>
     <string name="permdesc_injectEvents" product="default" msgid="653128057572326253">"Inaruhusu programu kuwasilisha matukio yake ya ingizo (mibonyezo ya kitufe, nk.)kwa programu zingine.Programu hasidi zinaweza kutumia hii kutawala simu."</string>
@@ -314,8 +388,8 @@
     <string name="permlab_installPackages" msgid="2199128482820306924">"sakinisha programu moja kwa moja"</string>
     <string name="permdesc_installPackages" msgid="5628530972548071284">"Inaruhusu programu kusakanisha au kusasisha furushi mpya za Android. Programu hasidi zinaweza kutumia hii kuongeza programu mpya ambazo zina ruhusa zenye nguvu."</string>
     <string name="permlab_clearAppCache" msgid="7487279391723526815">"Futa data yote kwenye kache ya programu"</string>
-    <string name="permdesc_clearAppCache" product="tablet" msgid="3523396284474042284">"Inaruhusu programu kuongeza hifadhi ya kompyuta kibao kwa kufuta faili katika saraka ya kache ya programu. Upatikanaji umezuiwa kwa mfumo wa uendeshaji tu."</string>
-    <string name="permdesc_clearAppCache" product="default" msgid="5067988373366292186">"Inaruhusu programu  kuongeza hifadhi  ya simu kwa kufuta faili katika programu ya saraka ya kache. Upatikanaji umefungiwa kwa mfumo wa uendeshaji tu."</string>
+    <string name="permdesc_clearAppCache" product="tablet" msgid="8974640871945434565">"Inaruhusu programu kutoa nafasi ya hifadhi ya kompyuta ndogo kwa kufuta faili katika saraka za kache za programu nyingine. Huenda hii ikasababisha programu nyingine kuanza polepole zaidi kwa sababu zinahitaji kuepua data zazo."</string>
+    <string name="permdesc_clearAppCache" product="default" msgid="2459441021956436779">"Inaruhusu programu kutoa nafasi ya hifadhi ya simu kwa kufuta faili katika saraka za kache za programu nyingine. Huenda hii ikasababisha programu nyingine kuanza polepole zaidi kwa sababu zinahitaji kuepua data zazo."</string>
     <string name="permlab_movePackage" msgid="3289890271645921411">"songesha rasilimali ya programu"</string>
     <string name="permdesc_movePackage" msgid="319562217778244524">"Huruhusu programu kuhamisha nyenzo za programu kutoka midia ya ndani hadi ya nje na kinyume chake."</string>
     <string name="permlab_readLogs" msgid="6615778543198967614">"soma kumbukumbu ya data muhimu"</string>
@@ -361,9 +435,9 @@
     <string name="permlab_writeProfile" msgid="907793628777397643">"rekebisha kadi yako mwenyewe ya mawasiliano"</string>
     <string name="permdesc_writeProfile" product="default" msgid="5552084294598465899">"Inaruhusu programu kubadilisha au kuongeza taarifa ya maelezo mafupi ya kibinafsi yaliyohifadhiwa kwenye kifaa chako, kama vile jina lako na taarifa ya anwani. Hii inamaanisha kuwa programu inaweza kukutambua na inaweza kutuma taarifa ya maelezo yako mafupi kwa wengine."</string>
     <string name="permlab_readSocialStream" product="default" msgid="1268920956152419170">"soma mipasho yako wa kijamii"</string>
-    <string name="permdesc_readSocialStream" product="default" msgid="4255706027172050872">"Inaruhusu programu kufikia na kupatanisha sasisho za kijamii kutoka kwa marafiki zako. Kuwa makini wakati unashiriki taarifa -- hii inaruhusu programu kusoma mawasiliano kati yako na marafiki zako kwenye mitandao ya jamii, bila kujali usiri. Kumbuka: idhini hii haiwezi kutekelezwa kwenye mitandao yote ya jamii."</string>
+    <string name="permdesc_readSocialStream" product="default" msgid="4255706027172050872">"Huruhusu programu kufikia na kupatanisha masasisho ya kijamii kutoka kwa marafiki zako. Kuwa makini wakati unashiriki taarifa -- hii huruhusu programu kusoma mawasiliano kati yako na marafiki zako kwenye mitandao ya jamii, bila kujali usiri. Kumbuka: idhini hii haiwezi kutekelezwa kwenye mitandao yote ya jamii."</string>
     <string name="permlab_writeSocialStream" product="default" msgid="3504179222493235645">"andika kwa mipasho yako wa kijamii"</string>
-    <string name="permdesc_writeSocialStream" product="default" msgid="3086557552204114849">"Inaruhusu programu kuonyesha sasisho za kijamii kutoka kwa marafiki zako. Kuwa makini wakati unashiriki taarifa -- hii inaruhusu programu kutoa ujumbe unaoweza kuonekana kuwa unatoka kwa rafiki. Kumbuka: idhini hii huenda usitekelezwe kwenye mitandao yote ya kijamii."</string>
+    <string name="permdesc_writeSocialStream" product="default" msgid="3086557552204114849">"Huruhusu programu kuonyesha masasisho ya kijamii kutoka kwa marafiki zako. Kuwa makini wakati unashiriki taarifa -- hii inaruhusu programu kutoa ujumbe unaoweza kuonekana kuwa unatoka kwa rafiki. Kumbuka: idhini hii huenda usitekelezwe kwenye mitandao yote ya jamii."</string>
     <string name="permlab_readCalendar" msgid="5972727560257612398">"soma matukio ya kalenda pamoja na maelezo ya siri"</string>
     <string name="permdesc_readCalendar" product="tablet" msgid="4216462049057658723">"Inaruhusu programu kusoma matukio yote ya kalenda yaliohifadhiwa kwenye kompyuta kibao yako, yakijumuisha yale ya marafiki au wafanyakazi wenza. Hii inaweza kuruhusu programu kushiriki au kuhifadhi data yako ya kaelnda, bila kujali usiri au unyeti."</string>
     <string name="permdesc_readCalendar" product="default" msgid="7434548682470851583">"Inaruhusu programu kusoma matukio yote ya kalenda yaliyohifadhiwa kwenye simu yako, pamoja na yale ya marafiki au wafanyakazi wenza. Hii inaweza kuruhusu programu kushiriki au kuhifadhi data yako ya kalenda, bila kujali usiri au umuhimu."</string>
@@ -376,22 +450,27 @@
     <string name="permdesc_accessLocationExtraCommands" msgid="5945166642335800763">"Huruhusu programu kufikia amri za ziada za mtoaji huduma wa eneo. Hii inaweza kuruhusu programu kuhitilafiana na uendeshaji wa GPS au vyanzo vingine vya eneo."</string>
     <string name="permlab_installLocationProvider" msgid="6578101199825193873">"kibali ili kusakinisha mtoa huduma ya mahali"</string>
     <string name="permdesc_installLocationProvider" msgid="9066146120470591509">"Unda vyanzo vya eneo la majaribio vya kujaribu au kusakinisha mtoaji huduma mpya wa eneo. Hii inaruhusu programu kufuta eneo na/au hali zilizorudishwa na vyanzo vingine vya eneo kama vile GPS au watoaji huduma wa eneo."</string>
-    <string name="permlab_accessFineLocation" msgid="5885550969882561436">"eneo halisi la (GPS)"</string>
-    <string name="permdesc_accessFineLocation" product="tablet" msgid="8960597421469894181">"Fikia vyanzo vya eneo sahihi kama vile Mfumo wa Global Positioning kwenye kompyuta ndogo. Wakati huduma za eneo zinapatikana na kuwashwa, kibali hiki kinaruhusu programu kuthibitisha eneo lako kamili."</string>
-    <string name="permdesc_accessFineLocation" product="default" msgid="239268765496141815">"Fikia vyanzo vya eneo sahihi kama vile Mfumo wa Global Positioning kwenye simu. Wakati huduma za eneo zinapatikana na zimewashwa, kibali hiki kinaruhusu programu kuthibitisha eneo lako kamili."</string>
-    <string name="permlab_accessCoarseLocation" msgid="7422827215441638984">"eneo karibu  (linalotegemea mtandao)"</string>
-    <string name="permdesc_accessCoarseLocation" msgid="5383798877137640762">"Fikia kadirio la eneo lako kutoka kwa watoaji huduma wa eneo kwa kutumia vyanzo vya mtandao kama vile mnara wa seli na Wi-Fi. Wakati huduma hizi za eneo zinapatikana na kuwashwa, kibali hiki kinaruhusu programu kuthibitisha kadirio la eneo lako."</string>
+    <string name="permlab_accessFineLocation" msgid="1191898061965273372">"eneo sahihi (GPS na mtandao)"</string>
+    <string name="permdesc_accessFineLocation" msgid="5295047563564981250">"Inaruhusu programu kupata eneo lako sahihi kwa kutumia Mfumo wa Mkao Ulimwenguni (GPS) au vyanzo vya mtandao vya eneo kama vile minara na Wi-Fi. Lazima huduma hizi za eneo ziwashwe na kupatikana kwenye kifaa chako ili programu izitumie. Huenda programu zikatumia hii kutambua ulipo, na zinaweza kutumia kawi ya ziada ya betri."</string>
+    <string name="permlab_accessCoarseLocation" msgid="4887895362354239628">"eneo la kukadiriwa (ya mtandao)"</string>
+    <string name="permdesc_accessCoarseLocation" msgid="2538200184373302295">"Inaruhusu programu kupata eneo lako la kukadiria. Eneo hili linatokana na huduma za maeneo kwa kutumia vyanzo vya mtandao vya eneo kama vile minara na Wi-Fi. Lazima huduma hizi za eneo ziwashwe na kupatikana kwenye kifaa chako ili programu izitumie. Huenda programu zikatumia hii kutambua ulipo kwa kukadiria."</string>
     <string name="permlab_accessSurfaceFlinger" msgid="2363969641792388947">"fikia SurfaceFlinger"</string>
     <string name="permdesc_accessSurfaceFlinger" msgid="1041619516733293551">"Inaruhusu programu kutumia vipengee vya kiwango cha chini vya SurfaceFlinger."</string>
     <string name="permlab_readFrameBuffer" msgid="6690504248178498136">"soma bafa ya fremu"</string>
     <string name="permdesc_readFrameBuffer" msgid="4937405521809454680">"Inaruhusu programu kusoma maudhui ya fremu ya bafa."</string>
+    <string name="permlab_configureWifiDisplay" msgid="5595661694746742168">"sanidi maonyesho ya Wifi"</string>
+    <string name="permdesc_configureWifiDisplay" msgid="7916815158690218065">"Inaruhusu programu kusanidi na kuunganika kwenye maonyesho ya Wifi."</string>
+    <string name="permlab_controlWifiDisplay" msgid="393641276723695496">"dhibiti maonyesho ya Wifi"</string>
+    <string name="permdesc_controlWifiDisplay" msgid="4543912292681826986">"Inaruhusu programu kudhibiti vipengele vya kiwango cha chini vya maonyesho ya Wifi."</string>
     <string name="permlab_modifyAudioSettings" msgid="6095859937069146086">"badilisha mipangilio yako ya sauti"</string>
     <string name="permdesc_modifyAudioSettings" msgid="3522565366806248517">"Inaruhusu programu kurekebisha mipangilio ya sauti kila mahali kama vile sauti na ni kipaza sauti kipi ambacho kinatumika kwa kutoa."</string>
     <string name="permlab_recordAudio" msgid="3876049771427466323">"rekodi sauti"</string>
     <string name="permdesc_recordAudio" msgid="4906839301087980680">"Inaruhusu programu kurekodi sauti kwa kinasa sauti. Idhini hii inaruhusu programu kurekodi sauti wakati wowote bila ya uthibitisho wako."</string>
-    <string name="permlab_camera" msgid="3616391919559751192">"chukua picha na video"</string>
+    <string name="permlab_camera" msgid="3616391919559751192">"Kupiga picha na kurekodi video"</string>
     <string name="permdesc_camera" msgid="8497216524735535009">"Inaruhusu programu kupiga picha na video kwa kamera. Kibali hiki kinaruhusu programu kutumia kamera kwa wakati wowote bila uthibitisho wako."</string>
-    <string name="permlab_brick" product="tablet" msgid="2961292205764488304">"lemaza kompyuta ndogo kabisa"</string>
+    <string name="permlab_cameraDisableTransmitLed" msgid="2651072630501126222">"zima LED ya kisambaza kiashirio wakati kamera inatumika"</string>
+    <string name="permdesc_cameraDisableTransmitLed" msgid="4764585465480295341">"Huruhusu mfumo wa programu iliyosakinishwa awali kuzima kamera isitumie kiashirio cha LED."</string>
+    <string name="permlab_brick" product="tablet" msgid="2961292205764488304">"zima kompyuta ndogo kabisa"</string>
     <string name="permlab_brick" product="default" msgid="8337817093326370537">"simu iliyolemazwa kabisa"</string>
     <string name="permdesc_brick" product="tablet" msgid="4334818808001699530">"Inaruhusu programu kulemaza kompyuta yote kibao kabisa. Hii ni hatari sana."</string>
     <string name="permdesc_brick" product="default" msgid="5788903297627283099">"Inaruhusu programu kulemaza simu yote kabisa. Hii ni hatari sana."</string>
@@ -433,7 +512,7 @@
     <string name="permlab_performCdmaProvisioning" product="default" msgid="5604848095315421425">"anzisha moja kwa moja usanidi wa simu ya CDMA"</string>
     <string name="permdesc_performCdmaProvisioning" msgid="1994193538802314186">"Inaruhusu programu kuanza ugawaji wa CDMA. Programu hasidi zinaweza anza ugawaji wa CDMA usio wa lazima."</string>
     <string name="permlab_locationUpdates" msgid="7785408253364335740">"dhibiti arifa za usasishaji mahali"</string>
-    <string name="permdesc_locationUpdates" msgid="1120741557891438876">"Inaruhusu programu kuwezesha/kulemeza arifa za usasishaji za eneo kutoka kwa redio. Si ya matumizi na programu za kawaida."</string>
+    <string name="permdesc_locationUpdates" msgid="1120741557891438876">"Huruhusu kuwasha au kuzima arifa za masasisho ya mahali kutoka kwa redio. Sio ya kutumiwa kwenye programu za kawaida."</string>
     <string name="permlab_checkinProperties" msgid="7855259461268734914">"fikia mipangilio ya ukaguzi"</string>
     <string name="permdesc_checkinProperties" msgid="4024526968630194128">"Inaruhusu kusoma/kuandika kwa programu kufikia mipangilio iliyopakiwa na huduma ya kuangalia. Si ya matumizi na programu za kawaida."</string>
     <string name="permlab_bindGadget" msgid="776905339015863471">"chagua wijeti"</string>
@@ -446,7 +525,7 @@
     <string name="permlab_wakeLock" product="default" msgid="573480187941496130">"zuia simu dhidi ya kulala"</string>
     <string name="permdesc_wakeLock" product="tablet" msgid="7311319824400447868">"Inaruhusu programu kuzuia kompyuta kibao  kwenda kulala."</string>
     <string name="permdesc_wakeLock" product="default" msgid="8559100677372928754">"Inaruhusu programu kuzuia simu isiende kulala."</string>
-    <string name="permlab_devicePower" product="tablet" msgid="2787034722616350417">"Washa au zima kompyuta ndogo"</string>
+    <string name="permlab_devicePower" product="tablet" msgid="2787034722616350417">"Washa au zima kompyuta kibao"</string>
     <string name="permlab_devicePower" product="default" msgid="4928622470980943206">"washa au zima simu"</string>
     <string name="permdesc_devicePower" product="tablet" msgid="6689862878984631831">"Inaruhusu programu kuwasha au kuzima kompyuta kibao."</string>
     <string name="permdesc_devicePower" product="default" msgid="6037057348463131032">"Inaruhusu programu kuwasha au kuzima simu."</string>
@@ -458,7 +537,7 @@
     <string name="permlab_setWallpaperHints" msgid="3278608165977736538">"rekebisha ukubwa wa mandhari yako"</string>
     <string name="permdesc_setWallpaperHints" msgid="8235784384223730091">"Inaruhusu programu kuweka vidokezo vya ukubwa wa mandhari ya mfumo."</string>
     <string name="permlab_masterClear" msgid="2315750423139697397">"weka upya mfumo kwa chaguo-msingi za kiwanda"</string>
-    <string name="permdesc_masterClear" msgid="3665380492633910226">"Inaruhusu programu kuweka upya kabisa mfumo kwa mipangilio yake ya kiwanda, huku ikifuta data yote, usanidi, na programu zilizosanikishwa."</string>
+    <string name="permdesc_masterClear" msgid="3665380492633910226">"Huruhusu programu kurudisha mfumo kwenye mipangilio yake ya mwanzo, hatua ambayo hufuta data, usanidi, na programu zote zilizosanikishwa."</string>
     <string name="permlab_setTime" msgid="2021614829591775646">"weka muda"</string>
     <string name="permdesc_setTime" product="tablet" msgid="1896341438151152881">"Inaruhusu programu kubadilisha wakati wa saa ya kompyuta kibao."</string>
     <string name="permdesc_setTime" product="default" msgid="1855702730738020">"Inaruhusu programu kubadilisha wakati wa saa ya simu."</string>
@@ -470,13 +549,13 @@
     <string name="permlab_getAccounts" msgid="1086795467760122114">"pata akaunti kwenye kifaa"</string>
     <string name="permdesc_getAccounts" product="tablet" msgid="2741496534769660027">"Inaruhusu programu kupata orodha ya akaunti zinazojulikana kwa kompyuta kibao. Hii inaweza kujumuisha akaunti zozote zilizoundwa na programu ambazo umesakinisha."</string>
     <string name="permdesc_getAccounts" product="default" msgid="3448316822451807382">"Inaruhusu programu kupata orodha ya akaunti zinazojulikana kwa simu. Hii inaweza kujumuisha akaunti zozote zilizoundwa na programu ambazo umesakinisha."</string>
-    <string name="permlab_authenticateAccounts" msgid="5265908481172736933">"unda akaunti na weka manenosiri"</string>
-    <string name="permdesc_authenticateAccounts" msgid="5472124296908977260">"Inaruhusu programu kutumia uwezo wa uthibitishaji akaunti wa KidhibitiAkaunti, pamoja na kuunda akaunti na kupata na kuweka nywila zao."</string>
+    <string name="permlab_authenticateAccounts" msgid="5265908481172736933">"fungua akaunti na weka manenosiri"</string>
+    <string name="permdesc_authenticateAccounts" msgid="5472124296908977260">"Inaruhusu programu kutumia uwezo wa uthibitishaji akaunti wa KidhibitiAkaunti, ikiwa ni pamoja na kufungua akaunti na kupata na kuweka manenosiri ya akaunti hizo."</string>
     <string name="permlab_manageAccounts" msgid="4983126304757177305">"ongeza au uondoe akaunti"</string>
     <string name="permdesc_manageAccounts" msgid="8698295625488292506">"Inaruhusu programu kutekeleza shughuli kama vile kuongeza na kutoa akaunti, na kufuta manenosiri yazo."</string>
     <string name="permlab_useCredentials" msgid="235481396163877642">"tumia akaunti kwenye kifaa"</string>
     <string name="permdesc_useCredentials" msgid="7984227147403346422">"Inaruhusu programu kuomba shuhuda za uthibitisho."</string>
-    <string name="permlab_accessNetworkState" msgid="4951027964348974773">"ona miunganisho ya mtandao"</string>
+    <string name="permlab_accessNetworkState" msgid="4951027964348974773">"Kuangalia mitandao"</string>
     <string name="permdesc_accessNetworkState" msgid="8318964424675960975">"Inaruhusu programu kuona taarifa kuhusu miunganisho ya mtandao kama vile mitandao ipi iliyopo na imeunganishwa."</string>
     <string name="permlab_createNetworkSockets" msgid="8018758136404323658">"ufikiaji kamili wa mtandao"</string>
     <string name="permdesc_createNetworkSockets" msgid="3403062187779724185">"Inaruhusu programu kuunda soketi za mtandao na kutumia itifaki za mtandao maalum. Kivinajri na programu nyingine zilizotolewa zinamaanisha kutuma data kwenye mtandao, kwa hivyo kibali hiki hakihitajiki kutuma data kwenye mtandao."</string>
@@ -498,7 +577,7 @@
     <string name="permlab_bluetoothAdmin" msgid="6006967373935926659">"fikia mipangilio ya Bluetooth"</string>
     <string name="permdesc_bluetoothAdmin" product="tablet" msgid="6921177471748882137">"Inaruhusu programu kusanidi kompyuta kibao ya karibu ya Bluetooth na kutambua na kuoanisha na vifaa vya kudhibiti."</string>
     <string name="permdesc_bluetoothAdmin" product="default" msgid="8931682159331542137">"Inaruhusu programu kusanidi simu ya karibu ya Bluetooth, na kutambua na kuoanisha na vifaa vya mbali."</string>
-    <string name="permlab_accessWimaxState" msgid="7436749103151096452">"Ona miunganisho ya WiMAX"</string>
+    <string name="permlab_accessWimaxState" msgid="4195907010610205703">"unganisha na uukate muunaganisho kutoka kwenye  WiMAX"</string>
     <string name="permdesc_accessWimaxState" msgid="6360102877261978887">"Inaruhusu programu kuthibitisha ikiwa WiMAX imewezeshwa na taarifa kuhusu mitandao yoyote ya WiMAX ambayo imeunganishwa."</string>
     <string name="permlab_changeWimaxState" msgid="2405042267131496579">"Badilisha hali ya WiMAX"</string>
     <string name="permdesc_changeWimaxState" product="tablet" msgid="3156456504084201805">"Inaruhusu programu kuunganisha kompyuta kibao,  na kukata kompyuta kibao kutoka mitandao ya WiMAX."</string>
@@ -506,9 +585,9 @@
     <string name="permlab_bluetooth" msgid="6127769336339276828">"oanisha na vifaa vya Bluetooth"</string>
     <string name="permdesc_bluetooth" product="tablet" msgid="3480722181852438628">"Inaruhusu programu kuona usanidi wa Bluetooth kwenye kompyuta kibao, na kuunda na kukubali miunganisho kwa vifaa vilivyooanishwa."</string>
     <string name="permdesc_bluetooth" product="default" msgid="3207106324452312739">"Inaruhusu programu kuona usanidi wa Bluetooth kwenye simu, na kuunda na kukubali miunganisho kwa vifaa vilivyooanishwa."</string>
-    <string name="permlab_nfc" msgid="4423351274757876953">"dhibiti Mawasiliano Karibu na Uga"</string>
+    <string name="permlab_nfc" msgid="4423351274757876953">"dhibiti Mawasiliano ya vifaa vilivyo Karibu"</string>
     <string name="permdesc_nfc" msgid="7120611819401789907">"Inaruhusu programu kuwasiliana na lebo, kadi na wasomaji wa Near Field Communication (NFC)."</string>
-    <string name="permlab_disableKeyguard" msgid="3598496301486439258">"lemaza kufuli la skrini yako"</string>
+    <string name="permlab_disableKeyguard" msgid="3598496301486439258">"zima kufuli la skrini yako"</string>
     <string name="permdesc_disableKeyguard" msgid="6034203065077122992">"Inaruhusu programu kulemaza ufunguo wa vitufe na usalama mwingine ambata wa nenosiri. Kwa mfano, simu inalemaza ufunguo wa viitufe inapopokea simu inayoingia, kisha inawezesha upya ufunguo wa vitufe wakati simu inapokamilika."</string>
     <string name="permlab_readSyncSettings" msgid="6201810008230503052">"soma mipangilio ya usawazishaji"</string>
     <string name="permdesc_readSyncSettings" msgid="2706745674569678644">"Inaruhusu programu kusoma mipangilio ya upatanishi wa akaunti. Kwa mfano, huku kunaweza kuamua kama programu ya Watu imepatanishwa na akaunti."</string>
@@ -522,11 +601,11 @@
     <string name="permdesc_subscribedFeedsWrite" msgid="6928930188826089413">"Inaruhusu programu kurekebisha milisho yako iliyolandanishwa kwa sasa. Programu hasidi zinaweza kubadilisha milisho yako iliyolandanishwa."</string>
     <string name="permlab_readDictionary" msgid="4107101525746035718">"soma maneno uliyoongeza kwenye kamusi"</string>
     <string name="permdesc_readDictionary" msgid="659614600338904243">"Inaruhusu programu kusoma maneno, majina na misemo yote ambayo mtumiaji alihifadhi katika kamusi ya mtumiaji."</string>
-    <string name="permlab_writeDictionary" msgid="2296383164914812772">"andika kwa kamusi iliyobainishwa na mtumiaji"</string>
+    <string name="permlab_writeDictionary" msgid="2183110402314441106">"ongeza maneno katika kamusi ya mtumiaji iliyofafanuliwa"</string>
     <string name="permdesc_writeDictionary" msgid="8185385716255065291">"Inaruhusu programu kuandika maneno mapya katika kamusi ya mtumiaji."</string>
     <string name="permlab_sdcardRead" product="nosdcard" msgid="8235341515605559677">"jaribu mfikio kwa hifadhi iliyolindwa"</string>
     <string name="permlab_sdcardRead" product="default" msgid="8235341515605559677">"jaribu mfikio kwa hifadhi iliyolindwa"</string>
-    <string name="permdesc_sdcardRead" product="nosdcard" msgid="5791957130190763289">"Inaruhusu programu kujaribu idhini ya hifadhi ya USB itakayokuwa kwenye vifaa vya baadaye."</string>
+    <string name="permdesc_sdcardRead" product="nosdcard" msgid="3642473292348132072">"Inaruhusu programu kujaribu idhini ya hifadhi ya USB itakayopatikana kwenye vifaa vya baadaye."</string>
     <string name="permdesc_sdcardRead" product="default" msgid="5914402684685848828">"Inaruhusu programu kujaribu idhini ya kadi ya SD itakayokuwa kwenye vifaa vya baadaye."</string>
     <string name="permlab_sdcardWrite" product="nosdcard" msgid="8485979062254666748">"rekebisha au ufute maudhui ya hifadhi yako ya USB"</string>
     <string name="permlab_sdcardWrite" product="default" msgid="8805693630050458763">"rekebisha au ufute maudhui ya kadi yako ya SD"</string>
@@ -534,6 +613,8 @@
     <string name="permdesc_sdcardWrite" product="default" msgid="4337417790936632090">"Inaruhusu programu kuandikia kadi ya SD."</string>
     <string name="permlab_mediaStorageWrite" product="default" msgid="6859839199706879015">"badilisha/futa maudhui ya hifadhi ya media ya ndani."</string>
     <string name="permdesc_mediaStorageWrite" product="default" msgid="8189160597698529185">"Inaruhusu programu kurekebisha maudhui ya hifadhi ya ndani vyombo vya habari."</string>
+    <string name="permlab_sdcardAccessAll" msgid="8150613823900460576">"Fikia hifadhi ya nje ya watumiaji wote"</string>
+    <string name="permdesc_sdcardAccessAll" msgid="3215208357415891320">"Inaruhusu programu kufikia hifadhi ya nje kwa watumiaji wote."</string>
     <string name="permlab_cache_filesystem" msgid="5656487264819669824">"fikia faili za mfumo za kache"</string>
     <string name="permdesc_cache_filesystem" msgid="5578967642265550955">"Inaruhusu programu kusoma na kuandika mfumo wa faili wa kache."</string>
     <string name="permlab_use_sip" msgid="5986952362795870502">"piga/pokea simu za mtandao"</string>
@@ -544,6 +625,10 @@
     <string name="permdesc_manageNetworkPolicy" msgid="7537586771559370668">"Inaruhusu programu kudhibiti sera za mtandao na kufafanua sheria maalum za programu."</string>
     <string name="permlab_modifyNetworkAccounting" msgid="5088217309088729650">"badilisha uthibitishaji wa matumizi ya mtandao"</string>
     <string name="permdesc_modifyNetworkAccounting" msgid="5443412866746198123">"Huruhusu programu kurekebisha jinsi matumizi ya mtandao yana hesabika dhidi ya programu. Sio ya matumizi na programu za kawaida."</string>
+    <string name="permlab_accessNotifications" msgid="7673416487873432268">"fikia arifa"</string>
+    <string name="permdesc_accessNotifications" msgid="458457742683431387">"Huruhusu programu kurejesha, kuchunguza, na kuondoa arifa, ikiwa ni pamoja na zile zilizochapishwa na programu nyingine."</string>
+    <string name="permlab_bindNotificationListenerService" msgid="7057764742211656654">"unganisha kwenye huduma ya kisikilizi cha arifa"</string>
+    <string name="permdesc_bindNotificationListenerService" msgid="985697918576902986">"Inaruhusu kishikilizi kuunganishwa kwenye kusano cha kiwango cha juu cha huduma ya kisikilizi cha arifa. Haipaswi kuhitajika tena kwa programu za kawaida."</string>
     <string name="policylab_limitPassword" msgid="4497420728857585791">"Weka kanuni za nenosiri"</string>
     <string name="policydesc_limitPassword" msgid="3252114203919510394">"Dhibiti urefu na vibambo vinavyoruhusiwa katika manenosiri ya kufungua skrini."</string>
     <string name="policylab_watchLogin" msgid="914130646942199503">"Chunguza majaribio ya kutofun gua skrini"</string>
@@ -562,8 +647,10 @@
     <string name="policydesc_expirePassword" msgid="1729725226314691591">"Dhibiti ni mara ngapi nenosiri la kufunga skrini linafaa libadilishwe."</string>
     <string name="policylab_encryptedStorage" msgid="8901326199909132915">"Weka msimbo fiche wa hifadhi"</string>
     <string name="policydesc_encryptedStorage" msgid="2637732115325316992">"Inahitaji kwamba data ya programu iliyohifadhiwa iwe na msimbo fiche."</string>
-    <string name="policylab_disableCamera" msgid="6395301023152297826">"Lemaza kamera"</string>
+    <string name="policylab_disableCamera" msgid="6395301023152297826">"Zima kamera"</string>
     <string name="policydesc_disableCamera" msgid="2306349042834754597">"Zuia matumizi yote ya kamera za kifaa."</string>
+    <string name="policylab_disableKeyguardFeatures" msgid="266329104542638802">"Lemaza vipengele kwenye kilinzi cha kitufe."</string>
+    <string name="policydesc_disableKeyguardFeatures" msgid="3467082272186534614">"Inazuia matumizi ya baadhi ya vipengele kwenye kilinzi cha kitufe."</string>
   <string-array name="phoneTypes">
     <item msgid="8901098336658710359">"Nyumbani"</item>
     <item msgid="869923650527136615">"Simu ya mkononi"</item>
@@ -699,10 +786,10 @@
     <string name="lockscreen_password_wrong" msgid="5737815393253165301">"Jaribu tena"</string>
     <string name="faceunlock_multiple_failures" msgid="754137583022792429">"Majaribio ya Juu ya Kufungua Uso yamezidishwa"</string>
     <string name="lockscreen_plugged_in" msgid="8057762828355572315">"Inachaji <xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>"</string>
-    <string name="lockscreen_charged" msgid="4938930459620989972">"Imechajiwa."</string>
+    <string name="lockscreen_charged" msgid="321635745684060624">"Imechajiwa"</string>
     <string name="lockscreen_battery_short" msgid="4477264849386850266">"<xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>"</string>
     <string name="lockscreen_low_battery" msgid="1482873981919249740">"Unganisha chaja yako"</string>
-    <string name="lockscreen_missing_sim_message_short" msgid="7381499217732227295">"Hakuna SIM kadi."</string>
+    <string name="lockscreen_missing_sim_message_short" msgid="5099439277819215399">"Hakuna SIM kadi"</string>
     <string name="lockscreen_missing_sim_message" product="tablet" msgid="151659196095791474">"Hakuna SIM kadi katika kompyuta ndogo."</string>
     <string name="lockscreen_missing_sim_message" product="default" msgid="2186920585695169078">"Hakuna SIM kadi kwenye simu."</string>
     <string name="lockscreen_missing_sim_instructions" msgid="5372787138023272615">"Ingiza SIM kadi."</string>
@@ -737,7 +824,7 @@
     <string name="lockscreen_glogin_username_hint" msgid="8846881424106484447">"Jina la mtumiaji (barua pepe)"</string>
     <string name="lockscreen_glogin_password_hint" msgid="5958028383954738528">"Nenosiri"</string>
     <string name="lockscreen_glogin_submit_button" msgid="7130893694795786300">"Ingia"</string>
-    <string name="lockscreen_glogin_invalid_input" msgid="1364051473347485908">"Jina batili la mtumiaji au nywila"</string>
+    <string name="lockscreen_glogin_invalid_input" msgid="1364051473347485908">"Jina la mtumiaji au nenosiri batili."</string>
     <string name="lockscreen_glogin_account_recovery_hint" msgid="1696924763690379073">"Umesahau jina lako la mtumiaji au nenosiri?"\n"Tembela "<b>"google.com/accounts/recovery"</b>"."</string>
     <string name="lockscreen_glogin_checking_password" msgid="7114627351286933867">"Inakagua..."</string>
     <string name="lockscreen_unlock_label" msgid="737440483220667054">"Fungua"</string>
@@ -747,6 +834,27 @@
     <string name="lockscreen_access_pattern_cleared" msgid="5583479721001639579">"Ruwaza imefutwa"</string>
     <string name="lockscreen_access_pattern_cell_added" msgid="6756031208359292487">"Kiini kimeongezwa"</string>
     <string name="lockscreen_access_pattern_detected" msgid="4988730895554057058">"Ruwaza imekamilika"</string>
+    <string name="keyguard_accessibility_widget_changed" msgid="5678624624681400191">"%1$s. Wiji %2$d ya %3$d."</string>
+    <string name="keyguard_accessibility_add_widget" msgid="8273277058724924654">"Ongeza wiji"</string>
+    <string name="keyguard_accessibility_widget_empty_slot" msgid="1281505703307930757">"Tupu"</string>
+    <string name="keyguard_accessibility_unlock_area_expanded" msgid="2278106022311170299">"Eneo la kufungua limepanuliwa."</string>
+    <string name="keyguard_accessibility_unlock_area_collapsed" msgid="6366992066936076396">"Eneo la kufungua limekunjwa."</string>
+    <string name="keyguard_accessibility_widget" msgid="6527131039741808240">"<xliff:g id="WIDGET_INDEX">%1$s</xliff:g> ya wiji."</string>
+    <string name="keyguard_accessibility_user_selector" msgid="1226798370913698896">"Kiteuzi cha mtumiaji"</string>
+    <string name="keyguard_accessibility_status" msgid="8008264603935930611">"Hali"</string>
+    <string name="keyguard_accessibility_camera" msgid="8904231194181114603">"Kamera"</string>
+    <string name="keygaurd_accessibility_media_controls" msgid="262209654292161806">"Vidhibiti vya media"</string>
+    <string name="keyguard_accessibility_widget_reorder_start" msgid="8736853615588828197">"Upangaji upya wa wiji umeanza."</string>
+    <string name="keyguard_accessibility_widget_reorder_end" msgid="7170190950870468320">"Upangaji upya wa wiji umekamilika."</string>
+    <string name="keyguard_accessibility_widget_deleted" msgid="4426204263929224434">"Wiji <xliff:g id="WIDGET_INDEX">%1$s</xliff:g> imefutwa."</string>
+    <string name="keyguard_accessibility_expand_lock_area" msgid="519859720934178024">"Panua eneo la kufungua."</string>
+    <string name="keyguard_accessibility_slide_unlock" msgid="2959928478764697254">"Kufungua slaidi."</string>
+    <string name="keyguard_accessibility_pattern_unlock" msgid="1490840706075246612">"Kufungua kwa ruwaza."</string>
+    <string name="keyguard_accessibility_face_unlock" msgid="4817282543351718535">"Kufungua kwa uso."</string>
+    <string name="keyguard_accessibility_pin_unlock" msgid="2469687111784035046">"Kufungua kwa PIN."</string>
+    <string name="keyguard_accessibility_password_unlock" msgid="7675777623912155089">"Kufungua kwa nenosiri."</string>
+    <string name="keyguard_accessibility_pattern_area" msgid="7679891324509597904">"Eneo la ruwaza."</string>
+    <string name="keyguard_accessibility_slide_area" msgid="6736064494019979544">"Eneo la slaidi."</string>
     <string name="password_keyboard_label_symbol_key" msgid="992280756256536042">"?123"</string>
     <string name="password_keyboard_label_alpha_key" msgid="8001096175167485649">"ABC"</string>
     <string name="password_keyboard_label_alt_key" msgid="1284820942620288678">"ALT"</string>
@@ -760,13 +868,16 @@
     <string name="factorytest_not_system" msgid="4435201656767276723">"Tendo la JARIBIO_LA KIWANDA  linahimiliwa tu kwa furushi zilizosakinishwa katika /system/app."</string>
     <string name="factorytest_no_action" msgid="872991874799998561">"Hakuna furushi lililopatikana ambalo linatoa tendo la JARIBIO_LA KIWANDA."</string>
     <string name="factorytest_reboot" msgid="6320168203050791643">"Washa tena"</string>
-    <string name="js_dialog_title" msgid="1987483977834603872">"Ukurasa ulio \"<xliff:g id="TITLE">%s</xliff:g>\" unasema:"</string>
+    <string name="js_dialog_title" msgid="1987483977834603872">"Ukurasa wa \"<xliff:g id="TITLE">%s</xliff:g>\" unasema:"</string>
     <string name="js_dialog_title_default" msgid="6961903213729667573">"HatiJava"</string>
-    <string name="js_dialog_before_unload" msgid="730366588032430474">"Toka kwa ukurasa huu?"\n\n"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"Gusa Sawa ili kuendelea, au Ghairi ili kubaki kwenye ukurasa wa sasa."</string>
+    <string name="js_dialog_before_unload_title" msgid="2619376555525116593">"Thibitisha jinsi ya kuelekea"</string>
+    <string name="js_dialog_before_unload_positive_button" msgid="3112752010600484130">"Toka kwenye Ukurasa huu"</string>
+    <string name="js_dialog_before_unload_negative_button" msgid="5614861293026099715">"Bakia kwenye Ukurasa huu"</string>
+    <string name="js_dialog_before_unload" msgid="3468816357095378590">"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"Je, una uhakika unataka kutoka kwenye ukurasa huu?"</string>
     <string name="save_password_label" msgid="6860261758665825069">"Thibitisha"</string>
     <string name="double_tap_toast" msgid="4595046515400268881">"Kidokezo: Gonga mara mbili ili kukuza ndani na nje."</string>
-    <string name="autofill_this_form" msgid="4616758841157816676">"Mjazo-otomatiki"</string>
-    <string name="setup_autofill" msgid="7103495070180590814">"Sanidi Mjazo-otomati"</string>
+    <string name="autofill_this_form" msgid="4616758841157816676">"Kujaza kiotomatiki"</string>
+    <string name="setup_autofill" msgid="7103495070180590814">"Weka uwezo wa kujaza kiotomatiki"</string>
     <string name="autofill_address_name_separator" msgid="6350145154779706772">" "</string>
     <string name="autofill_address_summary_name_format" msgid="3268041054899214945">"$1$2$3"</string>
     <string name="autofill_address_summary_separator" msgid="7483307893170324129">", "</string>
@@ -787,11 +898,11 @@
     <string name="permdesc_readHistoryBookmarks" msgid="8462378226600439658">"Inaruhusu programu kusoma historia ya URL zote ambazo zimetembelewa na Kivinjari, na alamisho zote za Kivinjari. Kumbuka: idhini hii haiwezi kutekelezwa vivinjari vya vingine au programu zingine zenye uwezo wa kuvinjari."</string>
     <string name="permlab_writeHistoryBookmarks" msgid="3714785165273314490">"andika alamisho na historia ya wavuti"</string>
     <string name="permdesc_writeHistoryBookmarks" product="tablet" msgid="6825527469145760922">"Inaruhusu programu kurekebisha historia ya Kivinjari au alamisho zilizohifadhiwa kwenye kompyuta kibao yako. Hii inaruhusu programu kufuta au kurekebisha data ya Kivinjari. Kumbuka: huenda idhini hii isitekelezwe na kivinjari kingine au programu nyingine zenye uwezo wa kuvinjari wavuti."</string>
-    <string name="permdesc_writeHistoryBookmarks" product="default" msgid="8497389531014185509">"Inaruhusu programu kurekebisha historia ya Kivinjari au vialamisho vilivyohifadhiwa kwenye simu yako. Hii huenda ikaruhusu programu kufuta au kurekebisha data ya Kivinjari. Kumbuka: huenda idhini hii isitekelezwe na vivinjari vingine au programu nyingine zenye uwezo wa kuvinjari wavuti."</string>
+    <string name="permdesc_writeHistoryBookmarks" product="default" msgid="8497389531014185509">"Inaruhusu programu kurekebisha historia ya Kivinjari au alamisho zilizohifadhiwa kwenye simu yako. Hii huenda ikaruhusu programu kufuta au kurekebisha data ya Kivinjari. Kumbuka: huenda idhini hii isitekelezwe na vivinjari vingine au programu nyingine zenye uwezo wa kuvinjari wavuti."</string>
     <string name="permlab_setAlarm" msgid="1379294556362091814">"weka kengele"</string>
     <string name="permdesc_setAlarm" msgid="316392039157473848">"Inaruhusu programu kuweka kengele katika programu iliyosakinishwa ya kengele. Programu zingine za kengele zinawezakosa kutekeleza kipengee hiki."</string>
     <string name="permlab_addVoicemail" msgid="5525660026090959044">"ongeza barua ya sauti"</string>
-    <string name="permdesc_addVoicemail" msgid="6604508651428252437">"Inaruhusu programu kuongeza jumbe kwenye kikasha cha ujumbe wa sauti."</string>
+    <string name="permdesc_addVoicemail" msgid="6604508651428252437">"Huruhusu programu kuongeza mawasiliano kwenye kikasha cha ujumbe wa sauti."</string>
     <string name="permlab_writeGeolocationPermissions" msgid="5962224158955273932">"Rekebisha vibali vya Kivinjari cha eneo la jio"</string>
     <string name="permdesc_writeGeolocationPermissions" msgid="1083743234522638747">"Inaruhusu programu kurekebisha ruhusa za eneo la jio za kivinjari. Programu hasidi zinaweza tumia hii kuruhusu kutuma taarifa ya eneo kwa wavuti holela."</string>
     <string name="permlab_packageVerificationAgent" msgid="5568139100645829117">"thibitisha furushi"</string>
@@ -901,7 +1012,7 @@
     <string name="day" msgid="8144195776058119424">"siku"</string>
     <string name="days" msgid="4774547661021344602">"siku"</string>
     <string name="hour" msgid="2126771916426189481">"saa"</string>
-    <string name="hours" msgid="894424005266852993">"masaa"</string>
+    <string name="hours" msgid="894424005266852993">"saa"</string>
     <string name="minute" msgid="9148878657703769868">"dakika"</string>
     <string name="minutes" msgid="5646001005827034509">"Dakika"</string>
     <string name="second" msgid="3184235808021478">"sekunde"</string>
@@ -910,6 +1021,18 @@
     <string name="weeks" msgid="6509623834583944518">"wiki"</string>
     <string name="year" msgid="4001118221013892076">"mwaka"</string>
     <string name="years" msgid="6881577717993213522">"miaka"</string>
+  <plurals name="duration_seconds">
+    <item quantity="one" msgid="6962015528372969481">"Sekunde 1"</item>
+    <item quantity="other" msgid="1886107766577166786">"Sekunde <xliff:g id="COUNT">%d</xliff:g>"</item>
+  </plurals>
+  <plurals name="duration_minutes">
+    <item quantity="one" msgid="4915414002546085617">"Dakika 1"</item>
+    <item quantity="other" msgid="3165187169224908775">"Dakika <xliff:g id="COUNT">%d</xliff:g>"</item>
+  </plurals>
+  <plurals name="duration_hours">
+    <item quantity="one" msgid="8917467491248809972">"Saa 1"</item>
+    <item quantity="other" msgid="3863962854246773930">"Saa <xliff:g id="COUNT">%d</xliff:g>"</item>
+  </plurals>
     <string name="VideoView_error_title" msgid="3534509135438353077">"Shida ya video"</string>
     <string name="VideoView_error_text_invalid_progressive_playback" msgid="3186670335938670444">"Video hii si halali kutiririshwa kwa kifaa hiki."</string>
     <string name="VideoView_error_text_unknown" msgid="3450439155187810085">"Haiwezi kucheza video hii."</string>
@@ -930,12 +1053,14 @@
     <string name="copyUrl" msgid="2538211579596067402">"Nakili URL"</string>
     <string name="selectTextMode" msgid="1018691815143165326">"Chagua maandishi"</string>
     <string name="textSelectionCABTitle" msgid="5236850394370820357">"Uchaguzi wa maandishi?"</string>
-    <string name="addToDictionary" msgid="9090375111134433012">"ongeza kwa kamusi"</string>
-    <string name="deleteText" msgid="7070985395199629156">"futa"</string>
+    <string name="addToDictionary" msgid="4352161534510057874">"Ongeza kwenye kamusi"</string>
+    <string name="deleteText" msgid="6979668428458199034">"Futa"</string>
     <string name="inputMethod" msgid="1653630062304567879">"Mbinu ya uingizaji"</string>
     <string name="editTextMenuTitle" msgid="4909135564941815494">"Vitendo vya maandishi"</string>
     <string name="low_internal_storage_view_title" msgid="5576272496365684834">"Nafasi ya kuhafadhi inakwisha"</string>
     <string name="low_internal_storage_view_text" msgid="6640505817617414371">"Baadhi ya vipengee vya mfumo huenda visifanye kazi"</string>
+    <string name="app_running_notification_title" msgid="8718335121060787914">"<xliff:g id="APP_NAME">%1$s</xliff:g> inatumiwa"</string>
+    <string name="app_running_notification_text" msgid="4653586947747330058">"Gusa ili upate maelezo zaidi au usitishe programu."</string>
     <string name="ok" msgid="5970060430562524910">"Sawa"</string>
     <string name="cancel" msgid="6442560571259935130">"Ghairi"</string>
     <string name="yes" msgid="5362982303337969312">"Sawa"</string>
@@ -944,7 +1069,7 @@
     <string name="loading" msgid="7933681260296021180">"Inapakia…"</string>
     <string name="capital_on" msgid="1544682755514494298">"Washa"</string>
     <string name="capital_off" msgid="6815870386972805832">"ZIMA"</string>
-    <string name="whichApplication" msgid="4533185947064773386">"Kamilisha kitendo kwa kutumia"</string>
+    <string name="whichApplication" msgid="4533185947064773386">"Kamilisha kitendo ukitumia"</string>
     <string name="alwaysUse" msgid="4583018368000610438">"Tumia kama chaguo-msingi la kitendo hiki."</string>
     <string name="clearDefaultHintMsg" msgid="3252584689512077257">"Futa chaguo-msingi katika mipangilio ya Mfumo &gt; Apps &gt; iliyopakuliwa."</string>
     <string name="chooseActivity" msgid="7486876147751803333">"Chagua kitendo"</string>
@@ -997,9 +1122,9 @@
     <string name="volume_icon_description_incall" msgid="8890073218154543397">"Sauti ya simu"</string>
     <string name="volume_icon_description_media" msgid="4217311719665194215">"Sauti ya midia"</string>
     <string name="volume_icon_description_notification" msgid="7044986546477282274">"Sauti ya arifa"</string>
-    <string name="ringtone_default" msgid="3789758980357696936">"Toni mlio chaguo-msingi"</string>
-    <string name="ringtone_default_with_actual" msgid="8129563480895990372">"Toni mlio chaguo-msingi  (<xliff:g id="ACTUAL_RINGTONE">%1$s</xliff:g>)"</string>
-    <string name="ringtone_silent" msgid="4440324407807468713">"Kimya"</string>
+    <string name="ringtone_default" msgid="3789758980357696936">"Mlio chaguo-msingi"</string>
+    <string name="ringtone_default_with_actual" msgid="8129563480895990372">"Mlio chaguo-msingi (<xliff:g id="ACTUAL_RINGTONE">%1$s</xliff:g>)"</string>
+    <string name="ringtone_silent" msgid="7937634392408977062">"Hamna"</string>
     <string name="ringtone_picker_title" msgid="3515143939175119094">"Toni za mlio"</string>
     <string name="ringtone_unknown" msgid="5477919988701784788">"Mlio amabo haujulikani"</string>
   <plurals name="wifi_available">
@@ -1011,7 +1136,8 @@
     <item quantity="other" msgid="7915895323644292768">"Fungua mitandao ya Wi-Fi inayopatikana"</item>
   </plurals>
     <string name="wifi_available_sign_in" msgid="4029489716605255386">"Ingia kwenye mtandao wa Wi-Fi"</string>
-    <!-- no translation found for wifi_available_sign_in_detailed (6797764740339907572) -->
+    <string name="network_available_sign_in" msgid="8495155593358054676">"Ingia kwenye mtandao"</string>
+    <!-- no translation found for network_available_sign_in_detailed (8000081941447976118) -->
     <skip />
     <string name="wifi_watchdog_network_disabled" msgid="7904214231651546347">"Haikuweza kuunganisha kwa Mtandao-Hewa"</string>
     <string name="wifi_watchdog_network_disabled_detailed" msgid="5548780776418332675">" ina muunganisho duni wa Mtandao."</string>
@@ -1028,11 +1154,22 @@
     <string name="wifi_p2p_to_message" msgid="248968974522044099">"Kwa:"</string>
     <string name="wifi_p2p_enter_pin_message" msgid="5920929550367828970">"Charaza PIN inayohitajika:"</string>
     <string name="wifi_p2p_show_pin_message" msgid="8530563323880921094">"PIN:"</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="tablet" msgid="8012981257742232475">"Kompyuta ndogo itaukata muunganisho kwa muda kutoka kwenye Wi-Fi inapokuwa imeunganishwa kwenye <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="default" msgid="7363907213787469151">"Simu itaukata muunganisho kwa muda kutoka kwenye Wi-Fi inapokuwa imeunganishwa kwenye <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="select_character" msgid="3365550120617701745">"Ingiza kibambo"</string>
     <string name="sms_control_title" msgid="7296612781128917719">"Inatuma ujumbe wa SMS"</string>
-    <string name="sms_control_message" msgid="3867899169651496433">"&lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; inatuma idadi kubwa ya jumbe za SMS. Je, unataka kuruhusu programu hii kuendelea kutuma jumbe?"</string>
+    <string name="sms_control_message" msgid="3867899169651496433">"&lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; inatuma idadi kubwa ya SMS. Je, unataka kuruhusu programu hii kuendelea kutuma SMS?"</string>
     <string name="sms_control_yes" msgid="3663725993855816807">"Ruhusu"</string>
     <string name="sms_control_no" msgid="625438561395534982">"Kataza"</string>
+    <string name="sms_short_code_confirm_message" msgid="1645436466285310855">"&lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; ingependa kutuma ujumbe kwa &lt;b&gt;<xliff:g id="DEST_ADDRESS">%2$s</xliff:g>&lt;/b&gt;."</string>
+    <string name="sms_short_code_details" msgid="3492025719868078457">"Hii "<font fgcolor="#ffffb060">"huenda ikasababisha gharama"</font>" kwenye akaunti yako ya simu."</string>
+    <string name="sms_premium_short_code_details" msgid="5523826349105123687"><font fgcolor="#ffffb060">"Hii itasababisha gharama kwenye akaunti yako ya simu."</font></string>
+    <string name="sms_short_code_confirm_allow" msgid="4458878637111023413">"Tuma"</string>
+    <string name="sms_short_code_confirm_deny" msgid="2927389840209170706">"Ghairi"</string>
+    <string name="sms_short_code_remember_choice" msgid="5289538592272218136">"Kumbuka chaguo yangu"</string>
+    <string name="sms_short_code_remember_undo_instruction" msgid="4960944133052287484">"Unaweza kubadilisha hii baadaye kwenye Mipangilio &gt; Programu"</string>
+    <string name="sms_short_code_confirm_always_allow" msgid="3241181154869493368">"Ruhusu Kila mara"</string>
+    <string name="sms_short_code_confirm_never_allow" msgid="446992765774269673">"Usiruhusu Kamwe"</string>
     <string name="sim_removed_title" msgid="6227712319223226185">"Kadi ya SIM imeondolewa"</string>
     <string name="sim_removed_message" msgid="2333164559970958645">"mtandao wa simu hutapatika hadi uanzishe upya na SIM kadi halali iliyoingizwa."</string>
     <string name="sim_done_button" msgid="827949989369963775">"Kwisha"</string>
@@ -1043,12 +1180,10 @@
     <string name="date_picker_dialog_title" msgid="5879450659453782278">"Weka tarehe"</string>
     <string name="date_time_set" msgid="5777075614321087758">"Weka"</string>
     <string name="date_time_done" msgid="2507683751759308828">"Imekamilika"</string>
-    <string name="default_permission_group" msgid="2690160991405646128">"Chaguo-msingi"</string>
-    <string name="no_permissions" msgid="7283357728219338112">"Hakuna vibali vinavyohitajika"</string>
-    <string name="perms_hide" msgid="7283915391320676226"><b>"Ficha"</b></string>
-    <string name="perms_show_all" msgid="2671791163933091180"><b>"Onyesha zote"</b></string>
-    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff900000">" MPYA: "</font></string>
+    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff33b5e5">" MPYA: "</font></string>
     <string name="perms_description_app" msgid="5139836143293299417">"Imetolewa na <xliff:g id="APP_NAME">%1$s</xliff:g>."</string>
+    <string name="no_permissions" msgid="7283357728219338112">"Hakuna vibali vinavyohitajika"</string>
+    <string name="perm_costs_money" msgid="4902470324142151116">"huenda hii ikakugharimu pesa"</string>
     <string name="usb_storage_activity_title" msgid="4465055157209648641">"Hifadhi kubwa ya USB"</string>
     <string name="usb_storage_title" msgid="5901459041398751495">"USB imeunganishwa"</string>
     <string name="usb_storage_message" product="nosdcard" msgid="3308538094316477839">"Umeunganisha kwenye kompyuta yako kupitia USB. Gusa kitufe hapa chini kama unataka kunakili faili kati ya kompyuta yako na hifadhi yako ya USB ya Android."</string>
@@ -1143,25 +1278,30 @@
     <string name="accessibility_binding_label" msgid="4148120742096474641">"Ufikiaji"</string>
     <string name="wallpaper_binding_label" msgid="1240087844304687662">"Mandhari"</string>
     <string name="chooser_wallpaper" msgid="7873476199295190279">"Badilisha mandhari"</string>
+    <string name="notification_listener_binding_label" msgid="2014162835481906429">"Kisikilizi cha arifa"</string>
     <string name="vpn_title" msgid="19615213552042827">"VPN imewezeshwa"</string>
     <string name="vpn_title_long" msgid="6400714798049252294">"VPN imeamilishwa na <xliff:g id="APP">%s</xliff:g>"</string>
     <string name="vpn_text" msgid="3011306607126450322">"Gusa ili kudhibiti mtandao."</string>
     <string name="vpn_text_long" msgid="6407351006249174473">"Imeunganishwa kwa <xliff:g id="SESSION">%s</xliff:g>. Gusa ili kudhibiti mtandao."</string>
+    <string name="vpn_lockdown_connecting" msgid="6443438964440960745">"Kila mara VPN iliyowashwa inaunganishwa…"</string>
+    <string name="vpn_lockdown_connected" msgid="8202679674819213931">"Kila mara VPN iliyowashwa imeunganishwa"</string>
+    <string name="vpn_lockdown_error" msgid="6009249814034708175">"Kila mara kuna hitilafu ya VPN iliyowashwa"</string>
+    <string name="vpn_lockdown_config" msgid="6415899150671537970">"Gusa ili kusanidi"</string>
     <string name="upload_file" msgid="2897957172366730416">"Chagua faili"</string>
     <string name="no_file_chosen" msgid="6363648562170759465">"Hakuna faili iliyochaguliwa"</string>
     <string name="reset" msgid="2448168080964209908">"Weka upya"</string>
     <string name="submit" msgid="1602335572089911941">"Wasilisha"</string>
     <string name="car_mode_disable_notification_title" msgid="3164768212003864316">"Mtindo wa gari umewezeshwa"</string>
     <string name="car_mode_disable_notification_message" msgid="8035230537563503262">"Gusa ili kutoka katika modi ya gari."</string>
-    <string name="tethered_notification_title" msgid="3146694234398202601">"Amilisha uzuiaji au mahali maalum"</string>
+    <string name="tethered_notification_title" msgid="3146694234398202601">"Kushiriki au kusambaza intaneti kumewashwa"</string>
     <string name="tethered_notification_message" msgid="6857031760103062982">"Gusa ili kusanidi."</string>
     <string name="back_button_label" msgid="2300470004503343439">"Nyuma"</string>
     <string name="next_button_label" msgid="1080555104677992408">"Ifuatayo"</string>
     <string name="skip_button_label" msgid="1275362299471631819">"Ruka"</string>
     <string name="throttle_warning_notification_title" msgid="4890894267454867276">"Utumizi wa juu wa data ya simu"</string>
-    <string name="throttle_warning_notification_message" msgid="3340822228599337743">"Gusa ili kujifunza zaidi kuhusu matumizi ya data ya simu ya mkononi."</string>
+    <string name="throttle_warning_notification_message" msgid="3340822228599337743">"Gusa ili kupata maelezo zaidi kuhusu matumizi ya data ya simu ya mkononi."</string>
     <string name="throttled_notification_title" msgid="6269541897729781332">"Kiwango cha kupunguza data ya simu kimezidishwa."</string>
-    <string name="throttled_notification_message" msgid="5443457321354907181">"Gusa ili kujifunza zaidi kuhusu matumizi ya data ya simu ya mkononi."</string>
+    <string name="throttled_notification_message" msgid="5443457321354907181">"Gusa ili kupata maelezo zaidi kuhusu matumizi ya data ya simu ya mkononi."</string>
     <string name="no_matches" msgid="8129421908915840737">"Hakuna vinavyolingana"</string>
     <string name="find_on_page" msgid="1946799233822820384">"Pata kwenye ukurasa"</string>
   <plurals name="matches_found">
@@ -1185,6 +1325,8 @@
     <string name="share" msgid="1778686618230011964">"Shiriki"</string>
     <string name="find" msgid="4808270900322985960">"Tafuta"</string>
     <string name="websearch" msgid="4337157977400211589">"Utafutaji Wavuti"</string>
+    <string name="find_next" msgid="5742124618942193978">"Pata ifuatayo"</string>
+    <string name="find_previous" msgid="2196723669388360506">"Pata iliyotangulia"</string>
     <string name="gpsNotifTicker" msgid="5622683912616496172">"Ombi la mahali kutoka <xliff:g id="NAME">%s</xliff:g>"</string>
     <string name="gpsNotifTitle" msgid="5446858717157416839">"Ombi la mahali"</string>
     <string name="gpsNotifMessage" msgid="1374718023224000702">"Imeombwa na <xliff:g id="NAME">%1$s</xliff:g> (<xliff:g id="SERVICE">%2$s</xliff:g>)"</string>
@@ -1193,7 +1335,7 @@
     <string name="sync_too_many_deletes" msgid="5296321850662746890">"Upeo wa ufutaji umezidishwa"</string>
     <string name="sync_too_many_deletes_desc" msgid="496551671008694245">"Kuna vipengee <xliff:g id="NUMBER_OF_DELETED_ITEMS">%1$d</xliff:g> vilivyofutwa vya <xliff:g id="TYPE_OF_SYNC">%2$s</xliff:g>, akaunti <xliff:g id="ACCOUNT_NAME">%3$s</xliff:g>. Je, unataka kufanya nini?"</string>
     <string name="sync_really_delete" msgid="2572600103122596243">"Futa vipengee"</string>
-    <string name="sync_undo_deletes" msgid="2941317360600338602">"Tengua ufutaji"</string>
+    <string name="sync_undo_deletes" msgid="2941317360600338602">"Tendua ufutaji"</string>
     <string name="sync_do_nothing" msgid="3743764740430821845">"Usifanye chochote kwa sasa"</string>
     <string name="choose_account_label" msgid="5655203089746423927">"Chagua akaunti"</string>
     <string name="add_account_label" msgid="2935267344849993553">"Ongeza akaunti"</string>
@@ -1220,10 +1362,10 @@
     <string name="keyboardview_keycode_done" msgid="1992571118466679775">"Imefanyika"</string>
     <string name="keyboardview_keycode_mode_change" msgid="4547387741906537519">"Modi ya mabadiliko"</string>
     <string name="keyboardview_keycode_shift" msgid="2270748814315147690">"Songa"</string>
-    <string name="keyboardview_keycode_enter" msgid="2985864015076059467">"Ingiza"</string>
+    <string name="keyboardview_keycode_enter" msgid="2985864015076059467">"Enter"</string>
     <string name="activitychooserview_choose_application" msgid="2125168057199941199">"Chagua programu"</string>
-    <string name="shareactionprovider_share_with" msgid="806688056141131819">"Gawa na"</string>
-    <string name="shareactionprovider_share_with_application" msgid="5627411384638389738">"Gawa na <xliff:g id="APPLICATION_NAME">%s</xliff:g>"</string>
+    <string name="shareactionprovider_share_with" msgid="806688056141131819">"Shiriki na"</string>
+    <string name="shareactionprovider_share_with_application" msgid="5627411384638389738">"Shiriki na <xliff:g id="APPLICATION_NAME">%s</xliff:g>"</string>
     <string name="content_description_sliding_handle" msgid="415975056159262248">"Utambo unaosonga. Gusa &amp; shika"</string>
     <string name="description_direction_up" msgid="7169032478259485180">"Sogeza juu kwa <xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> ."</string>
     <string name="description_direction_down" msgid="5087739728639014595">"Sogeza chini kwa <xliff:g id="TARGET_DESCRIPTION">%s</xliff:g>."</string>
@@ -1240,6 +1382,8 @@
     <string name="action_bar_home_description" msgid="5293600496601490216">"Abiri nyumbani"</string>
     <string name="action_bar_up_description" msgid="2237496562952152589">"Ongoza"</string>
     <string name="action_menu_overflow_description" msgid="2295659037509008453">"Chaguo zaidi"</string>
+    <string name="action_bar_home_description_format" msgid="7965984360903693903">"%1$s, %2$s"</string>
+    <string name="action_bar_home_subtitle_description_format" msgid="6985546530471780727">"%1$s, %2$s, %3$s"</string>
     <string name="storage_internal" msgid="4891916833657929263">"Hifadhi ya mfumo"</string>
     <string name="storage_sd_card" msgid="3282948861378286745">"Kadi ya SD"</string>
     <string name="storage_usb" msgid="3017954059538517278">"Hifadhi ya USB"</string>
@@ -1286,8 +1430,69 @@
     <string name="default_audio_route_name" product="default" msgid="4239291273420140123">"Simu"</string>
     <string name="default_audio_route_name_headphones" msgid="8119971843803439110">"Vipokeasauti"</string>
     <string name="default_audio_route_name_dock_speakers" msgid="6240602982276591864">"Vipasa sauti vya kituo"</string>
-    <string name="default_audio_route_name_hdmi" msgid="7986404173839007682">"Sauti ya HDMI"</string>
+    <string name="default_media_route_name_hdmi" msgid="2450970399023478055">"HDMI"</string>
     <string name="default_audio_route_category_name" msgid="3722811174003886946">"Mfumo"</string>
     <string name="bluetooth_a2dp_audio_route_name" msgid="8575624030406771015">"Sauti ya Bluetooth"</string>
+    <string name="wireless_display_route_description" msgid="9070346425023979651">"Uonyeshaji usiotumia waya"</string>
     <string name="media_route_chooser_grouping_done" msgid="7966438307723317169">"Kwisha"</string>
+    <string name="media_route_button_content_description" msgid="5758553567065145276">"Towe la midia"</string>
+    <string name="media_route_status_scanning" msgid="7279908761758293783">"Inatambaza..."</string>
+    <string name="media_route_status_connecting" msgid="6422571716007825440">"Inaunganisha..."</string>
+    <string name="media_route_status_available" msgid="6983258067194649391">"Inapatikana"</string>
+    <string name="media_route_status_not_available" msgid="6739899962681886401">"Haipatikani"</string>
+    <string name="display_manager_built_in_display_name" msgid="2583134294292563941">"Skrini Iliyojengwa ndani"</string>
+    <string name="display_manager_hdmi_display_name" msgid="1555264559227470109">"Skrini ya HDMI"</string>
+    <string name="display_manager_overlay_display_name" msgid="5142365982271620716">"Uwekeleaji #<xliff:g id="ID">%1$d</xliff:g>"</string>
+    <string name="display_manager_overlay_display_title" msgid="652124517672257172">"<xliff:g id="NAME">%1$s</xliff:g>: <xliff:g id="WIDTH">%2$d</xliff:g>x<xliff:g id="HEIGHT">%3$d</xliff:g>, <xliff:g id="DPI">%4$d</xliff:g> dpi"</string>
+    <string name="wifi_display_notification_title" msgid="2223050649240326557">"Onyesho pasiwaya limeunganishwa"</string>
+    <string name="wifi_display_notification_message" msgid="4498802012464170685">"Skrini hii inaonyesha kwenye kifaa kingine"</string>
+    <string name="wifi_display_notification_disconnect" msgid="6183754463561153372">"Tenganisha"</string>
+    <string name="kg_emergency_call_label" msgid="684946192523830531">"Simu ya dharura"</string>
+    <string name="kg_forgot_pattern_button_text" msgid="8852021467868220608">"Umesahau Ruwaza"</string>
+    <string name="kg_wrong_pattern" msgid="1850806070801358830">"Mchoro Usio sahihi"</string>
+    <string name="kg_wrong_password" msgid="2333281762128113157">"Nenosiri Lisilo sahihi"</string>
+    <string name="kg_wrong_pin" msgid="1131306510833563801">"PIN isiyo sahihi"</string>
+    <string name="kg_too_many_failed_attempts_countdown" msgid="6358110221603297548">"Jaribu tena baada ya sekunde <xliff:g id="NUMBER">%d</xliff:g>."</string>
+    <string name="kg_pattern_instructions" msgid="398978611683075868">"Chora ruwaza yako"</string>
+    <string name="kg_sim_pin_instructions" msgid="2319508550934557331">"Ingiza PIN ya SIM"</string>
+    <string name="kg_pin_instructions" msgid="2377242233495111557">"Ingiza PIN"</string>
+    <string name="kg_password_instructions" msgid="5753646556186936819">"Ingiza Nenosiri"</string>
+    <string name="kg_puk_enter_puk_hint" msgid="453227143861735537">"SIM sasa imelemazwa. Ingiza msimbo wa PUK ili kuendelea. Wasiliana na mtoa huduma kwa maelezo."</string>
+    <string name="kg_puk_enter_pin_hint" msgid="7871604527429602024">"Ingiza msimbo wa PIN unaopendelewa"</string>
+    <string name="kg_enter_confirm_pin_hint" msgid="325676184762529976">"Thibitisha msimbo wa PIN unaopendelewa"</string>
+    <string name="kg_sim_unlock_progress_dialog_message" msgid="8950398016976865762">"Inafungua kadi ya SIM..."</string>
+    <string name="kg_password_wrong_pin_code" msgid="1139324887413846912">"Msimbo wa PIN usio sahihi."</string>
+    <string name="kg_invalid_sim_pin_hint" msgid="8795159358110620001">"Charaza PIN iliyo na tarakimu kati ya 4 na 8."</string>
+    <string name="kg_invalid_sim_puk_hint" msgid="7553388325654369575">"Msimbo wa PUK unafaa kuwa na nambari 8 au zaidi."</string>
+    <string name="kg_invalid_puk" msgid="3638289409676051243">"Ingiza upya msimbo sahihi wa PUK. Majaribio yanayorudiwa yatalemaza SIM kabisa."</string>
+    <string name="kg_invalid_confirm_pin_hint" product="default" msgid="7003469261464593516">"Misimbo ya PIN haifanani"</string>
+    <string name="kg_login_too_many_attempts" msgid="6486842094005698475">"Majaribio mengi mno ya mchoro"</string>
+    <string name="kg_login_instructions" msgid="1100551261265506448">"Ili kufungua, ingia kwa Akaunti yako ya Google."</string>
+    <string name="kg_login_username_hint" msgid="5718534272070920364">"Jina la mtumiaji (barua pepe)"</string>
+    <string name="kg_login_password_hint" msgid="9057289103827298549">"Nenosiri"</string>
+    <string name="kg_login_submit_button" msgid="5355904582674054702">"Ingia"</string>
+    <string name="kg_login_invalid_input" msgid="5754664119319872197">"Jina la mtumiaji au nenosiri batili."</string>
+    <string name="kg_login_account_recovery_hint" msgid="5690709132841752974">"Je, umesahau jina lako la mtumiaji au nenosiri?"\n"Tembela "<b>"Bgoogle.com/accounts/recovery"</b>"."</string>
+    <string name="kg_login_checking_password" msgid="1052685197710252395">"Inakagua akaunti…"</string>
+    <string name="kg_too_many_failed_pin_attempts_dialog_message" msgid="8276745642049502550">"Umeingiza nenosiri lako kwa makosa mara <xliff:g id="NUMBER_0">%d</xliff:g>. "\n\n" Jaribu tena baada ya sekunde <xliff:g id="NUMBER_1">%d</xliff:g>."</string>
+    <string name="kg_too_many_failed_password_attempts_dialog_message" msgid="7813713389422226531">"Umeingiza nenosiri lako kwa makosa mara <xliff:g id="NUMBER_0">%d</xliff:g>. "\n\n" Jaribu tena baada ya sekunde <xliff:g id="NUMBER_1">%d</xliff:g>."</string>
+    <string name="kg_too_many_failed_pattern_attempts_dialog_message" msgid="74089475965050805">"Umechora ruwaza yako ya kufunga kwa makosa mara <xliff:g id="NUMBER_0">%d</xliff:g>. "\n\n" Jaribu tena baada ya sekunde <xliff:g id="NUMBER_1">%d</xliff:g>."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="tablet" msgid="1575557200627128949">"Umejaribu kufungua kompyuta ndogo kwa njia isiyo sahihi mara <xliff:g id="NUMBER_0">%d</xliff:g>. Baada ya majaribio <xliff:g id="NUMBER_1">%d</xliff:g> zaidi yasiyofaulu, kompyuta ndogo itarejeshwa katika mfumo chaguo-msingi ilivyotoka kiwandani data yote ya mtumiaji itapotea."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="default" msgid="4051015943038199910">"Umejaribu kufungua simu kwa njia isiyo sahihi mara <xliff:g id="NUMBER_0">%d</xliff:g>. Baada ya majaribio <xliff:g id="NUMBER_1">%d</xliff:g> zaidi yasiyofaulu, simu itarejeshwa katika mfumo chaguo-msingi ilivyotoka kiwandani na data yote ya mtumiaji itapotea."</string>
+    <string name="kg_failed_attempts_now_wiping" product="tablet" msgid="2072996269148483637">"Umejaribu kufungua kompyuta ndogo kwa njia isiyo sahihi mara <xliff:g id="NUMBER">%d</xliff:g>. Sasa kompyuta ndogo itarejeshwa katika mfumo chaguo-msingi ilivyotoka kiwandani."</string>
+    <string name="kg_failed_attempts_now_wiping" product="default" msgid="4817627474419471518">"Umejaribu kufungua simu kwa njia isiyo sahihi mara <xliff:g id="NUMBER">%d</xliff:g>. Sasa simu  itarejeshwa katika mfumo chaguo-msingi ilivyotoka kiwandani."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="tablet" msgid="3253575572118914370">"Umekosea katika kuweka mchoro wako wa kufungua mara <xliff:g id="NUMBER_0">%d</xliff:g>. Baada ya majaribio <xliff:g id="NUMBER_1">%d</xliff:g> bila kufaulu, utaombwa kufungua kompyuta yako ndogo kwa kutumia akaunti yako ya barua pepe."\n\n" Jaribu tena baada ya sekunde <xliff:g id="NUMBER_2">%d</xliff:g>."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="default" msgid="1437638152015574839">"Umekosea kuchora mchoro wako wa kufungua mara <xliff:g id="NUMBER_0">%d</xliff:g>. Baada ya majaribio <xliff:g id="NUMBER_1">%d</xliff:g> yasiyofaulu, utaombwa kufungua simu yako kwa kutumia akaunti ya barua pepe."\n\n" Jaribu tena baada ya sekunde <xliff:g id="NUMBER_2">%d</xliff:g>."</string>
+    <string name="kg_text_message_separator" product="default" msgid="4160700433287233771">" — "</string>
+    <string name="kg_reordering_delete_drop_target_text" msgid="7899202978204438708">"Ondoa"</string>
+    <string name="safe_media_volume_warning" product="default" msgid="7324161939475478066">"Ungependa kuongeza sauti kupita kiwango kinachopendekezwa?"\n"Kusikiliza kwa sauti ya juu kwa muda mrefu kunaweza kuharibu uwezo wako wa kusikia."</string>
+    <string name="continue_to_enable_accessibility" msgid="1626427372316070258">"Endelea kushikilia chini kwa vidole vyako viwili ili kuwezesha ufikivu."</string>
+    <string name="accessibility_enabled" msgid="1381972048564547685">"Ufikivu umewezeshwa."</string>
+    <string name="enable_accessibility_canceled" msgid="3833923257966635673">"Ufikivu umeghairiwa."</string>
+    <string name="user_switched" msgid="3768006783166984410">"Mtumiaji wa sasa <xliff:g id="NAME">%1$s</xliff:g>."</string>
+    <string name="owner_name" msgid="2716755460376028154">"Mmiliki"</string>
+    <string name="error_message_title" msgid="4510373083082500195">"Hitilafu"</string>
+    <string name="app_no_restricted_accounts" msgid="4011285085817350390">"Programu hii haiwezi kutumiwa na akaunti za wasifu zilizowekewa vikwazo"</string>
+    <string name="app_not_found" msgid="3429141853498927379">"Hakuna programu iliyopatikana ili kushughulikia kitendo hiki"</string>
+    <string name="revoke" msgid="5404479185228271586">"Batilisha"</string>
 </resources>

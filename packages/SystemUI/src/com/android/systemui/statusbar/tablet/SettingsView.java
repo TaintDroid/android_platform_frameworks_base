@@ -19,6 +19,7 @@ package com.android.systemui.statusbar.tablet;
 import android.app.StatusBarManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -29,11 +30,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.systemui.R;
+import com.android.systemui.settings.BrightnessController;
+import com.android.systemui.settings.ToggleSlider;
 import com.android.systemui.statusbar.policy.AirplaneModeController;
 import com.android.systemui.statusbar.policy.AutoRotateController;
-import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
-import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
 
 public class SettingsView extends LinearLayout implements View.OnClickListener {
@@ -77,6 +78,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 });
 
         mBrightness = new BrightnessController(context,
+                (ImageView)findViewById(R.id.brightness_icon),
                 (ToggleSlider)findViewById(R.id.brightness));
         mDoNotDisturb = new DoNotDisturbController(context,
                 (CompoundButton)findViewById(R.id.do_not_disturb_checkbox));
@@ -111,15 +113,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     private void onClickNetwork() {
         getContext().startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        getStatusBarManager().collapse();
+        getStatusBarManager().collapsePanels();
     }
 
     // Settings
     // ----------------------------
     private void onClickSettings() {
-        getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        getStatusBarManager().collapse();
+        getContext().startActivityAsUser(new Intent(Settings.ACTION_SETTINGS)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                new UserHandle(UserHandle.USER_CURRENT));
+        getStatusBarManager().collapsePanels();
     }
 }
 

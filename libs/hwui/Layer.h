@@ -23,9 +23,11 @@
 
 #include <ui/Region.h>
 
+#include <SkPaint.h>
 #include <SkXfermode.h>
 
 #include "Rect.h"
+#include "RenderBuffer.h"
 #include "SkiaColorFilter.h"
 #include "Texture.h"
 #include "Vertex.h"
@@ -40,30 +42,25 @@ namespace uirenderer {
 // Forward declarations
 class OpenGLRenderer;
 class DisplayList;
+class DeferredDisplayList;
+class DeferStateStruct;
 
 /**
  * A layer has dimensions and is backed by an OpenGL texture or FBO.
  */
 struct Layer {
-    Layer(const uint32_t layerWidth, const uint32_t layerHeight) {
-        mesh = NULL;
-        meshIndices = NULL;
-        meshElementCount = 0;
-        cacheable = true;
-        textureLayer = false;
-        renderTarget = GL_TEXTURE_2D;
-        texture.width = layerWidth;
-        texture.height = layerHeight;
-        colorFilter = NULL;
-        deferredUpdateScheduled = false;
-        renderer = NULL;
-        displayList = NULL;
-    }
+    Layer(const uint32_t layerWidth, const uint32_t layerHeight);
+    ~Layer();
 
-    ~Layer() {
-        if (mesh) delete mesh;
-        if (meshIndices) delete meshIndices;
-    }
+    static uint32_t computeIdealWidth(uint32_t layerWidth);
+    static uint32_t computeIdealHeight(uint32_t layerHeight);
+
+    /**
+     * Calling this method will remove (either by recycling or
+     * destroying) the associated FBO, if present, and any render
+     * buffer (stencil for instance.)
+     */
+    void removeFbo(bool flush = true);
 
     /**
      * Sets this layer's region to a rectangle. Computes the appropriate
@@ -93,24 +90,37 @@ struct Layer {
         deferredUpdateScheduled = true;
     }
 
-    inline uint32_t getWidth() {
+    inline uint32_t getWidth() const {
         return texture.width;
     }
 
-    inline uint32_t getHeight() {
+    inline uint32_t getHeight() const {
         return texture.height;
     }
+
+    /**
+     * Resize the layer and its texture if needed.
+     *
+     * @param width The new width of the layer
+     * @param height The new height of the layer
+     *
+     * @return True if the layer was resized or nothing happened, false if
+     *         a failure occurred during the resizing operation
+     */
+    bool resize(const uint32_t width, const uint32_t height);
 
     void setSize(uint32_t width, uint32_t height) {
         texture.width = width;
         texture.height = height;
     }
 
+    ANDROID_API void setPaint(SkPaint* paint);
+
     inline void setBlend(bool blend) {
         texture.blend = blend;
     }
 
-    inline bool isBlend() {
+    inline bool isBlend() const {
         return texture.blend;
     }
 
@@ -123,11 +133,11 @@ struct Layer {
         this->mode = mode;
     }
 
-    inline int getAlpha() {
+    inline int getAlpha() const {
         return alpha;
     }
 
-    inline SkXfermode::Mode getMode() {
+    inline SkXfermode::Mode getMode() const {
         return mode;
     }
 
@@ -135,7 +145,7 @@ struct Layer {
         this->empty = empty;
     }
 
-    inline bool isEmpty() {
+    inline bool isEmpty() const {
         return empty;
     }
 
@@ -143,19 +153,29 @@ struct Layer {
         this->fbo = fbo;
     }
 
-    inline GLuint getFbo() {
+    inline GLuint getFbo() const {
         return fbo;
     }
 
-    inline GLuint* getTexturePointer() {
-        return &texture.id;
+    inline void setStencilRenderBuffer(RenderBuffer* renderBuffer) {
+        if (RenderBuffer::isStencilBuffer(renderBuffer->getFormat())) {
+            this->stencil = renderBuffer;
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                    GL_RENDERBUFFER, stencil->getName());
+        } else {
+            ALOGE("The specified render buffer is not a stencil buffer");
+        }
     }
 
-    inline GLuint getTexture() {
+    inline RenderBuffer* getStencilRenderBuffer() const {
+        return stencil;
+    }
+
+    inline GLuint getTexture() const {
         return texture.id;
     }
 
-    inline GLenum getRenderTarget() {
+    inline GLenum getRenderTarget() const {
         return renderTarget;
     }
 
@@ -171,7 +191,7 @@ struct Layer {
         texture.setFilter(filter, bindTexture, force, renderTarget);
     }
 
-    inline bool isCacheable() {
+    inline bool isCacheable() const {
         return cacheable;
     }
 
@@ -179,7 +199,15 @@ struct Layer {
         this->cacheable = cacheable;
     }
 
-    inline bool isTextureLayer() {
+    inline bool isDirty() const {
+        return dirty;
+    }
+
+    inline void setDirty(bool dirty) {
+        this->dirty = dirty;
+    }
+
+    inline bool isTextureLayer() const {
         return textureLayer;
     }
 
@@ -187,32 +215,55 @@ struct Layer {
         this->textureLayer = textureLayer;
     }
 
-    inline SkiaColorFilter* getColorFilter() {
+    inline SkiaColorFilter* getColorFilter() const {
         return colorFilter;
     }
 
-    inline void setColorFilter(SkiaColorFilter* filter) {
-        colorFilter = filter;
+    ANDROID_API void setColorFilter(SkiaColorFilter* filter);
+
+    inline void bindTexture() const {
+        if (texture.id) {
+            glBindTexture(renderTarget, texture.id);
+        }
     }
 
-    inline void bindTexture() {
-        glBindTexture(renderTarget, texture.id);
+    inline void bindStencilRenderBuffer() const {
+        if (stencil) {
+            stencil->bind();
+        }
     }
 
     inline void generateTexture() {
-        glGenTextures(1, &texture.id);
+        if (!texture.id) {
+            glGenTextures(1, &texture.id);
+        }
     }
 
     inline void deleteTexture() {
-        if (texture.id) glDeleteTextures(1, &texture.id);
+        if (texture.id) {
+            glDeleteTextures(1, &texture.id);
+            texture.id = 0;
+        }
     }
 
-    inline void deleteFbo() {
-        if (fbo) glDeleteFramebuffers(1, &fbo);
+    /**
+     * When the caller frees the texture itself, the caller
+     * must call this method to tell this layer that it lost
+     * the texture.
+     */
+    void clearTexture() {
+        texture.id = 0;
     }
 
-    inline void allocateTexture(GLenum format, GLenum storage) {
-        glTexImage2D(renderTarget, 0, format, getWidth(), getHeight(), 0, format, storage, NULL);
+    inline void allocateTexture() {
+#if DEBUG_LAYERS
+        ALOGD("  Allocate layer: %dx%d", getWidth(), getHeight());
+#endif
+        if (texture.id) {
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+            glTexImage2D(renderTarget, 0, GL_RGBA, getWidth(), getHeight(), 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        }
     }
 
     inline mat4& getTexTransform() {
@@ -223,6 +274,10 @@ struct Layer {
         return transform;
     }
 
+    void defer();
+    void flush();
+    void render();
+
     /**
      * Bounds of the layer.
      */
@@ -231,6 +286,10 @@ struct Layer {
      * Texture coordinates of the layer.
      */
     Rect texCoords;
+    /**
+     * Clipping rectangle.
+     */
+    Rect clipRect;
 
     /**
      * Dirty region indicating what parts of the layer
@@ -257,6 +316,8 @@ struct Layer {
     OpenGLRenderer* renderer;
     DisplayList* displayList;
     Rect dirtyRect;
+    bool debugDrawUpdate;
+    bool hasDrawnSinceUpdate;
 
 private:
     /**
@@ -264,6 +325,11 @@ private:
      * this layer is not backed by an FBO, but a simple texture.
      */
     GLuint fbo;
+
+    /**
+     * The render buffer used as the stencil buffer.
+     */
+    RenderBuffer* stencil;
 
     /**
      * Indicates whether this layer has been used already.
@@ -285,6 +351,12 @@ private:
      * layer.
      */
     bool textureLayer;
+
+    /**
+     * When set to true, this layer is dirty and should be cleared
+     * before any rendering occurs.
+     */
+    bool dirty;
 
     /**
      * Indicates the render target.
@@ -314,6 +386,12 @@ private:
      * Optional transform.
      */
     mat4 transform;
+
+    /**
+     * Used to defer display lists when the layer is updated with a
+     * display list.
+     */
+    DeferredDisplayList* deferredList;
 
 }; // struct Layer
 

@@ -32,7 +32,7 @@ import java.lang.reflect.Modifier;
  * the standard support creating a local implementation of such an object.
  * 
  * <p>Most developers will not implement this class directly, instead using the
- * <a href="{@docRoot}guide/developing/tools/aidl.html">aidl</a> tool to describe the desired
+ * <a href="{@docRoot}guide/components/aidl.html">aidl</a> tool to describe the desired
  * interface, having it generate the appropriate Binder subclass.  You can,
  * however, derive directly from Binder to implement your own custom RPC
  * protocol or simply instantiate a raw Binder object directly to use as a
@@ -49,6 +49,11 @@ public class Binder implements IBinder {
     private static final boolean FIND_POTENTIAL_LEAKS = false;
     private static final String TAG = "Binder";
 
+    /**
+     * Control whether dump() calls are allowed.
+     */
+    private static String sDumpDisabled = null;
+
     /* mObject is used by native code, do not remove or rename */
     private int mObject;
     private IInterface mOwner;
@@ -64,7 +69,7 @@ public class Binder implements IBinder {
     public static final native int getCallingPid();
     
     /**
-     * Return the ID of the user assigned to the process that sent you the
+     * Return the Linux uid assigned to the process that sent you the
      * current transaction that is being processed.  This uid can be used with
      * higher-level system services to determine its identity and check
      * permissions.  If the current thread is not currently executing an
@@ -73,31 +78,15 @@ public class Binder implements IBinder {
     public static final native int getCallingUid();
 
     /**
-     * Return the original ID of the user assigned to the process that sent you the current
-     * transaction that is being processed. This uid can be used with higher-level system services
-     * to determine its identity and check permissions. If the current thread is not currently
-     * executing an incoming transaction, then its own uid is returned.
-     * <p/>
-     * This value cannot be reset by calls to {@link #clearCallingIdentity()}.
-     * @hide
+     * Return the UserHandle assigned to the process that sent you the
+     * current transaction that is being processed.  This is the user
+     * of the caller.  It is distinct from {@link #getCallingUid()} in that a
+     * particular user will have multiple distinct apps running under it each
+     * with their own uid.  If the current thread is not currently executing an
+     * incoming transaction, then its own UserHandle is returned.
      */
-    public static final int getOrigCallingUid() {
-        if (UserId.MU_ENABLED) {
-            return getOrigCallingUidNative();
-        } else {
-            return getCallingUid();
-        }
-    }
-
-    private static final native int getOrigCallingUidNative();
-
-    /**
-     * Utility function to return the user id of the calling process.
-     * @return userId of the calling process, extracted from the callingUid
-     * @hide
-     */
-    public static final int getOrigCallingUser() {
-        return UserId.getUserId(getOrigCallingUid());
+    public static final UserHandle getCallingUserHandle() {
+        return new UserHandle(UserHandle.getUserId(getCallingUid()));
     }
 
     /**
@@ -168,7 +157,15 @@ public class Binder implements IBinder {
      * not return until the current process is exiting.
      */
     public static final native void joinThreadPool();
-    
+
+    /**
+     * Returns true if the specified interface is a proxy.
+     * @hide
+     */
+    public static final boolean isProxy(IInterface iface) {
+        return iface.asBinder() != iface;
+    }
+
     /**
      * Default constructor initializes the object.
      */
@@ -232,7 +229,23 @@ public class Binder implements IBinder {
         }
         return null;
     }
-    
+
+    /**
+     * Control disabling of dump calls in this process.  This is used by the system
+     * process watchdog to disable incoming dump calls while it has detecting the system
+     * is hung and is reporting that back to the activity controller.  This is to
+     * prevent the controller from getting hung up on bug reports at this point.
+     * @hide
+     *
+     * @param msg The message to show instead of the dump; if null, dumps are
+     * re-enabled.
+     */
+    public static void setDumpDisabled(String msg) {
+        synchronized (Binder.class) {
+            sDumpDisabled = msg;
+        }
+    }
+
     /**
      * Default implementation is a stub that returns false.  You will want
      * to override this to do the appropriate unmarshalling of transactions.
@@ -277,7 +290,15 @@ public class Binder implements IBinder {
         FileOutputStream fout = new FileOutputStream(fd);
         PrintWriter pw = new PrintWriter(fout);
         try {
-            dump(fd, pw, args);
+            final String disabled;
+            synchronized (Binder.class) {
+                disabled = sDumpDisabled;
+            }
+            if (disabled == null) {
+                dump(fd, pw, args);
+            } else {
+                pw.println(sDumpDisabled);
+            }
         } finally {
             pw.flush();
         }

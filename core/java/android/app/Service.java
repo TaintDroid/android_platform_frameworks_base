@@ -142,7 +142,7 @@ import java.io.PrintWriter;
  * to the service.  The service will remain running as long as the connection
  * is established (whether or not the client retains a reference on the
  * service's IBinder).  Usually the IBinder returned is for a complex
- * interface that has been <a href="{@docRoot}guide/developing/tools/aidl.html">written
+ * interface that has been <a href="{@docRoot}guide/components/aidl.html">written
  * in aidl</a>.
  * 
  * <p>A service can be both started and have connections bound to it.  In such
@@ -473,7 +473,7 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
      * Return the communication channel to the service.  May return null if 
      * clients can not bind to the service.  The returned
      * {@link android.os.IBinder} is usually for a complex interface
-     * that has been <a href="{@docRoot}guide/developing/tools/aidl.html">described using
+     * that has been <a href="{@docRoot}guide/components/aidl.html">described using
      * aidl</a>.
      * 
      * <p><em>Note that unlike other application components, calls on to the
@@ -633,7 +633,7 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
      * 
      * @param id The identifier for this notification as per
      * {@link NotificationManager#notify(int, Notification)
-     * NotificationManager.notify(int, Notification)}.
+     * NotificationManager.notify(int, Notification)}; must not be 0.
      * @param notification The Notification to be displayed.
      * 
      * @see #stopForeground(boolean)
@@ -666,7 +666,9 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
     
     /**
      * Print the Service's state into the given stream.  This gets invoked if
-     * you run "adb shell dumpsys activity service &lt;yourservicename&gt;".
+     * you run "adb shell dumpsys activity service &lt;yourservicename&gt;"
+     * (note that for this command to work, the service must be running, and
+     * you must specify a fully-qualified service name).
      * This is distinct from "dumpsys &lt;servicename&gt;", which only works for
      * named system services and which invokes the {@link IBinder#dump} method
      * on the {@link IBinder} interface registered with ServiceManager.

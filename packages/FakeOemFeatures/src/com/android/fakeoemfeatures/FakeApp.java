@@ -86,7 +86,7 @@ public class FakeApp extends Application {
 
     @Override
     public void onCreate() {
-        String processName = ActivityThread.currentPackageName();
+        String processName = ActivityThread.currentProcessName();
         Slog.i("FakeOEMFeatures", "Creating app in process: " + processName);
         if (!getApplicationInfo().packageName.equals(processName)) {
             // If we are not in the main process of the app, then don't do
@@ -119,7 +119,7 @@ public class FakeApp extends Application {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                 | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        if (ActivityManager.isHighEndGfx(display)) {
+        if (ActivityManager.isHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;

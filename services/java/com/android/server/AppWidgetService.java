@@ -16,33 +16,31 @@
 
 package com.android.server;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.appwidget.AppWidgetManager;
+import android.app.ActivityManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Pair;
+import android.os.UserHandle;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
 
 import com.android.internal.appwidget.IAppWidgetHost;
 import com.android.internal.appwidget.IAppWidgetService;
-import com.android.internal.widget.IRemoteViewsAdapterConnection;
+import com.android.internal.util.IndentingPrintWriter;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -54,91 +52,23 @@ class AppWidgetService extends IAppWidgetService.Stub
 {
     private static final String TAG = "AppWidgetService";
 
-    /*
-     * When identifying a Host or Provider based on the calling process, use the uid field.
-     * When identifying a Host or Provider based on a package manager broadcast, use the
-     * package given.
-     */
-
-    static class Provider {
-        int uid;
-        AppWidgetProviderInfo info;
-        ArrayList<AppWidgetId> instances = new ArrayList<AppWidgetId>();
-        PendingIntent broadcast;
-        boolean zombie; // if we're in safe mode, don't prune this just because nobody references it
-        
-        int tag;    // for use while saving state (the index)
-    }
-
-    static class Host {
-        int uid;
-        int hostId;
-        String packageName;
-        ArrayList<AppWidgetId> instances = new ArrayList<AppWidgetId>();
-        IAppWidgetHost callbacks;
-        boolean zombie; // if we're in safe mode, don't prune this just because nobody references it
-        
-        int tag;    // for use while saving state (the index)
-    }
-
-    static class AppWidgetId {
-        int appWidgetId;
-        Provider provider;
-        RemoteViews views;
-        Host host;
-    }
-
-    /**
-     * Acts as a proxy between the ServiceConnection and the RemoteViewsAdapterConnection.
-     * This needs to be a static inner class since a reference to the ServiceConnection is held
-     * globally and may lead us to leak AppWidgetService instances (if there were more than one).
-     */
-    static class ServiceConnectionProxy implements ServiceConnection {
-        private final IBinder mConnectionCb;
-
-        ServiceConnectionProxy(Pair<Integer, Intent.FilterComparison> key, IBinder connectionCb) {
-            mConnectionCb = connectionCb;
-        }
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            final IRemoteViewsAdapterConnection cb =
-                IRemoteViewsAdapterConnection.Stub.asInterface(mConnectionCb);
-            try {
-                cb.onServiceConnected(service);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        public void onServiceDisconnected(ComponentName name) {
-            disconnect();
-        }
-        public void disconnect() {
-            final IRemoteViewsAdapterConnection cb =
-                IRemoteViewsAdapterConnection.Stub.asInterface(mConnectionCb);
-            try {
-                cb.onServiceDisconnected();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     Context mContext;
     Locale mLocale;
     PackageManager mPackageManager;
-    AlarmManager mAlarmManager;
-    ArrayList<Provider> mInstalledProviders = new ArrayList<Provider>();
-    int mNextAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID + 1;
-    final ArrayList<AppWidgetId> mAppWidgetIds = new ArrayList<AppWidgetId>();
-    ArrayList<Host> mHosts = new ArrayList<Host>();
     boolean mSafeMode;
-
+    private final Handler mSaveStateHandler;
 
     private final SparseArray<AppWidgetServiceImpl> mAppWidgetServices;
 
     AppWidgetService(Context context) {
         mContext = context;
+
+        HandlerThread handlerThread = new HandlerThread("AppWidgetService -- Save state");
+        handlerThread.start();
+        mSaveStateHandler = new Handler(handlerThread.getLooper());
+
         mAppWidgetServices = new SparseArray<AppWidgetServiceImpl>(5);
-        AppWidgetServiceImpl primary = new AppWidgetServiceImpl(context, 0);
+        AppWidgetServiceImpl primary = new AppWidgetServiceImpl(context, 0, mSaveStateHandler);
         mAppWidgetServices.append(0, primary);
     }
 
@@ -150,13 +80,13 @@ class AppWidgetService extends IAppWidgetService.Stub
         // Register for the boot completed broadcast, so we can send the
         // ENABLE broacasts. If we try to send them now, they time out,
         // because the system isn't ready to handle them yet.
-        mContext.registerReceiver(mBroadcastReceiver,
+        mContext.registerReceiverAsUser(mBroadcastReceiver, UserHandle.ALL,
                 new IntentFilter(Intent.ACTION_BOOT_COMPLETED), null, null);
 
         // Register for configuration changes so we can update the names
         // of the widgets when the locale changes.
-        mContext.registerReceiver(mBroadcastReceiver, new IntentFilter(
-                Intent.ACTION_CONFIGURATION_CHANGED), null, null);
+        mContext.registerReceiverAsUser(mBroadcastReceiver, UserHandle.ALL,
+                new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED), null, null);
 
         // Register for broadcasts about package install, etc., so we can
         // update the provider list.
@@ -165,182 +95,238 @@ class AppWidgetService extends IAppWidgetService.Stub
         filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         filter.addDataScheme("package");
-        mContext.registerReceiver(mBroadcastReceiver, filter);
+        mContext.registerReceiverAsUser(mBroadcastReceiver, UserHandle.ALL,
+                filter, null, null);
         // Register for events related to sdcard installation.
         IntentFilter sdFilter = new IntentFilter();
         sdFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         sdFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-        mContext.registerReceiver(mBroadcastReceiver, sdFilter);
+        mContext.registerReceiverAsUser(mBroadcastReceiver, UserHandle.ALL,
+                sdFilter, null, null);
 
         IntentFilter userFilter = new IntentFilter();
         userFilter.addAction(Intent.ACTION_USER_REMOVED);
+        userFilter.addAction(Intent.ACTION_USER_STOPPING);
         mContext.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                onUserRemoved(intent.getIntExtra(Intent.EXTRA_USERID, -1));
+                if (Intent.ACTION_USER_REMOVED.equals(intent.getAction())) {
+                    onUserRemoved(intent.getIntExtra(Intent.EXTRA_USER_HANDLE,
+                            UserHandle.USER_NULL));
+                } else if (Intent.ACTION_USER_STOPPING.equals(intent.getAction())) {
+                    onUserStopping(intent.getIntExtra(Intent.EXTRA_USER_HANDLE,
+                            UserHandle.USER_NULL));
+                }
             }
         }, userFilter);
     }
 
     @Override
-    public int allocateAppWidgetId(String packageName, int hostId) throws RemoteException {
-        return getImplForUser().allocateAppWidgetId(packageName, hostId);
-    }
-    
-    @Override
-    public void deleteAppWidgetId(int appWidgetId) throws RemoteException {
-        getImplForUser().deleteAppWidgetId(appWidgetId);
+    public int allocateAppWidgetId(String packageName, int hostId, int userId)
+            throws RemoteException {
+        return getImplForUser(userId).allocateAppWidgetId(packageName, hostId);
     }
 
     @Override
-    public void deleteHost(int hostId) throws RemoteException {
-        getImplForUser().deleteHost(hostId);
+    public int[] getAppWidgetIdsForHost(int hostId, int userId) throws RemoteException {
+        return getImplForUser(userId).getAppWidgetIdsForHost(hostId);
     }
 
     @Override
-    public void deleteAllHosts() throws RemoteException {
-        getImplForUser().deleteAllHosts();
+    public void deleteAppWidgetId(int appWidgetId, int userId) throws RemoteException {
+        getImplForUser(userId).deleteAppWidgetId(appWidgetId);
     }
 
     @Override
-    public void bindAppWidgetId(int appWidgetId, ComponentName provider) throws RemoteException {
-        getImplForUser().bindAppWidgetId(appWidgetId, provider);
+    public void deleteHost(int hostId, int userId) throws RemoteException {
+        getImplForUser(userId).deleteHost(hostId);
+    }
+
+    @Override
+    public void deleteAllHosts(int userId) throws RemoteException {
+        getImplForUser(userId).deleteAllHosts();
+    }
+
+    @Override
+    public void bindAppWidgetId(int appWidgetId, ComponentName provider, Bundle options, int userId)
+            throws RemoteException {
+        getImplForUser(userId).bindAppWidgetId(appWidgetId, provider, options);
     }
 
     @Override
     public boolean bindAppWidgetIdIfAllowed(
-            String packageName, int appWidgetId, ComponentName provider) throws RemoteException {
-        return getImplForUser().bindAppWidgetIdIfAllowed(packageName, appWidgetId, provider);
+            String packageName, int appWidgetId, ComponentName provider, Bundle options, int userId)
+                    throws RemoteException {
+        return getImplForUser(userId).bindAppWidgetIdIfAllowed(
+                packageName, appWidgetId, provider, options);
     }
 
     @Override
-    public boolean hasBindAppWidgetPermission(String packageName) throws RemoteException {
-        return getImplForUser().hasBindAppWidgetPermission(packageName);
-    }
-
-    @Override
-    public void setBindAppWidgetPermission(String packageName, boolean permission)
+    public boolean hasBindAppWidgetPermission(String packageName, int userId)
             throws RemoteException {
-        getImplForUser().setBindAppWidgetPermission(packageName, permission);
+        return getImplForUser(userId).hasBindAppWidgetPermission(packageName);
     }
 
     @Override
-    public void bindRemoteViewsService(int appWidgetId, Intent intent, IBinder connection)
+    public void setBindAppWidgetPermission(String packageName, boolean permission, int userId)
             throws RemoteException {
-        getImplForUser().bindRemoteViewsService(appWidgetId, intent, connection);
+        getImplForUser(userId).setBindAppWidgetPermission(packageName, permission);
+    }
+
+    @Override
+    public void bindRemoteViewsService(int appWidgetId, Intent intent, IBinder connection,
+            int userId) throws RemoteException {
+        getImplForUser(userId).bindRemoteViewsService(appWidgetId, intent, connection);
     }
 
     @Override
     public int[] startListening(IAppWidgetHost host, String packageName, int hostId,
-            List<RemoteViews> updatedViews) throws RemoteException {
-        return getImplForUser().startListening(host, packageName, hostId, updatedViews);
+            List<RemoteViews> updatedViews, int userId) throws RemoteException {
+        return getImplForUser(userId).startListening(host, packageName, hostId, updatedViews);
     }
 
     public void onUserRemoved(int userId) {
-        AppWidgetServiceImpl impl = mAppWidgetServices.get(userId);
         if (userId < 1) return;
+        synchronized (mAppWidgetServices) {
+            AppWidgetServiceImpl impl = mAppWidgetServices.get(userId);
+            mAppWidgetServices.remove(userId);
 
-        if (impl == null) {
-            AppWidgetServiceImpl.getSettingsFile(userId).delete();
-        } else {
-            impl.onUserRemoved();
+            if (impl == null) {
+                AppWidgetServiceImpl.getSettingsFile(userId).delete();
+            } else {
+                impl.onUserRemoved();
+            }
         }
     }
 
-    private AppWidgetServiceImpl getImplForUser() {
-        final int userId = Binder.getOrigCallingUser();
-        AppWidgetServiceImpl service = mAppWidgetServices.get(userId);
-        if (service == null) {
-            Slog.e(TAG, "Unable to find AppWidgetServiceImpl for the current user");
-            // TODO: Verify that it's a valid user
-            service = new AppWidgetServiceImpl(mContext, userId);
-            service.systemReady(mSafeMode);
-            // Assume that BOOT_COMPLETED was received, as this is a non-primary user.
-            service.sendInitialBroadcasts();
-            mAppWidgetServices.append(userId, service);
+    public void onUserStopping(int userId) {
+        if (userId < 1) return;
+        synchronized (mAppWidgetServices) {
+            AppWidgetServiceImpl impl = mAppWidgetServices.get(userId);
+            if (impl != null) {
+                mAppWidgetServices.remove(userId);
+                impl.onUserStopping();
+            }
         }
+    }
 
+    private void checkPermission(int userId) {
+        int realUserId = ActivityManager.handleIncomingUser(
+                Binder.getCallingPid(),
+                Binder.getCallingUid(),
+                userId,
+                false, /* allowAll */
+                true, /* requireFull */
+                this.getClass().getSimpleName(),
+                this.getClass().getPackage().getName());
+    }
+
+    private AppWidgetServiceImpl getImplForUser(int userId) {
+        checkPermission(userId);
+        boolean sendInitial = false;
+        AppWidgetServiceImpl service;
+        synchronized (mAppWidgetServices) {
+            service = mAppWidgetServices.get(userId);
+            if (service == null) {
+                Slog.i(TAG, "Unable to find AppWidgetServiceImpl for user " + userId + ", adding");
+                // TODO: Verify that it's a valid user
+                service = new AppWidgetServiceImpl(mContext, userId, mSaveStateHandler);
+                service.systemReady(mSafeMode);
+                // Assume that BOOT_COMPLETED was received, as this is a non-primary user.
+                mAppWidgetServices.append(userId, service);
+                sendInitial = true;
+            }
+        }
+        if (sendInitial) {
+            service.sendInitialBroadcasts();
+        }
         return service;
     }
 
     @Override
-    public int[] getAppWidgetIds(ComponentName provider) throws RemoteException {
-        return getImplForUser().getAppWidgetIds(provider);
+    public int[] getAppWidgetIds(ComponentName provider, int userId) throws RemoteException {
+        return getImplForUser(userId).getAppWidgetIds(provider);
     }
 
     @Override
-    public AppWidgetProviderInfo getAppWidgetInfo(int appWidgetId) throws RemoteException {
-        return getImplForUser().getAppWidgetInfo(appWidgetId);
-    }
-
-    @Override
-    public RemoteViews getAppWidgetViews(int appWidgetId) throws RemoteException {
-        return getImplForUser().getAppWidgetViews(appWidgetId);
-    }
-
-    @Override
-    public void updateAppWidgetOptions(int appWidgetId, Bundle options) {
-        getImplForUser().updateAppWidgetOptions(appWidgetId, options);
-    }
-
-    @Override
-    public Bundle getAppWidgetOptions(int appWidgetId) {
-        return getImplForUser().getAppWidgetOptions(appWidgetId);
-    }
-
-    static int[] getAppWidgetIds(Provider p) {
-        int instancesSize = p.instances.size();
-        int appWidgetIds[] = new int[instancesSize];
-        for (int i=0; i<instancesSize; i++) {
-            appWidgetIds[i] = p.instances.get(i).appWidgetId;
-        }
-        return appWidgetIds;
-    }
-
-    @Override
-    public List<AppWidgetProviderInfo> getInstalledProviders() throws RemoteException {
-        return getImplForUser().getInstalledProviders();
-    }
-
-    @Override
-    public void notifyAppWidgetViewDataChanged(int[] appWidgetIds, int viewId)
+    public AppWidgetProviderInfo getAppWidgetInfo(int appWidgetId, int userId)
             throws RemoteException {
-        getImplForUser().notifyAppWidgetViewDataChanged(appWidgetIds, viewId);
+        return getImplForUser(userId).getAppWidgetInfo(appWidgetId);
     }
 
     @Override
-    public void partiallyUpdateAppWidgetIds(int[] appWidgetIds, RemoteViews views)
+    public RemoteViews getAppWidgetViews(int appWidgetId, int userId) throws RemoteException {
+        return getImplForUser(userId).getAppWidgetViews(appWidgetId);
+    }
+
+    @Override
+    public void updateAppWidgetOptions(int appWidgetId, Bundle options, int userId) {
+        getImplForUser(userId).updateAppWidgetOptions(appWidgetId, options);
+    }
+
+    @Override
+    public Bundle getAppWidgetOptions(int appWidgetId, int userId) {
+        return getImplForUser(userId).getAppWidgetOptions(appWidgetId);
+    }
+
+    @Override
+    public List<AppWidgetProviderInfo> getInstalledProviders(int categoryFilter, int userId)
             throws RemoteException {
-        getImplForUser().partiallyUpdateAppWidgetIds(appWidgetIds, views);
+        return getImplForUser(userId).getInstalledProviders(categoryFilter);
     }
 
     @Override
-    public void stopListening(int hostId) throws RemoteException {
-        getImplForUser().stopListening(hostId);
-    }
-
-    @Override
-    public void unbindRemoteViewsService(int appWidgetId, Intent intent) throws RemoteException {
-        getImplForUser().unbindRemoteViewsService(appWidgetId, intent);
-    }
-
-    @Override
-    public void updateAppWidgetIds(int[] appWidgetIds, RemoteViews views) throws RemoteException {
-        getImplForUser().updateAppWidgetIds(appWidgetIds, views);
-    }
-
-    @Override
-    public void updateAppWidgetProvider(ComponentName provider, RemoteViews views)
+    public void notifyAppWidgetViewDataChanged(int[] appWidgetIds, int viewId, int userId)
             throws RemoteException {
-        getImplForUser().updateAppWidgetProvider(provider, views);
+        getImplForUser(userId).notifyAppWidgetViewDataChanged(
+                appWidgetIds, viewId);
+    }
+
+    @Override
+    public void partiallyUpdateAppWidgetIds(int[] appWidgetIds, RemoteViews views, int userId)
+            throws RemoteException {
+        getImplForUser(userId).partiallyUpdateAppWidgetIds(
+                appWidgetIds, views);
+    }
+
+    @Override
+    public void stopListening(int hostId, int userId) throws RemoteException {
+        getImplForUser(userId).stopListening(hostId);
+    }
+
+    @Override
+    public void unbindRemoteViewsService(int appWidgetId, Intent intent, int userId)
+            throws RemoteException {
+        getImplForUser(userId).unbindRemoteViewsService(
+                appWidgetId, intent);
+    }
+
+    @Override
+    public void updateAppWidgetIds(int[] appWidgetIds, RemoteViews views, int userId)
+            throws RemoteException {
+        getImplForUser(userId).updateAppWidgetIds(appWidgetIds, views);
+    }
+
+    @Override
+    public void updateAppWidgetProvider(ComponentName provider, RemoteViews views, int userId)
+            throws RemoteException {
+        getImplForUser(userId).updateAppWidgetProvider(provider, views);
     }
 
     @Override
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        mContext.enforceCallingOrSelfPermission(android.Manifest.permission.DUMP, TAG);
+
         // Dump the state of all the app widget providers
-        for (int i = 0; i < mAppWidgetServices.size(); i++) {
-            AppWidgetServiceImpl service = mAppWidgetServices.valueAt(i);
-            service.dump(fd, pw, args);
+        synchronized (mAppWidgetServices) {
+            IndentingPrintWriter ipw = new IndentingPrintWriter(pw, "  ");
+            for (int i = 0; i < mAppWidgetServices.size(); i++) {
+                pw.println("User: " + mAppWidgetServices.keyAt(i));
+                ipw.increaseIndent();
+                AppWidgetServiceImpl service = mAppWidgetServices.valueAt(i);
+                service.dump(fd, ipw, args);
+                ipw.decreaseIndent();
+            }
         }
     }
 
@@ -349,16 +335,29 @@ class AppWidgetService extends IAppWidgetService.Stub
             String action = intent.getAction();
             // Slog.d(TAG, "received " + action);
             if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-                getImplForUser().sendInitialBroadcasts();
+                int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, UserHandle.USER_NULL);
+                if (userId >= 0) {
+                    getImplForUser(userId).sendInitialBroadcasts();
+                } else {
+                    Slog.w(TAG, "Incorrect user handle supplied in " + intent);
+                }
             } else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 for (int i = 0; i < mAppWidgetServices.size(); i++) {
                     AppWidgetServiceImpl service = mAppWidgetServices.valueAt(i);
                     service.onConfigurationChanged();
                 }
             } else {
-                for (int i = 0; i < mAppWidgetServices.size(); i++) {
-                    AppWidgetServiceImpl service = mAppWidgetServices.valueAt(i);
-                    service.onBroadcastReceived(intent);
+                int sendingUser = getSendingUserId();
+                if (sendingUser == UserHandle.USER_ALL) {
+                    for (int i = 0; i < mAppWidgetServices.size(); i++) {
+                        AppWidgetServiceImpl service = mAppWidgetServices.valueAt(i);
+                        service.onBroadcastReceived(intent);
+                    }
+                } else {
+                    AppWidgetServiceImpl service = mAppWidgetServices.get(sendingUser);
+                    if (service != null) {
+                        service.onBroadcastReceived(intent);
+                    }
                 }
             }
         }

@@ -27,12 +27,12 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
-import android.media.RemoteControlClient;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.StrictMode;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -571,7 +571,9 @@ import java.util.Set;
  *     <li> {@link #EXTRA_INITIAL_INTENTS}
  *     <li> {@link #EXTRA_INTENT}
  *     <li> {@link #EXTRA_KEY_EVENT}
+ *     <li> {@link #EXTRA_ORIGINATING_URI}
  *     <li> {@link #EXTRA_PHONE_NUMBER}
+ *     <li> {@link #EXTRA_REFERRER}
  *     <li> {@link #EXTRA_REMOTE_INTENT_TOKEN}
  *     <li> {@link #EXTRA_REPLACING}
  *     <li> {@link #EXTRA_SHORTCUT_ICON}
@@ -882,7 +884,7 @@ public class Intent implements Parcelable, Cloneable {
      * Activity Action: Allow the user to select a particular kind of data and
      * return it.  This is different than {@link #ACTION_PICK} in that here we
      * just say what kind of data is desired, not a URI of existing data from
-     * which the user can pick.  A ACTION_GET_CONTENT could allow the user to
+     * which the user can pick.  An ACTION_GET_CONTENT could allow the user to
      * create the data as it runs (for example taking a picture or recording a
      * sound), let them browse over the web and download the desired data,
      * etc.
@@ -916,12 +918,17 @@ public class Intent implements Parcelable, Cloneable {
      * from a remote server but not already on the local device (thus requiring
      * they be downloaded when opened).
      * <p>
+     * If the caller can handle multiple returned items (the user performing
+     * multiple selection), then it can specify {@link #EXTRA_ALLOW_MULTIPLE}
+     * to indicate this.
+     * <p>
      * Input: {@link #getType} is the desired MIME type to retrieve.  Note
      * that no URI is supplied in the intent, as there are no constraints on
      * where the returned data originally comes from.  You may also include the
      * {@link #CATEGORY_OPENABLE} if you can only accept data that can be
      * opened as a stream.  You may use {@link #EXTRA_LOCAL_ONLY} to limit content
-     * selection to local data.
+     * selection to local data.  You may use {@link #EXTRA_ALLOW_MULTIPLE} to
+     * allow the user to select multiple items.
      * <p>
      * Output: The URI of the item that was picked.  This must be a content:
      * URI so that any receiver can access it.
@@ -1139,14 +1146,47 @@ public class Intent implements Parcelable, Cloneable {
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_WEB_SEARCH = "android.intent.action.WEB_SEARCH";
+
     /**
      * Activity Action: Perform assist action.
      * <p>
-     * Input: nothing
+     * Input: {@link #EXTRA_ASSIST_PACKAGE} and {@link #EXTRA_ASSIST_CONTEXT} can provide
+     * additional optional contextual information about where the user was when they requested
+     * the assist.
      * Output: nothing.
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_ASSIST = "android.intent.action.ASSIST";
+
+    /**
+     * Activity Action: Perform voice assist action.
+     * <p>
+     * Input: {@link #EXTRA_ASSIST_PACKAGE} and {@link #EXTRA_ASSIST_CONTEXT} can provide
+     * additional optional contextual information about where the user was when they requested
+     * the voice assist.
+     * Output: nothing.
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+    public static final String ACTION_VOICE_ASSIST = "android.intent.action.VOICE_ASSIST";
+
+    /**
+     * An optional field on {@link #ACTION_ASSIST}
+     * containing the name of the current foreground application package at the time
+     * the assist was invoked.
+     */
+    public static final String EXTRA_ASSIST_PACKAGE
+            = "android.intent.extra.ASSIST_PACKAGE";
+
+    /**
+     * An optional field on {@link #ACTION_ASSIST}
+     * containing additional contextual information supplied by the current
+     * foreground app at the time of the assist request.  This is a {@link Bundle} of
+     * additional data.
+     */
+    public static final String EXTRA_ASSIST_CONTEXT
+            = "android.intent.extra.ASSIST_CONTEXT";
+
     /**
      * Activity Action: List all available applications
      * <p>Input: Nothing.
@@ -1253,7 +1293,9 @@ public class Intent implements Parcelable, Cloneable {
      * Activity Action: Launch application installer.
      * <p>
      * Input: The data must be a content: or file: URI at which the application
-     * can be retrieved.  You can optionally supply
+     * can be retrieved.  As of {@link android.os.Build.VERSION_CODES#JELLY_BEAN_MR1},
+     * you can also use "package:<package-name>" to install an application for the
+     * current user that is already installed for another user. You can optionally supply
      * {@link #EXTRA_INSTALLER_PACKAGE_NAME}, {@link #EXTRA_NOT_UNKNOWN_SOURCE},
      * {@link #EXTRA_ALLOW_REPLACE}, and {@link #EXTRA_RETURN_RESULT}.
      * <p>
@@ -1284,6 +1326,30 @@ public class Intent implements Parcelable, Cloneable {
      */
     public static final String EXTRA_NOT_UNKNOWN_SOURCE
             = "android.intent.extra.NOT_UNKNOWN_SOURCE";
+
+    /**
+     * Used as a URI extra field with {@link #ACTION_INSTALL_PACKAGE} and
+     * {@link #ACTION_VIEW} to indicate the URI from which the local APK in the Intent
+     * data field originated from.
+     */
+    public static final String EXTRA_ORIGINATING_URI
+            = "android.intent.extra.ORIGINATING_URI";
+
+    /**
+     * Used as a URI extra field with {@link #ACTION_INSTALL_PACKAGE} and
+     * {@link #ACTION_VIEW} to indicate the HTTP referrer URI associated with the Intent
+     * data field or {@link #EXTRA_ORIGINATING_URI}.
+     */
+    public static final String EXTRA_REFERRER
+            = "android.intent.extra.REFERRER";
+
+    /**
+     * Used as an int extra field with {@link #ACTION_INSTALL_PACKAGE} and
+     * {@link} #ACTION_VIEW} to indicate the uid of the package that initiated the install
+     * @hide
+     */
+    public static final String EXTRA_ORIGINATING_UID
+            = "android.intent.extra.ORIGINATING_UID";
 
     /**
      * Used as a boolean extra field with {@link #ACTION_INSTALL_PACKAGE} to install a
@@ -1328,6 +1394,13 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_UNINSTALL_PACKAGE = "android.intent.action.UNINSTALL_PACKAGE";
 
     /**
+     * Specify whether the package should be uninstalled for all users.
+     * @hide because these should not be part of normal application flow.
+     */
+    public static final String EXTRA_UNINSTALL_ALL_USERS
+            = "android.intent.extra.UNINSTALL_ALL_USERS";
+
+    /**
      * A string associated with a {@link #ACTION_UPGRADE_SETUP} activity
      * describing the last run version of the platform that was setup.
      * @hide
@@ -1354,6 +1427,24 @@ public class Intent implements Parcelable, Cloneable {
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
     public static final String ACTION_SCREEN_ON = "android.intent.action.SCREEN_ON";
+
+    /**
+     * Broadcast Action: Sent after the system stops dreaming.
+     *
+     * <p class="note">This is a protected intent that can only be sent by the system.
+     * It is only sent to registered receivers.</p>
+     */
+    @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
+    public static final String ACTION_DREAMING_STOPPED = "android.intent.action.DREAMING_STOPPED";
+
+    /**
+     * Broadcast Action: Sent after the system starts dreaming.
+     *
+     * <p class="note">This is a protected intent that can only be sent by the system.
+     * It is only sent to registered receivers.</p>
+     */
+    @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
+    public static final String ACTION_DREAMING_STARTED = "android.intent.action.DREAMING_STARTED";
 
     /**
      * Broadcast Action: Sent when the user is present after device wakes up (e.g when the
@@ -1456,7 +1547,7 @@ public class Intent implements Parcelable, Cloneable {
      * Broadcast Action: A new application package has been installed on the
      * device. The data contains the name of the package.  Note that the
      * newly installed package does <em>not</em> receive this broadcast.
-     * <p>My include the following extras:
+     * <p>May include the following extras:
      * <ul>
      * <li> {@link #EXTRA_UID} containing the integer uid assigned to the new package.
      * <li> {@link #EXTRA_REPLACING} is set to true if this is following
@@ -1472,7 +1563,7 @@ public class Intent implements Parcelable, Cloneable {
      * Broadcast Action: A new version of an application package has been
      * installed, replacing an existing version that was previously installed.
      * The data contains the name of the package.
-     * <p>My include the following extras:
+     * <p>May include the following extras:
      * <ul>
      * <li> {@link #EXTRA_UID} containing the integer uid assigned to the new package.
      * </ul>
@@ -1536,7 +1627,7 @@ public class Intent implements Parcelable, Cloneable {
      * <ul>
      * <li> {@link #EXTRA_UID} containing the integer uid assigned to the package.
      * <li> {@link #EXTRA_CHANGED_COMPONENT_NAME_LIST} containing the class name
-     * of the changed components.
+     * of the changed components (or the package name itself).
      * <li> {@link #EXTRA_DONT_KILL_APP} containing boolean field to override the
      * default action of restarting the application.
      * </ul>
@@ -1622,6 +1713,15 @@ public class Intent implements Parcelable, Cloneable {
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
     public static final String ACTION_PACKAGE_NEEDS_VERIFICATION = "android.intent.action.PACKAGE_NEEDS_VERIFICATION";
+
+    /**
+     * Broadcast Action: Sent to the system package verifier when a package is
+     * verified. The data contains the package URI.
+     * <p class="note">
+     * This is a protected intent that can only be sent by the system.
+     */
+    @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
+    public static final String ACTION_PACKAGE_VERIFIED = "android.intent.action.PACKAGE_VERIFIED";
 
     /**
      * Broadcast Action: Resources for a set of packages (which were
@@ -1889,7 +1989,7 @@ public class Intent implements Parcelable, Cloneable {
 
     /**
      * Broadcast Action:  External media is present, but not mounted at its mount point.
-     * The path to the mount point for the removed media is contained in the Intent.mData field.
+     * The path to the mount point for the unmounted media is contained in the Intent.mData field.
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
     public static final String ACTION_MEDIA_UNMOUNTED = "android.intent.action.MEDIA_UNMOUNTED";
@@ -1910,7 +2010,7 @@ public class Intent implements Parcelable, Cloneable {
 
     /**
      * Broadcast Action:  External media is present and mounted at its mount point.
-     * The path to the mount point for the removed media is contained in the Intent.mData field.
+     * The path to the mount point for the mounted media is contained in the Intent.mData field.
      * The Intent contains an extra with name "read-only" and Boolean value to indicate if the
      * media was mounted read only.
      */
@@ -1941,7 +2041,7 @@ public class Intent implements Parcelable, Cloneable {
 
     /**
      * Broadcast Action:  External media is present but cannot be mounted.
-     * The path to the mount point for the removed media is contained in the Intent.mData field.
+     * The path to the mount point for the unmountable media is contained in the Intent.mData field.
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
     public static final String ACTION_MEDIA_UNMOUNTABLE = "android.intent.action.MEDIA_UNMOUNTABLE";
@@ -2170,7 +2270,7 @@ public class Intent implements Parcelable, Cloneable {
     /**
      * Broadcast Action: An outgoing call is about to be placed.
      *
-     * <p>The Intent will have the following extra value:
+     * <p>The Intent will have the following extra value:</p>
      * <ul>
      *   <li><em>{@link android.content.Intent#EXTRA_PHONE_NUMBER}</em> -
      *       the phone number originally intended to be dialed.</li>
@@ -2194,6 +2294,10 @@ public class Intent implements Parcelable, Cloneable {
      * <p>Emergency calls cannot be intercepted using this mechanism, and
      * other calls cannot be modified to call emergency numbers using this
      * mechanism.
+     * <p>Some apps (such as VoIP apps) may want to redirect the outgoing
+     * call to use their own service instead. Those apps should first prevent
+     * the call from being placed by setting resultData to <code>null</code>
+     * and then start their own app to make the call.
      * <p>You must hold the
      * {@link android.Manifest.permission#PROCESS_OUTGOING_CALLS}
      * permission to receive this Intent.</p>
@@ -2234,6 +2338,65 @@ public class Intent implements Parcelable, Cloneable {
             "android.intent.action.DOCK_EVENT";
 
     /**
+     * Broadcast Action: A broadcast when idle maintenance can be started.
+     * This means that the user is not interacting with the device and is
+     * not expected to do so soon. Typical use of the idle maintenance is
+     * to perform somehow expensive tasks that can be postponed at a moment
+     * when they will not degrade user experience.
+     * <p>
+     * <p class="note">In order to keep the device responsive in case of an
+     * unexpected user interaction, implementations of a maintenance task
+     * should be interruptible. In such a scenario a broadcast with action
+     * {@link #ACTION_IDLE_MAINTENANCE_END} will be sent. In other words, you
+     * should not do the maintenance work in
+     * {@link BroadcastReceiver#onReceive(Context, Intent)}, rather start a
+     * maintenance service by {@link Context#startService(Intent)}. Also
+     * you should hold a wake lock while your maintenance service is running
+     * to prevent the device going to sleep.
+     * </p>
+     * <p>
+     * <p class="note">This is a protected intent that can only be sent by
+     * the system.
+     * </p>
+     *
+     * @see #ACTION_IDLE_MAINTENANCE_END
+     *
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
+    public static final String ACTION_IDLE_MAINTENANCE_START =
+            "android.intent.action.ACTION_IDLE_MAINTENANCE_START";
+
+    /**
+     * Broadcast Action:  A broadcast when idle maintenance should be stopped.
+     * This means that the user was not interacting with the device as a result
+     * of which a broadcast with action {@link #ACTION_IDLE_MAINTENANCE_START}
+     * was sent and now the user started interacting with the device. Typical
+     * use of the idle maintenance is to perform somehow expensive tasks that
+     * can be postponed at a moment when they will not degrade user experience.
+     * <p>
+     * <p class="note">In order to keep the device responsive in case of an
+     * unexpected user interaction, implementations of a maintenance task
+     * should be interruptible. Hence, on receiving a broadcast with this
+     * action, the maintenance task should be interrupted as soon as possible.
+     * In other words, you should not do the maintenance work in
+     * {@link BroadcastReceiver#onReceive(Context, Intent)}, rather stop the
+     * maintenance service that was started on receiving of
+     * {@link #ACTION_IDLE_MAINTENANCE_START}.Also you should release the wake
+     * lock you acquired when your maintenance service started.
+     * </p>
+     * <p class="note">This is a protected intent that can only be sent
+     * by the system.
+     *
+     * @see #ACTION_IDLE_MAINTENANCE_START
+     *
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
+    public static final String ACTION_IDLE_MAINTENANCE_END =
+            "android.intent.action.ACTION_IDLE_MAINTENANCE_END";
+
+    /**
      * Broadcast Action: a remote intent is to be broadcasted.
      *
      * A remote intent is used for remote RPC between devices. The remote intent
@@ -2261,28 +2424,180 @@ public class Intent implements Parcelable, Cloneable {
             "android.intent.action.PRE_BOOT_COMPLETED";
 
     /**
-     * Broadcast sent to the system when a user is added. Carries an extra EXTRA_USERID that has the
-     * userid of the new user.
+     * Broadcast to a specific application to query any supported restrictions to impose
+     * on restricted users. The broadcast intent contains an extra
+     * {@link #EXTRA_RESTRICTIONS_BUNDLE} with the currently persisted
+     * restrictions as a Bundle of key/value pairs. The value types can be Boolean, String or
+     * String[] depending on the restriction type.<p/>
+     * The response should contain an extra {@link #EXTRA_RESTRICTIONS_LIST},
+     * which is of type <code>ArrayList&lt;RestrictionEntry&gt;</code>. It can also
+     * contain an extra {@link #EXTRA_RESTRICTIONS_INTENT}, which is of type <code>Intent</code>.
+     * The activity specified by that intent will be launched for a result which must contain
+     * one of the extras {@link #EXTRA_RESTRICTIONS_LIST} or {@link #EXTRA_RESTRICTIONS_BUNDLE}.
+     * The keys and values of the returned restrictions will be persisted.
+     * @see RestrictionEntry
+     */
+    public static final String ACTION_GET_RESTRICTION_ENTRIES =
+            "android.intent.action.GET_RESTRICTION_ENTRIES";
+
+    /**
+     * Sent the first time a user is starting, to allow system apps to
+     * perform one time initialization.  (This will not be seen by third
+     * party applications because a newly initialized user does not have any
+     * third party applications installed for it.)  This is sent early in
+     * starting the user, around the time the home app is started, before
+     * {@link #ACTION_BOOT_COMPLETED} is sent.  This is sent as a foreground
+     * broadcast, since it is part of a visible user interaction; be as quick
+     * as possible when handling it.
+     */
+    public static final String ACTION_USER_INITIALIZE =
+            "android.intent.action.USER_INITIALIZE";
+
+    /**
+     * Sent when a user switch is happening, causing the process's user to be
+     * brought to the foreground.  This is only sent to receivers registered
+     * through {@link Context#registerReceiver(BroadcastReceiver, IntentFilter)
+     * Context.registerReceiver}.  It is sent to the user that is going to the
+     * foreground.  This is sent as a foreground
+     * broadcast, since it is part of a visible user interaction; be as quick
+     * as possible when handling it.
+     */
+    public static final String ACTION_USER_FOREGROUND =
+            "android.intent.action.USER_FOREGROUND";
+
+    /**
+     * Sent when a user switch is happening, causing the process's user to be
+     * sent to the background.  This is only sent to receivers registered
+     * through {@link Context#registerReceiver(BroadcastReceiver, IntentFilter)
+     * Context.registerReceiver}.  It is sent to the user that is going to the
+     * background.  This is sent as a foreground
+     * broadcast, since it is part of a visible user interaction; be as quick
+     * as possible when handling it.
+     */
+    public static final String ACTION_USER_BACKGROUND =
+            "android.intent.action.USER_BACKGROUND";
+
+    /**
+     * Broadcast sent to the system when a user is added. Carries an extra
+     * EXTRA_USER_HANDLE that has the userHandle of the new user.  It is sent to
+     * all running users.  You must hold
+     * {@link android.Manifest.permission#MANAGE_USERS} to receive this broadcast.
      * @hide
      */
     public static final String ACTION_USER_ADDED =
             "android.intent.action.USER_ADDED";
 
     /**
-     * Broadcast sent to the system when a user is removed. Carries an extra EXTRA_USERID that has
-     * the userid of the user.
+     * Broadcast sent by the system when a user is started. Carries an extra
+     * EXTRA_USER_HANDLE that has the userHandle of the user.  This is only sent to
+     * registered receivers, not manifest receivers.  It is sent to the user
+     * that has been started.  This is sent as a foreground
+     * broadcast, since it is part of a visible user interaction; be as quick
+     * as possible when handling it.
+     * @hide
+     */
+    public static final String ACTION_USER_STARTED =
+            "android.intent.action.USER_STARTED";
+
+    /**
+     * Broadcast sent when a user is in the process of starting.  Carries an extra
+     * EXTRA_USER_HANDLE that has the userHandle of the user.  This is only
+     * sent to registered receivers, not manifest receivers.  It is sent to all
+     * users (including the one that is being started).  You must hold
+     * {@link android.Manifest.permission#INTERACT_ACROSS_USERS} to receive
+     * this broadcast.  This is sent as a background broadcast, since
+     * its result is not part of the primary UX flow; to safely keep track of
+     * started/stopped state of a user you can use this in conjunction with
+     * {@link #ACTION_USER_STOPPING}.  It is <b>not</b> generally safe to use with
+     * other user state broadcasts since those are foreground broadcasts so can
+     * execute in a different order.
+     * @hide
+     */
+    public static final String ACTION_USER_STARTING =
+            "android.intent.action.USER_STARTING";
+
+    /**
+     * Broadcast sent when a user is going to be stopped.  Carries an extra
+     * EXTRA_USER_HANDLE that has the userHandle of the user.  This is only
+     * sent to registered receivers, not manifest receivers.  It is sent to all
+     * users (including the one that is being stopped).  You must hold
+     * {@link android.Manifest.permission#INTERACT_ACROSS_USERS} to receive
+     * this broadcast.  The user will not stop until all receivers have
+     * handled the broadcast.  This is sent as a background broadcast, since
+     * its result is not part of the primary UX flow; to safely keep track of
+     * started/stopped state of a user you can use this in conjunction with
+     * {@link #ACTION_USER_STARTING}.  It is <b>not</b> generally safe to use with
+     * other user state broadcasts since those are foreground broadcasts so can
+     * execute in a different order.
+     * @hide
+     */
+    public static final String ACTION_USER_STOPPING =
+            "android.intent.action.USER_STOPPING";
+
+    /**
+     * Broadcast sent to the system when a user is stopped. Carries an extra
+     * EXTRA_USER_HANDLE that has the userHandle of the user.  This is similar to
+     * {@link #ACTION_PACKAGE_RESTARTED}, but for an entire user instead of a
+     * specific package.  This is only sent to registered receivers, not manifest
+     * receivers.  It is sent to all running users <em>except</em> the one that
+     * has just been stopped (which is no longer running).
+     * @hide
+     */
+    public static final String ACTION_USER_STOPPED =
+            "android.intent.action.USER_STOPPED";
+
+    /**
+     * Broadcast sent to the system when a user is removed. Carries an extra EXTRA_USER_HANDLE that has
+     * the userHandle of the user.  It is sent to all running users except the
+     * one that has been removed. The user will not be completely removed until all receivers have
+     * handled the broadcast. You must hold
+     * {@link android.Manifest.permission#MANAGE_USERS} to receive this broadcast.
      * @hide
      */
     public static final String ACTION_USER_REMOVED =
             "android.intent.action.USER_REMOVED";
 
     /**
-     * Broadcast sent to the system when the user switches. Carries an extra EXTRA_USERID that has
-     * the userid of the user to become the current one.
+     * Broadcast sent to the system when the user switches. Carries an extra EXTRA_USER_HANDLE that has
+     * the userHandle of the user to become the current one. This is only sent to
+     * registered receivers, not manifest receivers.  It is sent to all running users.
+     * You must hold
+     * {@link android.Manifest.permission#MANAGE_USERS} to receive this broadcast.
      * @hide
      */
     public static final String ACTION_USER_SWITCHED =
             "android.intent.action.USER_SWITCHED";
+
+    /**
+     * Broadcast sent to the system when a user's information changes. Carries an extra
+     * {@link #EXTRA_USER_HANDLE} to indicate which user's information changed.
+     * This is only sent to registered receivers, not manifest receivers. It is sent to all users.
+     * @hide
+     */
+    public static final String ACTION_USER_INFO_CHANGED =
+            "android.intent.action.USER_INFO_CHANGED";
+
+    /**
+     * Sent when the user taps on the clock widget in the system's "quick settings" area.
+     */
+    public static final String ACTION_QUICK_CLOCK =
+            "android.intent.action.QUICK_CLOCK";
+
+    /**
+     * Broadcast Action: This is broadcast when a user action should request the
+     * brightness setting dialog.
+     * @hide
+     */
+    public static final String ACTION_SHOW_BRIGHTNESS_DIALOG =
+            "android.intent.action.SHOW_BRIGHTNESS_DIALOG";
+
+    /**
+     * Broadcast Action:  A global button was pressed.  Includes a single
+     * extra field, {@link #EXTRA_KEY_EVENT}, containing the key event that
+     * caused the broadcast.
+     * @hide
+     */
+    public static final String ACTION_GLOBAL_BUTTON = "android.intent.action.GLOBAL_BUTTON";
 
     // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------
@@ -2405,7 +2720,8 @@ public class Intent implements Parcelable, Cloneable {
     public static final String CATEGORY_SAMPLE_CODE = "android.intent.category.SAMPLE_CODE";
     /**
      * Used to indicate that a GET_CONTENT intent only wants URIs that can be opened with
-     * ContentResolver.openInputStream. Openable URIs must support the columns in OpenableColumns
+     * ContentResolver.openInputStream. Openable URIs must support the columns in
+     * {@link android.provider.OpenableColumns}
      * when queried, though it is allowable for those columns to be blank.
      */
     @SdkConstant(SdkConstantType.INTENT_CATEGORY)
@@ -2693,6 +3009,15 @@ public class Intent implements Parcelable, Cloneable {
     public static final String EXTRA_DATA_REMOVED = "android.intent.extra.DATA_REMOVED";
 
     /**
+     * @hide
+     * Used as a boolean extra field in {@link android.content.Intent#ACTION_PACKAGE_REMOVED}
+     * intents to indicate that at this point the package has been removed for
+     * all users on the device.
+     */
+    public static final String EXTRA_REMOVED_FOR_ALL_USERS
+            = "android.intent.extra.REMOVED_FOR_ALL_USERS";
+
+    /**
      * Used as a boolean extra field in {@link android.content.Intent#ACTION_PACKAGE_REMOVED}
      * intents to indicate that this is a replacement of the package, so this
      * broadcast will immediately be followed by an add broadcast for a
@@ -2779,7 +3104,9 @@ public class Intent implements Parcelable, Cloneable {
 
     /**
      * This field is part of {@link android.content.Intent#ACTION_PACKAGE_CHANGED},
-     * and contains a string array of all of the components that have changed.
+     * and contains a string array of all of the components that have changed.  If
+     * the state of the overall package has changed, then it will contain an entry
+     * with the package name itself.
      */
     public static final String EXTRA_CHANGED_COMPONENT_NAME_LIST =
             "android.intent.extra.changed_component_name_list";
@@ -2834,12 +3161,46 @@ public class Intent implements Parcelable, Cloneable {
         "android.intent.extra.LOCAL_ONLY";
 
     /**
-     * The userid carried with broadcast intents related to addition, removal and switching of users
+     * Used to indicate that a {@link #ACTION_GET_CONTENT} intent can allow the
+     * user to select and return multiple items.  This is a boolean extra; the default
+     * is false.  If true, an implementation of ACTION_GET_CONTENT is allowed to
+     * present the user with a UI where they can pick multiple items that are all
+     * returned to the caller.  When this happens, they should be returned as
+     * the {@link #getClipData()} part of the result Intent.
+     */
+    public static final String EXTRA_ALLOW_MULTIPLE =
+        "android.intent.extra.ALLOW_MULTIPLE";
+
+    /**
+     * The userHandle carried with broadcast intents related to addition, removal and switching of
+     * users
      * - {@link #ACTION_USER_ADDED}, {@link #ACTION_USER_REMOVED} and {@link #ACTION_USER_SWITCHED}.
      * @hide
      */
-    public static final String EXTRA_USERID =
-            "android.intent.extra.user_id";
+    public static final String EXTRA_USER_HANDLE =
+            "android.intent.extra.user_handle";
+
+    /**
+     * Extra used in the response from a BroadcastReceiver that handles
+     * {@link #ACTION_GET_RESTRICTION_ENTRIES}. The type of the extra is
+     * <code>ArrayList&lt;RestrictionEntry&gt;</code>.
+     */
+    public static final String EXTRA_RESTRICTIONS_LIST = "android.intent.extra.restrictions_list";
+
+    /**
+     * Extra sent in the intent to the BroadcastReceiver that handles
+     * {@link #ACTION_GET_RESTRICTION_ENTRIES}. The type of the extra is a Bundle containing
+     * the restrictions as key/value pairs.
+     */
+    public static final String EXTRA_RESTRICTIONS_BUNDLE =
+            "android.intent.extra.restrictions_bundle";
+
+    /**
+     * Extra used in the response from a BroadcastReceiver that handles
+     * {@link #ACTION_GET_RESTRICTION_ENTRIES}.
+     */
+    public static final String EXTRA_RESTRICTIONS_INTENT =
+            "android.intent.extra.restrictions_intent";
 
     // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------
@@ -6625,6 +6986,32 @@ public class Intent implements Parcelable, Cloneable {
             type = type.substring(0, semicolonIndex);
         }
         return type;
+    }
+
+    /**
+     * Prepare this {@link Intent} to leave an app process.
+     *
+     * @hide
+     */
+    public void prepareToLeaveProcess() {
+        setAllowFds(false);
+
+        if (mSelector != null) {
+            mSelector.prepareToLeaveProcess();
+        }
+        if (mClipData != null) {
+            mClipData.prepareToLeaveProcess();
+        }
+
+        if (mData != null && StrictMode.vmFileUriExposureEnabled()) {
+            // There are several ACTION_MEDIA_* broadcasts that send file://
+            // Uris, so only check common actions.
+            if (ACTION_VIEW.equals(mAction) ||
+                    ACTION_EDIT.equals(mAction) ||
+                    ACTION_ATTACH_DATA.equals(mAction)) {
+                mData.checkFileUriExposed("Intent.getData()");
+            }
+        }
     }
 
     /**

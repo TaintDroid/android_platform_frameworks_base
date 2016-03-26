@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.ActionProvider;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.lang.ref.WeakReference;
 
@@ -80,8 +81,11 @@ public class MediaRouteActionProvider extends ActionProvider {
         }
         mMenuItem = item;
         mView = new MediaRouteButton(mContext);
+        mView.setCheatSheetEnabled(true);
         mView.setRouteTypes(mRouteTypes);
         mView.setExtendedSettingsClickListener(mExtendedSettingsListener);
+        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         return mView;
     }
 

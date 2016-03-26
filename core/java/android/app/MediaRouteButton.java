@@ -23,14 +23,19 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.MediaRouter;
 import android.media.MediaRouter.RouteGroup;
 import android.media.MediaRouter.RouteInfo;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.SoundEffectConstants;
 import android.view.View;
+import android.widget.Toast;
 
 public class MediaRouteButton extends View {
     private static final String TAG = "MediaRouteButton";
@@ -44,12 +49,18 @@ public class MediaRouteButton extends View {
     private Drawable mRemoteIndicator;
     private boolean mRemoteActive;
     private boolean mToggleMode;
+    private boolean mCheatSheetEnabled;
+    private boolean mIsConnecting;
 
     private int mMinWidth;
     private int mMinHeight;
 
     private OnClickListener mExtendedSettingsClickListener;
     private MediaRouteChooserDialogFragment mDialogFragment;
+
+    private static final int[] CHECKED_STATE_SET = {
+        R.attr.state_checked
+    };
 
     private static final int[] ACTIVATED_STATE_SET = {
         R.attr.state_activated
@@ -60,7 +71,7 @@ public class MediaRouteButton extends View {
     }
 
     public MediaRouteButton(Context context, AttributeSet attrs) {
-        this(context, null, com.android.internal.R.attr.mediaRouteButtonStyle);
+        this(context, attrs, com.android.internal.R.attr.mediaRouteButtonStyle);
     }
 
     public MediaRouteButton(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -82,6 +93,7 @@ public class MediaRouteButton extends View {
         a.recycle();
 
         setClickable(true);
+        setLongClickable(true);
 
         setRouteTypes(routeTypes);
     }
@@ -111,13 +123,13 @@ public class MediaRouteButton extends View {
 
         if (mToggleMode) {
             if (mRemoteActive) {
-                mRouter.selectRouteInt(mRouteTypes, mRouter.getSystemAudioRoute());
+                mRouter.selectRouteInt(mRouteTypes, mRouter.getDefaultRoute());
             } else {
                 final int N = mRouter.getRouteCount();
                 for (int i = 0; i < N; i++) {
                     final RouteInfo route = mRouter.getRouteAt(i);
                     if ((route.getSupportedTypes() & mRouteTypes) != 0 &&
-                            route != mRouter.getSystemAudioRoute()) {
+                            route != mRouter.getDefaultRoute()) {
                         mRouter.selectRouteInt(mRouteTypes, route);
                     }
                 }
@@ -127,6 +139,52 @@ public class MediaRouteButton extends View {
         }
 
         return handled;
+    }
+
+    void setCheatSheetEnabled(boolean enable) {
+        mCheatSheetEnabled = enable;
+    }
+
+    @Override
+    public boolean performLongClick() {
+        if (super.performLongClick()) {
+            return true;
+        }
+
+        if (!mCheatSheetEnabled) {
+            return false;
+        }
+
+        final CharSequence contentDesc = getContentDescription();
+        if (TextUtils.isEmpty(contentDesc)) {
+            // Don't show the cheat sheet if we have no description
+            return false;
+        }
+
+        final int[] screenPos = new int[2];
+        final Rect displayFrame = new Rect();
+        getLocationOnScreen(screenPos);
+        getWindowVisibleDisplayFrame(displayFrame);
+
+        final Context context = getContext();
+        final int width = getWidth();
+        final int height = getHeight();
+        final int midy = screenPos[1] + height / 2;
+        final int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
+        Toast cheatSheet = Toast.makeText(context, contentDesc, Toast.LENGTH_SHORT);
+        if (midy < displayFrame.height()) {
+            // Show along the top; follow action buttons
+            cheatSheet.setGravity(Gravity.TOP | Gravity.END,
+                    screenWidth - screenPos[0] - width / 2, height);
+        } else {
+            // Show along the bottom center
+            cheatSheet.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, height);
+        }
+        cheatSheet.show();
+        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+
+        return true;
     }
 
     public void setRouteTypes(int types) {
@@ -157,10 +215,22 @@ public class MediaRouteButton extends View {
     }
 
     void updateRemoteIndicator() {
-        final boolean isRemote =
-                mRouter.getSelectedRoute(mRouteTypes) != mRouter.getSystemAudioRoute();
+        final RouteInfo selected = mRouter.getSelectedRoute(mRouteTypes);
+        final boolean isRemote = selected != mRouter.getDefaultRoute();
+        final boolean isConnecting = selected != null &&
+                selected.getStatusCode() == RouteInfo.STATUS_CONNECTING;
+
+        boolean needsRefresh = false;
         if (mRemoteActive != isRemote) {
             mRemoteActive = isRemote;
+            needsRefresh = true;
+        }
+        if (mIsConnecting != isConnecting) {
+            mIsConnecting = isConnecting;
+            needsRefresh = true;
+        }
+
+        if (needsRefresh) {
             refreshDrawableState();
         }
     }
@@ -168,27 +238,41 @@ public class MediaRouteButton extends View {
     void updateRouteCount() {
         final int N = mRouter.getRouteCount();
         int count = 0;
+        boolean hasVideoRoutes = false;
         for (int i = 0; i < N; i++) {
             final RouteInfo route = mRouter.getRouteAt(i);
-            if ((route.getSupportedTypes() & mRouteTypes) != 0) {
+            final int routeTypes = route.getSupportedTypes();
+            if ((routeTypes & mRouteTypes) != 0) {
                 if (route instanceof RouteGroup) {
                     count += ((RouteGroup) route).getRouteCount();
                 } else {
                     count++;
+                }
+                if ((routeTypes & MediaRouter.ROUTE_TYPE_LIVE_VIDEO) != 0) {
+                    hasVideoRoutes = true;
                 }
             }
         }
 
         setEnabled(count != 0);
 
-        // Only allow toggling if we have more than just user routes
-        mToggleMode = count == 2 && (mRouteTypes & MediaRouter.ROUTE_TYPE_LIVE_AUDIO) != 0;
+        // Only allow toggling if we have more than just user routes.
+        // Don't toggle if we support video routes, we may have to let the dialog scan.
+        mToggleMode = count == 2 && (mRouteTypes & MediaRouter.ROUTE_TYPE_LIVE_AUDIO) != 0 &&
+                !hasVideoRoutes;
     }
 
     @Override
     protected int[] onCreateDrawableState(int extraSpace) {
         final int[] drawableState = super.onCreateDrawableState(extraSpace + 1);
-        if (mRemoteActive) {
+
+        // Technically we should be handling this more completely, but these
+        // are implementation details here. Checked is used to express the connecting
+        // drawable state and it's mutually exclusive with activated for the purposes
+        // of state selection here.
+        if (mIsConnecting) {
+            mergeDrawableStates(drawableState, CHECKED_STATE_SET);
+        } else if (mRemoteActive) {
             mergeDrawableStates(drawableState, ACTIVATED_STATE_SET);
         }
         return drawableState;
@@ -362,6 +446,11 @@ public class MediaRouteButton extends View {
 
         @Override
         public void onRouteUnselected(MediaRouter router, int type, RouteInfo info) {
+            updateRemoteIndicator();
+        }
+
+        @Override
+        public void onRouteChanged(MediaRouter router, RouteInfo info) {
             updateRemoteIndicator();
         }
 

@@ -66,7 +66,7 @@ public abstract class DisplayEventReceiver {
     @Override
     protected void finalize() throws Throwable {
         try {
-            dispose();
+            dispose(true);
         } finally {
             super.finalize();
         }
@@ -76,9 +76,17 @@ public abstract class DisplayEventReceiver {
      * Disposes the receiver.
      */
     public void dispose() {
+        dispose(false);
+    }
+
+    private void dispose(boolean finalized) {
         if (mCloseGuard != null) {
+            if (finalized) {
+                mCloseGuard.warnIfOpen();
+            }
             mCloseGuard.close();
         }
+
         if (mReceiverPtr != 0) {
             nativeDispose(mReceiverPtr);
             mReceiverPtr = 0;
@@ -93,9 +101,23 @@ public abstract class DisplayEventReceiver {
      *
      * @param timestampNanos The timestamp of the pulse, in the {@link System#nanoTime()}
      * timebase.
+     * @param builtInDisplayId The surface flinger built-in display id such as
+     * {@link SurfaceControl#BUILT_IN_DISPLAY_ID_MAIN}.
      * @param frame The frame number.  Increases by one for each vertical sync interval.
      */
-    public void onVsync(long timestampNanos, int frame) {
+    public void onVsync(long timestampNanos, int builtInDisplayId, int frame) {
+    }
+
+    /**
+     * Called when a display hotplug event is received.
+     *
+     * @param timestampNanos The timestamp of the event, in the {@link System#nanoTime()}
+     * timebase.
+     * @param builtInDisplayId The surface flinger built-in display id such as
+     * {@link SurfaceControl#BUILT_IN_DISPLAY_ID_HDMI}.
+     * @param connected True if the display is connected, false if it disconnected.
+     */
+    public void onHotplug(long timestampNanos, int builtInDisplayId, boolean connected) {
     }
 
     /**
@@ -113,7 +135,13 @@ public abstract class DisplayEventReceiver {
 
     // Called from native code.
     @SuppressWarnings("unused")
-    private void dispatchVsync(long timestampNanos, int frame) {
-        onVsync(timestampNanos, frame);
+    private void dispatchVsync(long timestampNanos, int builtInDisplayId, int frame) {
+        onVsync(timestampNanos, builtInDisplayId, frame);
+    }
+
+    // Called from native code.
+    @SuppressWarnings("unused")
+    private void dispatchHotplug(long timestampNanos, int builtInDisplayId, boolean connected) {
+        onHotplug(timestampNanos, builtInDisplayId, connected);
     }
 }

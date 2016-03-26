@@ -154,6 +154,9 @@
     <string name="global_actions" product="default" msgid="2406416831541615258">"אפשרויות טלפון"</string>
     <string name="global_action_lock" msgid="2844945191792119712">"נעילת מסך"</string>
     <string name="global_action_power_off" msgid="4471879440839879722">"כיבוי"</string>
+    <string name="global_action_bug_report" msgid="7934010578922304799">"דיווח על באג"</string>
+    <string name="bugreport_title" msgid="2667494803742548533">"מלא דיווח על באג"</string>
+    <string name="bugreport_message" msgid="398447048750350456">"פעולה זו תאסוף מידע על מצב המכשיר הנוכחי שלך על מנת לשלוח אותו כהודעת דוא\"ל. היא תימשך זמן קצר מרגע פתיחת דיווח הבאג ועד שיהיה ניתן לבצע שליחה. התאזר בסבלנות."</string>
     <string name="global_action_toggle_silent_mode" msgid="8219525344246810925">"מצב שקט"</string>
     <string name="global_action_silent_mode_on_status" msgid="3289841937003758806">"הקול כבוי"</string>
     <string name="global_action_silent_mode_off_status" msgid="1506046579177066419">"קול מופעל"</string>
@@ -168,12 +171,47 @@
     <string name="permgrouplab_messages" msgid="7521249148445456662">"ההודעות שלך"</string>
     <string name="permgroupdesc_messages" msgid="7821999071003699236">"קריאה וכתיבה בהודעות ה-SMS, הדוא\"ל והודעות אחרות שלך."</string>
     <string name="permgrouplab_personalInfo" msgid="3519163141070533474">"המידע האישי שלך"</string>
-    <string name="permgroupdesc_personalInfo" product="tablet" msgid="6975389054186265786">"גישה ישירה לאנשי הקשר וללוח השנה המאוחסנים בטבלט."</string>
-    <string name="permgroupdesc_personalInfo" product="default" msgid="5488050357388806068">"גישה ישירה לאנשי הקשר וללוח השנה המאוחסנים בטלפון."</string>
+    <string name="permgroupdesc_personalInfo" msgid="8426453129788861338">"גישה ישירה למידע עליך, המאוחסן בכרטיס איש הקשר שלך."</string>
+    <string name="permgrouplab_socialInfo" msgid="5799096623412043791">"מידע על הקשרים החברתיים שלך"</string>
+    <string name="permgroupdesc_socialInfo" msgid="7129842457611643493">"גישה ישירה למידע על אנשי קשר וקשרים חברתיים שלך."</string>
     <string name="permgrouplab_location" msgid="635149742436692049">"המיקום שלך"</string>
     <string name="permgroupdesc_location" msgid="5704679763124170100">"עקוב אחר המיקום הפיזי שלך."</string>
     <string name="permgrouplab_network" msgid="5808983377727109831">"תקשורת רשת"</string>
     <string name="permgroupdesc_network" msgid="4478299413241861987">"הרשאת גישה לתכונות רשת שונות."</string>
+    <string name="permgrouplab_bluetoothNetwork" msgid="1585403544162128109">"Bluetooth"</string>
+    <string name="permgroupdesc_bluetoothNetwork" msgid="5625288577164282391">"גישה למכשירים ולרשתות באמצעות Bluetooth."</string>
+    <string name="permgrouplab_audioSettings" msgid="8329261670151871235">"הגדרות אודיו"</string>
+    <string name="permgroupdesc_audioSettings" msgid="2641515403347568130">"שינוי הגדרות האודיו."</string>
+    <string name="permgrouplab_affectsBattery" msgid="6209246653424798033">"השפעה על הסוללה"</string>
+    <string name="permgroupdesc_affectsBattery" msgid="6441275320638916947">"שימוש בתכונות שיכולות לרוקן את הסוללה במהירות."</string>
+    <string name="permgrouplab_calendar" msgid="5863508437783683902">"לוח שנה"</string>
+    <string name="permgroupdesc_calendar" msgid="5777534316982184416">"גישה ישירה ללוח השנה ולאירועים."</string>
+    <string name="permgrouplab_dictionary" msgid="4148597128843641379">"קריאת מילון משתמש"</string>
+    <string name="permgroupdesc_dictionary" msgid="7921166355964764490">"קריאת מילים במילון משתמש."</string>
+    <string name="permgrouplab_writeDictionary" msgid="8090237702432576788">"כתיבת מילון משתמש"</string>
+    <string name="permgroupdesc_writeDictionary" msgid="2711561994497361646">"הוספת מילים למילון משתמש."</string>
+    <string name="permgrouplab_bookmarks" msgid="1949519673103968229">"סימניות והיסטוריה"</string>
+    <string name="permgroupdesc_bookmarks" msgid="4169771606257963028">"גישה ישירה אל סימניות והיסטוריית דפדפן."</string>
+    <string name="permgrouplab_deviceAlarms" msgid="6117704629728824101">"שעון מעורר"</string>
+    <string name="permgroupdesc_deviceAlarms" msgid="4769356362251641175">"הגדרת השעון המעורר."</string>
+    <string name="permgrouplab_voicemail" msgid="4162237145027592133">"דואר קולי"</string>
+    <string name="permgroupdesc_voicemail" msgid="2498403969862951393">"גישה ישירה לדואר הקולי."</string>
+    <string name="permgrouplab_microphone" msgid="171539900250043464">"מיקרופון"</string>
+    <string name="permgroupdesc_microphone" msgid="7106618286905738408">"גישה ישירה אל המיקרופון להקלטת אודיו."</string>
+    <string name="permgrouplab_camera" msgid="4820372495894586615">"מצלמה"</string>
+    <string name="permgroupdesc_camera" msgid="2933667372289567714">"גישה ישירה למצלמה לצילום תמונות או וידאו."</string>
+    <string name="permgrouplab_screenlock" msgid="8275500173330718168">"מסך נעילה"</string>
+    <string name="permgroupdesc_screenlock" msgid="7067497128925499401">"היכולת להשפיע על אופן ההתנהגות של מסך הנעילה של המכשיר."</string>
+    <string name="permgrouplab_appInfo" msgid="8028789762634147725">"מידע על היישומים שלך"</string>
+    <string name="permgroupdesc_appInfo" msgid="3950378538049625907">"יכולת להשפיע על התנהגותם של יישומים אחרים במכשיר."</string>
+    <string name="permgrouplab_wallpaper" msgid="3850280158041175998">"טפט"</string>
+    <string name="permgroupdesc_wallpaper" msgid="5630417854750540154">"שינוי הגדרות הטפט של המכשיר."</string>
+    <string name="permgrouplab_systemClock" msgid="406535759236612992">"שעון"</string>
+    <string name="permgroupdesc_systemClock" msgid="3944359833624094992">"שינוי השעה או אזור הזמן של המכשיר."</string>
+    <string name="permgrouplab_statusBar" msgid="2095862568113945398">"שורת המצב"</string>
+    <string name="permgroupdesc_statusBar" msgid="6242593432226807171">"שינוי הגדרות שורת המצב של המכשיר."</string>
+    <string name="permgrouplab_syncSettings" msgid="3341990986147826541">"הגדרות סנכרון"</string>
+    <string name="permgroupdesc_syncSettings" msgid="7603195265129031797">"גישה להגדרות הסנכרון."</string>
     <string name="permgrouplab_accounts" msgid="3359646291125325519">"החשבונות שלך"</string>
     <string name="permgroupdesc_accounts" msgid="4948732641827091312">"גישה לכל החשבונות הזמינים."</string>
     <string name="permgrouplab_hardwareControls" msgid="7998214968791599326">"בקרת חומרה"</string>
@@ -184,9 +222,21 @@
     <string name="permgroupdesc_systemTools" msgid="8162102602190734305">"גישה ושליטה במערכת ברמה נמוכה."</string>
     <string name="permgrouplab_developmentTools" msgid="3446164584710596513">"כלי פיתוח"</string>
     <string name="permgroupdesc_developmentTools" msgid="7058828032358142018">"תכונות הדרושות למפתחי יישומים בלבד."</string>
+    <string name="permgrouplab_display" msgid="4279909676036402636">"ממשק המשתמש של יישום אחר"</string>
+    <string name="permgroupdesc_display" msgid="6051002031933013714">"השפעה על ממשק המשתמש של יישומים אחרים."</string>
     <string name="permgrouplab_storage" msgid="1971118770546336966">"אחסון"</string>
     <string name="permgroupdesc_storage" product="nosdcard" msgid="7442318502446874999">"גישה לאמצעי אחסון מסוג USB."</string>
     <string name="permgroupdesc_storage" product="default" msgid="9203302214915355774">"גש לכרטיס SD."</string>
+    <string name="permgrouplab_accessibilityFeatures" msgid="7919025602283593907">"תכונות נגישות"</string>
+    <string name="permgroupdesc_accessibilityFeatures" msgid="4205196881678144335">"תכונות שטכנולוגיה מסייעת יכולה לבקש."</string>
+    <string name="capability_title_canRetrieveWindowContent" msgid="3901717936930170320">"אחזר תוכן של חלון"</string>
+    <string name="capability_desc_canRetrieveWindowContent" msgid="3772225008605310672">"בדוק את התוכן של חלון שאיתו אתה מבצע אינטראקציה."</string>
+    <string name="capability_title_canRequestTouchExploration" msgid="3108723364676667320">"הפעל את \'גילוי באמצעות מגע\'"</string>
+    <string name="capability_desc_canRequestTouchExploration" msgid="5800552516779249356">"פריטים שנגעת בהם ייאמרו בקול וניתן לנווט במסך באמצעות תנועות."</string>
+    <string name="capability_title_canRequestEnhancedWebAccessibility" msgid="1739881766522594073">"הפעל גישה משופרת לאינטרנט"</string>
+    <string name="capability_desc_canRequestEnhancedWebAccessibility" msgid="7881063961507511765">"ייתכן שסקריפטים יותקנו על מנת להקל את הגישה אל תוכן של יישומים."</string>
+    <string name="capability_title_canRequestFilterKeyEvents" msgid="2103440391902412174">"הצג טקסט שאתה מקליד"</string>
+    <string name="capability_desc_canRequestFilterKeyEvents" msgid="7463135292204152818">"כולל נתונים אישיים כמו מספרי כרטיס אשראי וסיסמאות."</string>
     <string name="permlab_statusBar" msgid="7417192629601890791">"השבת או שנה את שורת המצב"</string>
     <string name="permdesc_statusBar" msgid="8434669549504290975">"מאפשר ליישום להשבית את שורת המצב או להוסיף ולהסיר סמלי מערכת."</string>
     <string name="permlab_statusBarService" msgid="7247281911387931485">"שורת מצב"</string>
@@ -205,8 +255,8 @@
     <string name="permdesc_readCellBroadcasts" msgid="6361972776080458979">"מאפשר ליישום לקרוא הודעות שידור סלולרי שהתקבלו במכשיר שלך. התראות שידור סלולרי נשלחות במקומות מסוימים על מנת להזהיר אותך מפני מצבי חירום. יישומים זדוניים עשויים להפריע לביצועים או לפעולה של המכשיר שלך כאשר מתקבל שידור חירום סלולרי."</string>
     <string name="permlab_sendSms" msgid="5600830612147671529">"שלוח הודעות SMS"</string>
     <string name="permdesc_sendSms" msgid="7094729298204937667">"מאפשר ליישום לשלוח הודעות SMS. הדבר עשוי לגרום לחיובים בלתי צפויים. יישומים זדוניים עלולים לגרום לעלויות על ידי שליחת הודעות ללא אישורך."</string>
-    <string name="permlab_sendSmsNoConfirmation" msgid="4781483105951730228">"שלח הודעות SMS ללא אישור"</string>
-    <string name="permdesc_sendSmsNoConfirmation" msgid="402569800862935907">"מאפשר ליישום לשלוח הודעות SMS. הדבר עשוי לגרום לחיובים בלתי צפויים. יישומים זדוניים עלולים לגרום לעלויות על ידי שליחת הודעות ללא אישורך."</string>
+    <string name="permlab_sendRespondViaMessageRequest" msgid="8713889105305943200">"שליחת אירועי \'תגובה באמצעות הודעה\'"</string>
+    <string name="permdesc_sendRespondViaMessageRequest" msgid="7107648548468778734">"מאפשר ליישום לשלוח בקשות ליישומים אחרים של העברת הודעות כדי לטפל באירועי \'תגובה באמצעות הודעה\' עבור שיחות נכנסות."</string>
     <string name="permlab_readSms" msgid="8745086572213270480">"קריאת הודעות הטקסט שלך (SMS או MMS)"</string>
     <string name="permdesc_readSms" product="tablet" msgid="2467981548684735522">"מאפשר ליישום לקרוא הודעות SMS המאוחסנות בטאבלט או בכרטיס ה-SIM. דבר זה מתיר ליישום לקרוא את כל הודעות ה-SMS, ללא התחשבות בתוכן או בסודיות."</string>
     <string name="permdesc_readSms" product="default" msgid="3695967533457240550">"מאפשר ליישום לקרוא הודעות SMS המאוחסנות בטלפון או בכרטיס ה-SIM. דבר זה מתיר ליישום לקרוא את כל הודעות ה-SMS, ללא התחשבות בתוכן או בסודיות."</string>
@@ -217,6 +267,12 @@
     <string name="permdesc_receiveWapPush" msgid="748232190220583385">"מאפשר ליישום לקבל ולעבד הודעות WAP. אישור זה כולל את היכולת לעקוב אחר הודעות שנשלחו אליך ולמחוק אותן מבלי להציג לך אותן."</string>
     <string name="permlab_getTasks" msgid="6466095396623933906">"אחזור יישומים פעילים"</string>
     <string name="permdesc_getTasks" msgid="7454215995847658102">"מאפשר ליישום לאחזר מידע לגבי משימות הפועלות כרגע ושפעלו לאחרונה. ייתכן שהדבר יתיר ליישום לגלות מידע לגבי היישומים שבהם נעשה שימוש במכשיר."</string>
+    <string name="permlab_interactAcrossUsers" msgid="7114255281944211682">"אינטראקציה בין משתמשים"</string>
+    <string name="permdesc_interactAcrossUsers" msgid="364670963623385786">"מאפשר ליישום לבצע פעולות בין משתמשים שונים במכשיר. יישומים זדוניים עשויים להשתמש ביכולת זו כדי לפרוץ את ההגנה בין משתמשים."</string>
+    <string name="permlab_interactAcrossUsersFull" msgid="2567734285545074105">"רישיון מלא לבצע אינטראקציה בין משתמשים"</string>
+    <string name="permdesc_interactAcrossUsersFull" msgid="376841368395502366">"מאפשר את כל האינטראקציות האפשריות בין משתמשים."</string>
+    <string name="permlab_manageUsers" msgid="1676150911672282428">"נהל משתמשים"</string>
+    <string name="permdesc_manageUsers" msgid="8409306667645355638">"מאפשר ליישומים לנהל משתמשים במכשיר, כולל שאילתה, יצירה ומחיקה."</string>
     <string name="permlab_getDetailedTasks" msgid="6229468674753529501">"אחזור פרטי יישומים פועלים"</string>
     <string name="permdesc_getDetailedTasks" msgid="153824741440717599">"מאפשר ליישום לאחזר מידע מפורט על המשימות הנוכחיות הפועלות ועל משימות שפעלו לאחרונה. יישומים זדוניים עלולים לגלות מידע אישי על יישומים אחרים."</string>
     <string name="permlab_reorderTasks" msgid="2018575526934422779">"סידור מחדש של יישומים פעילים"</string>
@@ -243,10 +299,20 @@
     <string name="permdesc_dump" msgid="1778299088692290329">"מאפשר ליישום לאחזר את המצב הפנימי של המערכת. יישומים זדוניים עלולים לאחזר מגוון רחב של מידע אישי ונתוני אבטחה, שעל פי רוב לעולם לא יזדקקו להם."</string>
     <string name="permlab_retrieve_window_content" msgid="8022588608994589938">"אחזר את תוכן המסך"</string>
     <string name="permdesc_retrieve_window_content" msgid="3193269069469700265">"מאפשר ליישום לאחזר את התוכן של החלון הפעיל. יישומים זדוניים עלולים לאחזר את תוכן החלון כולו ולבחון את כל הטקסט שבו, מלבד סיסמאות."</string>
+    <string name="permlab_temporary_enable_accessibility" msgid="2312612135127310254">"הפעלת נגישות זמנית"</string>
+    <string name="permdesc_temporary_enable_accessibility" msgid="8079456293182975464">"מאפשר ליישום להפעיל באופן זמני נגישות במכשיר. יישומים זדוניים עלולים לאפשר נגישות ללא הסכמת משתמש."</string>
+    <string name="permlab_retrieve_window_info" msgid="8532295199112519378">"אחזר מידע חלון"</string>
+    <string name="permdesc_retrieve_window_info" msgid="4998836370424186849">"מאפשר ליישום לאחזר מידע לגבי החלונות ממנהל החלונות. יישומים זדוניים עשויים לאחזר מידע המיועד לשימוש מערכת פנימי."</string>
+    <string name="permlab_filter_events" msgid="8675535648807427389">"סנן אירועים"</string>
+    <string name="permdesc_filter_events" msgid="8006236315888347680">"מאפשר ליישום לרשום מסנן קלט שמסנן את הזרם של כל אירועי המשתמש לפני שהם נשלחים. יישום זדוני עשוי לשלוט ב-UI של המערכת ללא התערבות משתמש."</string>
+    <string name="permlab_magnify_display" msgid="5973626738170618775">"הגדלת תצוגה"</string>
+    <string name="permdesc_magnify_display" msgid="7121235684515003792">"מאפשר ליישום להגדיל את התוכן של תצוגה. יישומים זדוניים עלולים לשנות את תוכן התצוגה כך שהמכשיר יהפוך לבלתי שמיש."</string>
     <string name="permlab_shutdown" msgid="7185747824038909016">"כיבוי חלקי"</string>
     <string name="permdesc_shutdown" msgid="7046500838746291775">"מעביר את מנהל הפעילויות למצב כיבוי. לא מבצע כיבוי מלא."</string>
     <string name="permlab_stopAppSwitches" msgid="4138608610717425573">"מנע החלפת יישומים"</string>
     <string name="permdesc_stopAppSwitches" msgid="8262195802582255021">"מניעת מעבר ליישום אחר על ידי המשתמש."</string>
+    <string name="permlab_getTopActivityInfo" msgid="2537922311411546016">"קבל פרטים על היישום הנוכחי"</string>
+    <string name="permdesc_getTopActivityInfo" msgid="2512448855496067131">"מאפשר לבעלים לאחזר מידע פרטי לגבי היישום הנוכחי שבקדמת המסך."</string>
     <string name="permlab_runSetActivityWatcher" msgid="892239094867182656">"ניהול מעקב ושליטה על כל הפעלות היישומים"</string>
     <string name="permdesc_runSetActivityWatcher" msgid="6003603162578577406">"מאפשר ליישום לנהל מעקב אחר האופן שבו המערכת מפעילה פעילויות, ולשלוט בו. יישומים זדוניים עלולים לסכן את המערכת כולה. הרשאה זו אינה נחוצה לשימוש רגיל, אלא לפיתוח בלבד."</string>
     <string name="permlab_broadcastPackageRemoved" msgid="2576333434893532475">"שלח שידור שהוסר מחבילה"</string>
@@ -259,8 +325,14 @@
     <string name="permdesc_setProcessLimit" msgid="7318061314040879542">"מאפשר ליישום לשלוט על המספר המרבי של תהליכים שיפעלו. הרשאה זו לעולם אינה נחוצה ליישומים רגילים."</string>
     <string name="permlab_setAlwaysFinish" msgid="550958507798796965">"אילוץ סגירה של יישומים ברקע"</string>
     <string name="permdesc_setAlwaysFinish" msgid="7471310652868841499">"מאפשר ליישום לקבוע אם פעילויות תמיד מסתיימות עם העברתן לרקע. הרשאה זו לעולם אינה נחוצה ליישומים רגילים."</string>
-    <string name="permlab_batteryStats" msgid="7863923071360031652">"שנה את הנתונים הסטטיסטיים של הסוללה"</string>
-    <string name="permdesc_batteryStats" msgid="6835186932305744068">"מאפשר ליישום לשנות נתונים סטטיסטיים שנאספו לגבי הסוללה. לא מיועד לשימוש על ידי יישומים רגילים."</string>
+    <string name="permlab_batteryStats" msgid="2789610673514103364">"קריאת הנתונים הסטטיסטיים של הסוללה"</string>
+    <string name="permdesc_batteryStats" msgid="5897346582882915114">"מאפשר ליישום לקרוא את נתוני השימוש הנוכחיים של הסוללה ברמה נמוכה. עשוי לאפשר ליישום לגלות מידע מפורט לגבי היישומים שבהם אתה משתמש."</string>
+    <string name="permlab_updateBatteryStats" msgid="3719689764536379557">"שינוי הנתונים הסטטיסטיים של הסוללה"</string>
+    <string name="permdesc_updateBatteryStats" msgid="6862817857178025002">"מאפשר ליישום לשנות נתונים סטטיסטיים שנאספו לגבי הסוללה. לא מיועד לשימוש על ידי יישומים רגילים."</string>
+    <string name="permlab_getAppOpsStats" msgid="1508779687436585744">"אחזור נתונים סטטיסטיים של פעולות יישום"</string>
+    <string name="permdesc_getAppOpsStats" msgid="6243887041577912877">"הרשאה זו מאפשרת ליישום לאחזר נתונים סטטיסטיים שנאספו לגבי פעולות יישום. לא מיועד לשימוש על ידי יישומים רגילים."</string>
+    <string name="permlab_updateAppOpsStats" msgid="8829097373851521505">"שינוי סטטיסטיקת ההפעלה של היישום"</string>
+    <string name="permdesc_updateAppOpsStats" msgid="50784596594403483">"מאפשר ליישום לשנות נתונים סטטיסטיים שנאספו לגבי הפעלתו. לא מיועד לשימוש על ידי יישומים רגילים."</string>
     <string name="permlab_backup" msgid="470013022865453920">"שלוט בגיבוי ובשחזור של המערכת"</string>
     <string name="permdesc_backup" msgid="6912230525140589891">"מאפשר ליישום לשלוט במנגנון הגיבוי והשחזור של המערכת. לא מיועד לשימוש על ידי יישומים רגילים."</string>
     <string name="permlab_confirm_full_backup" msgid="5557071325804469102">"אשר פעולה של גיבוי או שחזור מלא"</string>
@@ -268,11 +340,13 @@
     <string name="permlab_internalSystemWindow" msgid="2148563628140193231">"הצג חלונות ללא הרשאה"</string>
     <string name="permdesc_internalSystemWindow" msgid="7458387759461466397">"הרשאה זו מאפשרת ליישום ליצור חלונות המיועדים לשימוש על ידי ממשק המשתמש של המערכת הפנימית. לא מיועד לשימוש ביישומים רגילים."</string>
     <string name="permlab_systemAlertWindow" msgid="3543347980839518613">"ציור על יישומים אחרים"</string>
-    <string name="permdesc_systemAlertWindow" msgid="4460454022797261814">"מאפשר ליישום להציג חלונות התראה של המערכת. חלונות התראה מסוימים עשויים להשתלט על המסך כולו."</string>
+    <string name="permdesc_systemAlertWindow" msgid="8584678381972820118">"מאפשר ליישום לצייר על יישומים אחרים או על חלקים מממשק המשתמש. הדבר עשוי להפריע לך להשתמש בממשק של יישומים, או לשנות את מה שאתה חושב שאתה רואה ביישומים אחרים."</string>
     <string name="permlab_setAnimationScale" msgid="2805103241153907174">"שנה את מהירות ההנפשה הגלובלית"</string>
     <string name="permdesc_setAnimationScale" msgid="7690063428924343571">"הרשאה זו מאפשרת ליישום לשנות את מהירות ההנפשה הכללית (הנפשות מהירות או איטיות יותר) בכל עת."</string>
     <string name="permlab_manageAppTokens" msgid="1286505717050121370">"ניהול אסימוני יישומים"</string>
     <string name="permdesc_manageAppTokens" msgid="8043431713014395671">"מאפשר ליישום ליצור ולנהל אסימונים משלהם, תוך עקיפת סידור ה-Z הרגיל שלהם. הרשאה זו לעולם אינה נחוצה ליישומים רגילים."</string>
+    <string name="permlab_freezeScreen" msgid="4708181184441880175">"הקפאת מסך"</string>
+    <string name="permdesc_freezeScreen" msgid="8558923789222670064">"מאפשר ליישום להקפיא באופן זמני את המסך למעבר למסך מלא."</string>
     <string name="permlab_injectEvents" msgid="1378746584023586600">"לחץ על מקשים ושלוט בלחצנים"</string>
     <string name="permdesc_injectEvents" product="tablet" msgid="206352565599968632">"מאפשר ליישום להעביר אירועי קלט (לחיצות על מקשים וכיוצא בזה) משלו ליישומים אחרים. יישומים זדוניים עלולים להשתמש בכך כדי להשתלט על הטבלט."</string>
     <string name="permdesc_injectEvents" product="default" msgid="653128057572326253">"מאפשר ליישום להעביר אירועי קלט (לחיצות על מקשים וכיוצא בזה) משלו ליישומים אחרים. יישומים זדוניים עלולים להשתמש בכך כדי להשתלט על הטלפון."</string>
@@ -314,8 +388,8 @@
     <string name="permlab_installPackages" msgid="2199128482820306924">"התקנה ישירה של יישומים"</string>
     <string name="permdesc_installPackages" msgid="5628530972548071284">"מאפשר ליישום להתקין חבילות Android חדשות או מעודכנות. יישומים זדוניים עלולים להשתמש בכך כדי להוסיף יישומים חדשים בעלי הרשאות זה כדי להוסיף יישומים חדשים עם הרשאות רבות-עוצמה אקראיות."</string>
     <string name="permlab_clearAppCache" msgid="7487279391723526815">"מחיקת כל הנתונים בקבצים שמורים של יישומים"</string>
-    <string name="permdesc_clearAppCache" product="tablet" msgid="3523396284474042284">"מאפשר ליישום לפנות מקום באמצעי האחסון של הטבלט על ידי מחיקת קבצים בספריית הקבצים השמורים של יישומים. בדרך כלל הגישה לתהליכי המערכת מוגבלת מאוד."</string>
-    <string name="permdesc_clearAppCache" product="default" msgid="5067988373366292186">"מאפשר ליישום לפנות מקום באמצעי האחסון של הטלפון על ידי מחיקת קבצים בספריית הקבצים השמורים של יישומים. בדרך כלל הגישה לתהליכי המערכת מוגבלת מאוד."</string>
+    <string name="permdesc_clearAppCache" product="tablet" msgid="8974640871945434565">"מאפשר ליישום לשחרר שטח אחסון בטאבלט על ידי מחיקת קבצים בספריות הקבצים השמורים של יישומים אחרים. הדבר עשוי לגרום להפעלה של יישומים אחרים להיות איטית יותר מכיוון שעליהם לאחזר מחדש את הנתונים."</string>
+    <string name="permdesc_clearAppCache" product="default" msgid="2459441021956436779">"מאפשר ליישום לפנות שטח אחסון בטלפון על ידי מחיקת קבצים בספריות הקבצים השמורים של יישומים אחרים. הדבר עשוי לגרום להפעלה של יישומים אחרים להיות איטית יותר מכיוון שעליהם לאחזר מחדש את הנתונים."</string>
     <string name="permlab_movePackage" msgid="3289890271645921411">"העברה של משאבי יישומים"</string>
     <string name="permdesc_movePackage" msgid="319562217778244524">"מאפשר ליישום להעביר משאבי יישומים ממדיה פנימית לחיצונית, ולהפך."</string>
     <string name="permlab_readLogs" msgid="6615778543198967614">"קרא נתונים רגישים של יומן רישום"</string>
@@ -376,21 +450,26 @@
     <string name="permdesc_accessLocationExtraCommands" msgid="5945166642335800763">"מאפשר ליישום לגשת לפקודות נוספות של ספק שירות המיקום. אישור זה עשוי לאפשר ליישום לשבש את פעולת ה-GPS או מקורות מיקום אחרים."</string>
     <string name="permlab_installLocationProvider" msgid="6578101199825193873">"הרשאה להתקין ספק מיקום"</string>
     <string name="permdesc_installLocationProvider" msgid="9066146120470591509">"צור מקורות מיקום מדומים לבדיקה, או התקן ספק מיקום חדש. פעולה זו מאפשרת ליישום לעקוף את המיקום ו/או הסטטוס המוחזרים על ידי מקורות מיקום אחרים כמו GPS או ספקי מיקום."</string>
-    <string name="permlab_accessFineLocation" msgid="5885550969882561436">"מיקום מדויק (GPS)"</string>
-    <string name="permdesc_accessFineLocation" product="tablet" msgid="8960597421469894181">"גש למקורות מיקום מדויק כמו GPS בטאבלט. כאשר שירותי מיקום זמינים ומופעלים, אישור זה מאפשר ליישום לקבוע את המיקום המדויק שלך."</string>
-    <string name="permdesc_accessFineLocation" product="default" msgid="239268765496141815">"גש למקורות מיקום מדויק כמו GPS בטלפון. כאשר שירותי מיקום זמינים ומופעלים, אישור זה מאפשר ליישום לקבוע את המיקום המדויק שלך."</string>
-    <string name="permlab_accessCoarseLocation" msgid="7422827215441638984">"מיקום משוער (מבוסס רשת)"</string>
-    <string name="permdesc_accessCoarseLocation" msgid="5383798877137640762">"גש למיקום המשוער מספקי מיקום באמצעות מקורות רשת כמו אנטנות סלולריות ו-Wi-Fi. כאשר שירותי מיקום אלה זמינים ומופעלים, אישור זה מאפשר ליישום לקבוע את המיקום המשוער שלך."</string>
+    <string name="permlab_accessFineLocation" msgid="1191898061965273372">"מיקום מדויק (מבוסס GPS ורשת)"</string>
+    <string name="permdesc_accessFineLocation" msgid="5295047563564981250">"מאפשר ליישום לקבל את המיקום המדויק שלך באמצעות מערכת המיקום הגלובלית (GPS) או מקורות מיקום ברשת כגון אנטנות סלולריות ו-Wi-Fi. שירותי מיקום אלה חייבים להיות מופעלים ונגישים למכשיר שלך כדי שהיישום ישתמש בהם. ייתכן שיישומים יעשו בכך שימוש כדי לקבוע היכן אתה נמצא ולגרום לצריכת סוללה מוגברת."</string>
+    <string name="permlab_accessCoarseLocation" msgid="4887895362354239628">"מיקום משוער (מבוסס רשת)"</string>
+    <string name="permdesc_accessCoarseLocation" msgid="2538200184373302295">"מאפשר ליישום לקבל את מיקומך המשוער. מיקום זה נגזר על-פי שירותי מיקום העושים שימוש במקורות מיקום ברשת, כגון אנטנות סלולריות ו-Wi-Fi. שירותי מיקום אלה חייבים להיות מופעלים ונגישים למכשיר שלך כדי שהיישום ישתמש בהם. ייתכן שיישומים יעשו בכך שימוש כדי לקבוע את מיקומך המשוער."</string>
     <string name="permlab_accessSurfaceFlinger" msgid="2363969641792388947">"גישה ל-SurfaceFlinger"</string>
     <string name="permdesc_accessSurfaceFlinger" msgid="1041619516733293551">"מאפשר ליישום להשתמש בתכונות ברמה הנמוכה של SurfaceFlinger."</string>
     <string name="permlab_readFrameBuffer" msgid="6690504248178498136">"אחסון זמני של מסגרת קריאה"</string>
     <string name="permdesc_readFrameBuffer" msgid="4937405521809454680">"מאפשר ליישום לקרוא את התוכן של מאגר הנתונים הזמני של המסגרות."</string>
+    <string name="permlab_configureWifiDisplay" msgid="5595661694746742168">"הגדר תצוגות Wi-Fi"</string>
+    <string name="permdesc_configureWifiDisplay" msgid="7916815158690218065">"מאפשר לאפליקציה להגדיר ולהתחבר לתצוגות Wi-Fi."</string>
+    <string name="permlab_controlWifiDisplay" msgid="393641276723695496">"שלוט בתצוגות Wi-Fi"</string>
+    <string name="permdesc_controlWifiDisplay" msgid="4543912292681826986">"מאפשר לאפליקציה לשלוט בתכונות ברמה נמוכה של תצוגות Wi-Fi."</string>
     <string name="permlab_modifyAudioSettings" msgid="6095859937069146086">"שנה את הגדרות האודיו שלך"</string>
     <string name="permdesc_modifyAudioSettings" msgid="3522565366806248517">"מאפשר ליישום לשנות הגדרות אודיו גלובליות כמו עוצמת קול ובחירת הרמקול המשמש לפלט."</string>
     <string name="permlab_recordAudio" msgid="3876049771427466323">"הקלט אודיו"</string>
     <string name="permdesc_recordAudio" msgid="4906839301087980680">"מאפשר ליישום להקליט אודיו באמצעות המיקרופון. אישור זה מתיר ליישום להקליט אודיו בכל עת ללא אישורך."</string>
     <string name="permlab_camera" msgid="3616391919559751192">"צלם תמונות וסרטונים"</string>
     <string name="permdesc_camera" msgid="8497216524735535009">"מאפשר ליישום לצלם תמונות וסרטונים באמצעות המצלמה. אישור זה מאפשר ליישום להשתמש במצלמה בכל עת ללא אישורך."</string>
+    <string name="permlab_cameraDisableTransmitLed" msgid="2651072630501126222">"השבת את נורית מצב השידור כשהמצלמה בשימוש"</string>
+    <string name="permdesc_cameraDisableTransmitLed" msgid="4764585465480295341">"מתיר ליישום מערכת המותקן מראש להשבית את השימוש של המצלמה בנורית המצב."</string>
     <string name="permlab_brick" product="tablet" msgid="2961292205764488304">"השבת טאבלט לצמיתות"</string>
     <string name="permlab_brick" product="default" msgid="8337817093326370537">"השבת טלפון לצמיתות"</string>
     <string name="permdesc_brick" product="tablet" msgid="4334818808001699530">"מאפשר ליישום להשבית את הטבלט כולו לצמיתות. זו הרשאה מסוכנת מאוד."</string>
@@ -498,7 +577,7 @@
     <string name="permlab_bluetoothAdmin" msgid="6006967373935926659">"גישה להגדרות Bluetooth"</string>
     <string name="permdesc_bluetoothAdmin" product="tablet" msgid="6921177471748882137">"מאפשר ליישום להגדיר את תצורתו של הטבלט המקומי מסוג Bluetooth וכן לגלות מכשירים מרוחקים ולבצע התאמה איתם."</string>
     <string name="permdesc_bluetoothAdmin" product="default" msgid="8931682159331542137">"מאפשר ליישום להגדיר את תצורתו של הטלפון המקומי מסוג Bluetooth וכן לגלות מכשירים מרוחקים ולבצע התאמה איתם."</string>
-    <string name="permlab_accessWimaxState" msgid="7436749103151096452">"הצג חיבורי WiMAX"</string>
+    <string name="permlab_accessWimaxState" msgid="4195907010610205703">"התחברות והתנתקות מ-WiMAX"</string>
     <string name="permdesc_accessWimaxState" msgid="6360102877261978887">"מאפשר ליישום לדעת האם WiNMAX מופעל, כמו גם לקבל מידע האם רשתות WiNMAX כלשהן מחוברות."</string>
     <string name="permlab_changeWimaxState" msgid="2405042267131496579">"שנה את מצב WiMAX"</string>
     <string name="permdesc_changeWimaxState" product="tablet" msgid="3156456504084201805">"מאפשר ליישום לחבר את הטאבלט לרשתות WiMAX ולהתנתק מהן."</string>
@@ -522,11 +601,11 @@
     <string name="permdesc_subscribedFeedsWrite" msgid="6928930188826089413">"מאפשר ליישום לשנות את ההזנות הנוכחיות שלך שמסונכרנות. יישומים זדוניים עלולים לשמות את ההזנות המסונכרנות שלך."</string>
     <string name="permlab_readDictionary" msgid="4107101525746035718">"קריאת מונחים שהוספת למילון"</string>
     <string name="permdesc_readDictionary" msgid="659614600338904243">"מאפשר ליישום לקרוא את כל המילים, השמות והביטויים שהמשתמש אחסן במילון המשתמש."</string>
-    <string name="permlab_writeDictionary" msgid="2296383164914812772">"כתיבה למילון בהגדרת המשתמש"</string>
+    <string name="permlab_writeDictionary" msgid="2183110402314441106">"הוספת מילים למילון מוגדר-משתמש"</string>
     <string name="permdesc_writeDictionary" msgid="8185385716255065291">"מאפשר ליישום לכתוב מילים חדשות במילון המשתמש."</string>
     <string name="permlab_sdcardRead" product="nosdcard" msgid="8235341515605559677">"בדיקת גישה לאחסון מוגן"</string>
     <string name="permlab_sdcardRead" product="default" msgid="8235341515605559677">"בדיקת גישה לאחסון מוגן"</string>
-    <string name="permdesc_sdcardRead" product="nosdcard" msgid="5791957130190763289">"מאפשר ליישום לבדוק אישור לאחסון USB שיהיה זמין במכשירים עתידיים."</string>
+    <string name="permdesc_sdcardRead" product="nosdcard" msgid="3642473292348132072">"מאפשר ליישום לבדוק אישור לאחסון USB שיהיה זמין במכשירים עתידיים."</string>
     <string name="permdesc_sdcardRead" product="default" msgid="5914402684685848828">"מאפשר ליישום לבדוק אישור לכרטיס SD שיהיה זמין במכשירים עתידיים."</string>
     <string name="permlab_sdcardWrite" product="nosdcard" msgid="8485979062254666748">"שינוי או מחיקה של תוכן אחסון ה-USB שלך"</string>
     <string name="permlab_sdcardWrite" product="default" msgid="8805693630050458763">"שינוי או מחיקה של תוכן כרטיס ה-SD שלך"</string>
@@ -534,6 +613,8 @@
     <string name="permdesc_sdcardWrite" product="default" msgid="4337417790936632090">"מאפשר ליישום לכתוב לכרטיס ה-SD."</string>
     <string name="permlab_mediaStorageWrite" product="default" msgid="6859839199706879015">"שנה/מחק תוכן של אחסון מדיה פנימי"</string>
     <string name="permdesc_mediaStorageWrite" product="default" msgid="8189160597698529185">"מאפשר ליישום לשנות את התוכן של אמצעי האחסון הפנימי למדיה."</string>
+    <string name="permlab_sdcardAccessAll" msgid="8150613823900460576">"גישה לאחסון חיצוני, כל המשתמשים"</string>
+    <string name="permdesc_sdcardAccessAll" msgid="3215208357415891320">"מאפשר ליישום לגשת לאחסון חיצוני עבור כל המשתמשים."</string>
     <string name="permlab_cache_filesystem" msgid="5656487264819669824">"גישה למערכת הקבצים בקובץ השמור"</string>
     <string name="permdesc_cache_filesystem" msgid="5578967642265550955">"מאפשר ליישום לקרוא ולכתוב במערכת הקבצים של הקבצים השמורים."</string>
     <string name="permlab_use_sip" msgid="5986952362795870502">"בצע/קבל שיחות אינטרנט"</string>
@@ -544,6 +625,10 @@
     <string name="permdesc_manageNetworkPolicy" msgid="7537586771559370668">"מאפשר ליישום לנהל מדיניות הרשת להגדיר כללים ספציפיים-ליישום."</string>
     <string name="permlab_modifyNetworkAccounting" msgid="5088217309088729650">"שנה ניהול חשבונות של שימוש ברשת"</string>
     <string name="permdesc_modifyNetworkAccounting" msgid="5443412866746198123">"הרשאה זו מאפשרת ליישום לשנות את אופן החישוב של נתוני שימוש ברשת מול כל יישום. לא מיועד לשימוש ביישומים רגילים."</string>
+    <string name="permlab_accessNotifications" msgid="7673416487873432268">"גישה להתראות"</string>
+    <string name="permdesc_accessNotifications" msgid="458457742683431387">"מאפשר ליישום לאחזר, לבדוק ולמחוק התראות, כולל כאלה שפורסמו על ידי יישומים אחרים."</string>
+    <string name="permlab_bindNotificationListenerService" msgid="7057764742211656654">"איגוד לשירות של מאזין להתראות"</string>
+    <string name="permdesc_bindNotificationListenerService" msgid="985697918576902986">"הרשאה זו מאפשרת למשתמש לבצע איגוד לממשק הרמה העליונה של שירות מאזין להתראות. הרשאה זו אף פעם אינה נחוצה ליישומים רגילים."</string>
     <string name="policylab_limitPassword" msgid="4497420728857585791">"הגדר כללי סיסמה"</string>
     <string name="policydesc_limitPassword" msgid="3252114203919510394">"שלוט באורך ובתווים המותרים בסיסמאות לביטול נעילת מסך."</string>
     <string name="policylab_watchLogin" msgid="914130646942199503">"עקוב אחר ניסיונות לביטול נעילת מסך"</string>
@@ -564,6 +649,8 @@
     <string name="policydesc_encryptedStorage" msgid="2637732115325316992">"דרוש שנתוני יישומים מאוחסנים יהיו מוצפנים."</string>
     <string name="policylab_disableCamera" msgid="6395301023152297826">"השבת מצלמות"</string>
     <string name="policydesc_disableCamera" msgid="2306349042834754597">"מנע שימוש בכל המצלמות שבמכשיר."</string>
+    <string name="policylab_disableKeyguardFeatures" msgid="266329104542638802">"השבת תכונות ב-Keyguard"</string>
+    <string name="policydesc_disableKeyguardFeatures" msgid="3467082272186534614">"מנע שימוש בתכונות מסוימות ב-Keyguard."</string>
   <string-array name="phoneTypes">
     <item msgid="8901098336658710359">"בית"</item>
     <item msgid="869923650527136615">"נייד"</item>
@@ -699,10 +786,10 @@
     <string name="lockscreen_password_wrong" msgid="5737815393253165301">"נסה שוב"</string>
     <string name="faceunlock_multiple_failures" msgid="754137583022792429">"חרגת ממספר הניסיונות המרבי של זיהוי פרצוף"</string>
     <string name="lockscreen_plugged_in" msgid="8057762828355572315">"טוען (<xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>)"</string>
-    <string name="lockscreen_charged" msgid="4938930459620989972">"נטען."</string>
+    <string name="lockscreen_charged" msgid="321635745684060624">"טעון"</string>
     <string name="lockscreen_battery_short" msgid="4477264849386850266">"<xliff:g id="NUMBER">%d</xliff:g><xliff:g id="PERCENT">%%</xliff:g>"</string>
     <string name="lockscreen_low_battery" msgid="1482873981919249740">"חבר את המטען."</string>
-    <string name="lockscreen_missing_sim_message_short" msgid="7381499217732227295">"אין כרטיס SIM."</string>
+    <string name="lockscreen_missing_sim_message_short" msgid="5099439277819215399">"אין כרטיס SIM"</string>
     <string name="lockscreen_missing_sim_message" product="tablet" msgid="151659196095791474">"אין כרטיס SIM בטבלט."</string>
     <string name="lockscreen_missing_sim_message" product="default" msgid="2186920585695169078">"אין כרטיס SIM בטלפון."</string>
     <string name="lockscreen_missing_sim_instructions" msgid="5372787138023272615">"הכנס כרטיס SIM."</string>
@@ -747,6 +834,27 @@
     <string name="lockscreen_access_pattern_cleared" msgid="5583479721001639579">"התבנית נמחקה"</string>
     <string name="lockscreen_access_pattern_cell_added" msgid="6756031208359292487">"התא נוסף"</string>
     <string name="lockscreen_access_pattern_detected" msgid="4988730895554057058">"התבנית הושלמה"</string>
+    <string name="keyguard_accessibility_widget_changed" msgid="5678624624681400191">"%1$s. Widget %2$d מתוך %3$d."</string>
+    <string name="keyguard_accessibility_add_widget" msgid="8273277058724924654">"הוסף Widget."</string>
+    <string name="keyguard_accessibility_widget_empty_slot" msgid="1281505703307930757">"ריק"</string>
+    <string name="keyguard_accessibility_unlock_area_expanded" msgid="2278106022311170299">"אזור ביטול הנעילה הורחב."</string>
+    <string name="keyguard_accessibility_unlock_area_collapsed" msgid="6366992066936076396">"אזור ביטול הנעילה כווץ."</string>
+    <string name="keyguard_accessibility_widget" msgid="6527131039741808240">"Widget ‏<xliff:g id="WIDGET_INDEX">%1$s</xliff:g>."</string>
+    <string name="keyguard_accessibility_user_selector" msgid="1226798370913698896">"בוחר משתמשים"</string>
+    <string name="keyguard_accessibility_status" msgid="8008264603935930611">"סטטוס"</string>
+    <string name="keyguard_accessibility_camera" msgid="8904231194181114603">"מצלמה"</string>
+    <string name="keygaurd_accessibility_media_controls" msgid="262209654292161806">"פקדי מדיה"</string>
+    <string name="keyguard_accessibility_widget_reorder_start" msgid="8736853615588828197">"סידור מחדש של Widgets התחיל."</string>
+    <string name="keyguard_accessibility_widget_reorder_end" msgid="7170190950870468320">"סידור מחדש של Widgets הסתיים."</string>
+    <string name="keyguard_accessibility_widget_deleted" msgid="4426204263929224434">"Widget ‏<xliff:g id="WIDGET_INDEX">%1$s</xliff:g> נמחק."</string>
+    <string name="keyguard_accessibility_expand_lock_area" msgid="519859720934178024">"הרחב את אזור ביטול הנעילה."</string>
+    <string name="keyguard_accessibility_slide_unlock" msgid="2959928478764697254">"ביטול נעילה באמצעות הסטה."</string>
+    <string name="keyguard_accessibility_pattern_unlock" msgid="1490840706075246612">"ביטול נעילה באמצעות ציור קו."</string>
+    <string name="keyguard_accessibility_face_unlock" msgid="4817282543351718535">"ביטול נעילה באמצעות זיהוי פרצוף."</string>
+    <string name="keyguard_accessibility_pin_unlock" msgid="2469687111784035046">"ביטול נעילה באמצעות מספר PIN."</string>
+    <string name="keyguard_accessibility_password_unlock" msgid="7675777623912155089">"ביטול נעילה באמצעות סיסמה."</string>
+    <string name="keyguard_accessibility_pattern_area" msgid="7679891324509597904">"אזור ציור קו."</string>
+    <string name="keyguard_accessibility_slide_area" msgid="6736064494019979544">"אזור הסטה."</string>
     <string name="password_keyboard_label_symbol_key" msgid="992280756256536042">"?123"</string>
     <string name="password_keyboard_label_alpha_key" msgid="8001096175167485649">"אבג"</string>
     <string name="password_keyboard_label_alt_key" msgid="1284820942620288678">"ALT"</string>
@@ -762,7 +870,10 @@
     <string name="factorytest_reboot" msgid="6320168203050791643">"אתחל מחדש"</string>
     <string name="js_dialog_title" msgid="1987483977834603872">"בדף שבכתובת \'<xliff:g id="TITLE">%s</xliff:g>\' כתוב כך:"</string>
     <string name="js_dialog_title_default" msgid="6961903213729667573">"JavaScript"</string>
-    <string name="js_dialog_before_unload" msgid="730366588032430474">"לנווט אל מחוץ לדף זה?"\n\n"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"גע באפשרות \'אישור\' כדי להמשיך, או \'ביטול\' כדי להישאר בדף הנוכחי."</string>
+    <string name="js_dialog_before_unload_title" msgid="2619376555525116593">"אישור ניווט"</string>
+    <string name="js_dialog_before_unload_positive_button" msgid="3112752010600484130">"צא מדף זה"</string>
+    <string name="js_dialog_before_unload_negative_button" msgid="5614861293026099715">"הישאר בדף זה"</string>
+    <string name="js_dialog_before_unload" msgid="3468816357095378590">"<xliff:g id="MESSAGE">%s</xliff:g>"\n\n"האם אתה בטוח שברצונך לנווט אל מחוץ לדף זה?"</string>
     <string name="save_password_label" msgid="6860261758665825069">"אשר"</string>
     <string name="double_tap_toast" msgid="4595046515400268881">"טיפ: הקש פעמיים כדי להגדיל ולהקטין."</string>
     <string name="autofill_this_form" msgid="4616758841157816676">"מילוי אוטומטי"</string>
@@ -822,8 +933,8 @@
     <string name="searchview_description_submit" msgid="2688450133297983542">"שלח שאילתה"</string>
     <string name="searchview_description_voice" msgid="2453203695674994440">"חיפוש קולי"</string>
     <string name="enable_explore_by_touch_warning_title" msgid="7460694070309730149">"האם להפעיל את התכונה \'חקור על ידי מגע\'?"</string>
-    <string name="enable_explore_by_touch_warning_message" product="tablet" msgid="8655887539089910577">"<xliff:g id="ACCESSIBILITY_SERVICE_NAME">%1$s</xliff:g> רוצה להפעיל את התכונה \'חקור על ידי מגע\'. כאשר התכונה \'חקור על ידי מגע\' מופעלת, אתה יכול לשמוע או לראות תיאורים של הפריטים שעליהם אצבעך מונחת או לקיים אינטראקציה עם הטאבלט באמצעות מחוות."</string>
-    <string name="enable_explore_by_touch_warning_message" product="default" msgid="2708199672852373195">"<xliff:g id="ACCESSIBILITY_SERVICE_NAME">%1$s</xliff:g> רוצה להפעיל את התכונה \'חקור על ידי מגע\'. כאשר התכונה \'חקור על ידי מגע\' מופעלת, אתה יכול לשמוע או לראות תיאורים של הפריטים שעליהם אצבעך מונחת או לקיים אינטראקציה עם הטלפון באמצעות מחוות."</string>
+    <string name="enable_explore_by_touch_warning_message" product="tablet" msgid="8655887539089910577">"<xliff:g id="ACCESSIBILITY_SERVICE_NAME">%1$s</xliff:g> רוצה להפעיל את התכונה \'חקור על ידי מגע\'. כאשר התכונה \'חקור על ידי מגע\' מופעלת, אתה יכול לשמוע או לראות תיאורים של הפריטים שעליהם אצבעך  מונחת או לקיים אינטראקציה עם הטאבלט באמצעות תנועות אצבע."</string>
+    <string name="enable_explore_by_touch_warning_message" product="default" msgid="2708199672852373195">"<xliff:g id="ACCESSIBILITY_SERVICE_NAME">%1$s</xliff:g> רוצה להפעיל את התכונה \'חקור על ידי מגע\'. כאשר התכונה \'חקור על ידי מגע\' מופעלת, אתה יכול לשמוע או לראות תיאורים של הפריטים שעליהם אצבעך מונחת או לקיים אינטראקציה עם הטלפון באמצעות תנועות אצבע."</string>
     <string name="oneMonthDurationPast" msgid="7396384508953779925">"לפני חודש אחד"</string>
     <string name="beforeOneMonthDurationPast" msgid="909134546836499826">"לפני חודש אחד"</string>
   <plurals name="num_seconds_ago">
@@ -910,6 +1021,18 @@
     <string name="weeks" msgid="6509623834583944518">"שבועות"</string>
     <string name="year" msgid="4001118221013892076">"שנה"</string>
     <string name="years" msgid="6881577717993213522">"שנים"</string>
+  <plurals name="duration_seconds">
+    <item quantity="one" msgid="6962015528372969481">"שנייה אחת"</item>
+    <item quantity="other" msgid="1886107766577166786">"<xliff:g id="COUNT">%d</xliff:g> שניות"</item>
+  </plurals>
+  <plurals name="duration_minutes">
+    <item quantity="one" msgid="4915414002546085617">"דקה אחת"</item>
+    <item quantity="other" msgid="3165187169224908775">"<xliff:g id="COUNT">%d</xliff:g> דקות"</item>
+  </plurals>
+  <plurals name="duration_hours">
+    <item quantity="one" msgid="8917467491248809972">"שעה אחת"</item>
+    <item quantity="other" msgid="3863962854246773930">"<xliff:g id="COUNT">%d</xliff:g> שעות"</item>
+  </plurals>
     <string name="VideoView_error_title" msgid="3534509135438353077">"בעיה בווידאו"</string>
     <string name="VideoView_error_text_invalid_progressive_playback" msgid="3186670335938670444">"סרטון זה אינו חוקי להעברה כמדיה זורמת למכשיר זה."</string>
     <string name="VideoView_error_text_unknown" msgid="3450439155187810085">"לא ניתן להפעיל סרטון זה."</string>
@@ -930,12 +1053,14 @@
     <string name="copyUrl" msgid="2538211579596067402">"העתק כתובת אתר"</string>
     <string name="selectTextMode" msgid="1018691815143165326">"בחר טקסט"</string>
     <string name="textSelectionCABTitle" msgid="5236850394370820357">"בחירת טקסט"</string>
-    <string name="addToDictionary" msgid="9090375111134433012">"הוסף למילון"</string>
-    <string name="deleteText" msgid="7070985395199629156">"מחק"</string>
+    <string name="addToDictionary" msgid="4352161534510057874">"הוסף למילון"</string>
+    <string name="deleteText" msgid="6979668428458199034">"מחק"</string>
     <string name="inputMethod" msgid="1653630062304567879">"שיטת קלט"</string>
     <string name="editTextMenuTitle" msgid="4909135564941815494">"פעולות טקסט"</string>
     <string name="low_internal_storage_view_title" msgid="5576272496365684834">"שטח האחסון אוזל"</string>
     <string name="low_internal_storage_view_text" msgid="6640505817617414371">"ייתכן שפונקציות מערכת מסוימות לא יפעלו"</string>
+    <string name="app_running_notification_title" msgid="8718335121060787914">"<xliff:g id="APP_NAME">%1$s</xliff:g> פועל"</string>
+    <string name="app_running_notification_text" msgid="4653586947747330058">"גע לקבלת מידע נוסף או כדי לעצור את היישום."</string>
     <string name="ok" msgid="5970060430562524910">"אישור"</string>
     <string name="cancel" msgid="6442560571259935130">"ביטול"</string>
     <string name="yes" msgid="5362982303337969312">"אישור"</string>
@@ -951,7 +1076,7 @@
     <string name="chooseUsbActivity" msgid="6894748416073583509">"בחר יישום עבור התקן ה-USB"</string>
     <string name="noApplications" msgid="2991814273936504689">"אין יישומים שיכולים לבצע פעולה זו."</string>
     <string name="aerr_title" msgid="1905800560317137752"></string>
-    <string name="aerr_application" msgid="932628488013092776">"לצערנו, פעולת ה<xliff:g id="APPLICATION">%1$s</xliff:g> הופסקה."</string>
+    <string name="aerr_application" msgid="932628488013092776">"לצערנו, פעולת <xliff:g id="APPLICATION">%1$s</xliff:g> הופסקה."</string>
     <string name="aerr_process" msgid="4507058997035697579">"לצערנו, התהליך <xliff:g id="PROCESS">%1$s</xliff:g> הופסק."</string>
     <string name="anr_title" msgid="4351948481459135709"></string>
     <string name="anr_activity_application" msgid="1904477189057199066">"<xliff:g id="APPLICATION">%2$s</xliff:g> אינו מגיב."\n\n"תרצה לסגור אותו?"</string>
@@ -999,7 +1124,7 @@
     <string name="volume_icon_description_notification" msgid="7044986546477282274">"עוצמת קול של התראות"</string>
     <string name="ringtone_default" msgid="3789758980357696936">"רינגטון ברירת מחדל"</string>
     <string name="ringtone_default_with_actual" msgid="8129563480895990372">"רינגטון ברירת מחדל (<xliff:g id="ACTUAL_RINGTONE">%1$s</xliff:g>)"</string>
-    <string name="ringtone_silent" msgid="4440324407807468713">"שקט"</string>
+    <string name="ringtone_silent" msgid="7937634392408977062">"ללא"</string>
     <string name="ringtone_picker_title" msgid="3515143939175119094">"רינגטונים"</string>
     <string name="ringtone_unknown" msgid="5477919988701784788">"רינגטון לא ידוע"</string>
   <plurals name="wifi_available">
@@ -1011,7 +1136,8 @@
     <item quantity="other" msgid="7915895323644292768">"רשתות Wi-Fi פתוחות זמינות"</item>
   </plurals>
     <string name="wifi_available_sign_in" msgid="4029489716605255386">"כניסה לרשת Wi-Fi"</string>
-    <!-- no translation found for wifi_available_sign_in_detailed (6797764740339907572) -->
+    <string name="network_available_sign_in" msgid="8495155593358054676">"היכנס לרשת"</string>
+    <!-- no translation found for network_available_sign_in_detailed (8000081941447976118) -->
     <skip />
     <string name="wifi_watchdog_network_disabled" msgid="7904214231651546347">"אין אפשרות להתחבר ל-Wi-Fi"</string>
     <string name="wifi_watchdog_network_disabled_detailed" msgid="5548780776418332675">" אינו מחובר היטב לאינטרנט."</string>
@@ -1028,11 +1154,22 @@
     <string name="wifi_p2p_to_message" msgid="248968974522044099">"אל:"</string>
     <string name="wifi_p2p_enter_pin_message" msgid="5920929550367828970">"הקלד את קוד ה-PIN הנדרש."</string>
     <string name="wifi_p2p_show_pin_message" msgid="8530563323880921094">"PIN:"</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="tablet" msgid="8012981257742232475">"הטאבלט יתנתק מרשת ה-Wi-Fi באופן זמני בשעה שהוא מחובר אל <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="wifi_p2p_frequency_conflict_message" product="default" msgid="7363907213787469151">"הטלפון יתנתק מרשת ה-Wi-Fi באופן זמני בשעה שהוא מחובר אל <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="select_character" msgid="3365550120617701745">"הוסף תו"</string>
     <string name="sms_control_title" msgid="7296612781128917719">"שולח הודעות SMS"</string>
     <string name="sms_control_message" msgid="3867899169651496433">"&lt;b&gt; <xliff:g id="APP_NAME">%1$s</xliff:g> &lt;/ b&gt; שולח מספר רב של הודעות SMS. האם ברצונך לאפשר ליישום זה להמשיך לשלוח הודעות?"</string>
     <string name="sms_control_yes" msgid="3663725993855816807">"אפשר"</string>
     <string name="sms_control_no" msgid="625438561395534982">"דחה"</string>
+    <string name="sms_short_code_confirm_message" msgid="1645436466285310855">"&lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; רוצה לשלוח הודעה אל &lt;b&gt;<xliff:g id="DEST_ADDRESS">%2$s</xliff:g>&lt;/b&gt;."</string>
+    <string name="sms_short_code_details" msgid="3492025719868078457">"הפעולה "<font fgcolor="#ffffb060">"עשויה לגרום לחיובים"</font>" בחשבון המכשיר הנייד שלך."</string>
+    <string name="sms_premium_short_code_details" msgid="5523826349105123687"><font fgcolor="#ffffb060">"הפעולה תגרום לחיובים בחשבון המכשיר הנייד שלך."</font></string>
+    <string name="sms_short_code_confirm_allow" msgid="4458878637111023413">"שלח"</string>
+    <string name="sms_short_code_confirm_deny" msgid="2927389840209170706">"בטל"</string>
+    <string name="sms_short_code_remember_choice" msgid="5289538592272218136">"זכור את הבחירה שלי"</string>
+    <string name="sms_short_code_remember_undo_instruction" msgid="4960944133052287484">"ניתן לשנות זאת מאוחר יותר ב\'הגדרות\' &gt; \'יישומים\'"</string>
+    <string name="sms_short_code_confirm_always_allow" msgid="3241181154869493368">"אפשר תמיד"</string>
+    <string name="sms_short_code_confirm_never_allow" msgid="446992765774269673">"לעולם אל תאפשר"</string>
     <string name="sim_removed_title" msgid="6227712319223226185">"כרטיס ה-SIM הוסר"</string>
     <string name="sim_removed_message" msgid="2333164559970958645">"הרשת הסלולרית לא תהיה זמינה עד שתפעיל מחדש לאחר הכנסת כרטיס SIM חוקי."</string>
     <string name="sim_done_button" msgid="827949989369963775">"סיום"</string>
@@ -1043,12 +1180,10 @@
     <string name="date_picker_dialog_title" msgid="5879450659453782278">"הגדר תאריך"</string>
     <string name="date_time_set" msgid="5777075614321087758">"הגדר"</string>
     <string name="date_time_done" msgid="2507683751759308828">"בוצע"</string>
-    <string name="default_permission_group" msgid="2690160991405646128">"ברירת מחדל"</string>
-    <string name="no_permissions" msgid="7283357728219338112">"לא דרושים אישורים"</string>
-    <string name="perms_hide" msgid="7283915391320676226"><b>"הסתר"</b></string>
-    <string name="perms_show_all" msgid="2671791163933091180"><b>"הצג הכל"</b></string>
-    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff900000">"חדש: "</font></string>
+    <string name="perms_new_perm_prefix" msgid="8257740710754301407"><font size="12" fgcolor="#ff33b5e5">"חדש: "</font></string>
     <string name="perms_description_app" msgid="5139836143293299417">"מטעם <xliff:g id="APP_NAME">%1$s</xliff:g>."</string>
+    <string name="no_permissions" msgid="7283357728219338112">"לא דרושים אישורים"</string>
+    <string name="perm_costs_money" msgid="4902470324142151116">"פעולה זו עשויה לחייב אותך בכסף:"</string>
     <string name="usb_storage_activity_title" msgid="4465055157209648641">"אמצעי מסוג USB לאחסון בנפח גדול"</string>
     <string name="usb_storage_title" msgid="5901459041398751495">"USB מחובר"</string>
     <string name="usb_storage_message" product="nosdcard" msgid="3308538094316477839">"התחברת למחשב באמצעות USB. גע בלחצן שבהמשך אם ברצונך להעתיק קבצים בין המחשב לאחסון ה-USB של מכשיר ה-Android שלך."</string>
@@ -1143,10 +1278,15 @@
     <string name="accessibility_binding_label" msgid="4148120742096474641">"נגישות"</string>
     <string name="wallpaper_binding_label" msgid="1240087844304687662">"טפט"</string>
     <string name="chooser_wallpaper" msgid="7873476199295190279">"שנה טפט"</string>
+    <string name="notification_listener_binding_label" msgid="2014162835481906429">"מאזין להתראות"</string>
     <string name="vpn_title" msgid="19615213552042827">"VPN מופעל"</string>
     <string name="vpn_title_long" msgid="6400714798049252294">"VPN מופעל על ידי <xliff:g id="APP">%s</xliff:g>"</string>
     <string name="vpn_text" msgid="3011306607126450322">"גע כדי לנהל את הרשת."</string>
     <string name="vpn_text_long" msgid="6407351006249174473">"מחובר אל <xliff:g id="SESSION">%s</xliff:g>. גע כדי לנהל את הרשת."</string>
+    <string name="vpn_lockdown_connecting" msgid="6443438964440960745">"ה-VPN שמופעל תמיד, מתחבר..."</string>
+    <string name="vpn_lockdown_connected" msgid="8202679674819213931">"ה-VPN שפועל תמיד, מחובר"</string>
+    <string name="vpn_lockdown_error" msgid="6009249814034708175">"שגיאת VPN שמופעל תמיד"</string>
+    <string name="vpn_lockdown_config" msgid="6415899150671537970">"גע כדי להגדיר"</string>
     <string name="upload_file" msgid="2897957172366730416">"בחר קובץ"</string>
     <string name="no_file_chosen" msgid="6363648562170759465">"לא נבחר קובץ"</string>
     <string name="reset" msgid="2448168080964209908">"איפוס"</string>
@@ -1185,6 +1325,8 @@
     <string name="share" msgid="1778686618230011964">"שתף"</string>
     <string name="find" msgid="4808270900322985960">"מצא"</string>
     <string name="websearch" msgid="4337157977400211589">"חיפוש באינטרנט"</string>
+    <string name="find_next" msgid="5742124618942193978">"חפש את הבא"</string>
+    <string name="find_previous" msgid="2196723669388360506">"חפש את הקודם"</string>
     <string name="gpsNotifTicker" msgid="5622683912616496172">"בקשת מיקום מאת <xliff:g id="NAME">%s</xliff:g>"</string>
     <string name="gpsNotifTitle" msgid="5446858717157416839">"בקשת מיקום"</string>
     <string name="gpsNotifMessage" msgid="1374718023224000702">"מבוקש על ידי <xliff:g id="NAME">%1$s</xliff:g> (<xliff:g id="SERVICE">%2$s</xliff:g>)"</string>
@@ -1240,6 +1382,8 @@
     <string name="action_bar_home_description" msgid="5293600496601490216">"נווט לדף הבית"</string>
     <string name="action_bar_up_description" msgid="2237496562952152589">"נווט למעלה"</string>
     <string name="action_menu_overflow_description" msgid="2295659037509008453">"אפשרויות נוספות"</string>
+    <string name="action_bar_home_description_format" msgid="7965984360903693903">"%1$s‏, %2$s"</string>
+    <string name="action_bar_home_subtitle_description_format" msgid="6985546530471780727">"%1$s‏, %2$s‏, %3$s"</string>
     <string name="storage_internal" msgid="4891916833657929263">"אחסון פנימי"</string>
     <string name="storage_sd_card" msgid="3282948861378286745">"כרטיס SD"</string>
     <string name="storage_usb" msgid="3017954059538517278">"אחסון USB"</string>
@@ -1286,8 +1430,69 @@
     <string name="default_audio_route_name" product="default" msgid="4239291273420140123">"טלפון"</string>
     <string name="default_audio_route_name_headphones" msgid="8119971843803439110">"אוזניות"</string>
     <string name="default_audio_route_name_dock_speakers" msgid="6240602982276591864">"רמקולים של מעגן"</string>
-    <string name="default_audio_route_name_hdmi" msgid="7986404173839007682">"אודיו HDMI"</string>
+    <string name="default_media_route_name_hdmi" msgid="2450970399023478055">"HDMI"</string>
     <string name="default_audio_route_category_name" msgid="3722811174003886946">"מערכת"</string>
     <string name="bluetooth_a2dp_audio_route_name" msgid="8575624030406771015">"אודיו Bluetooth"</string>
+    <string name="wireless_display_route_description" msgid="9070346425023979651">"צג אלחוטי"</string>
     <string name="media_route_chooser_grouping_done" msgid="7966438307723317169">"סיום"</string>
+    <string name="media_route_button_content_description" msgid="5758553567065145276">"פלט מדיה"</string>
+    <string name="media_route_status_scanning" msgid="7279908761758293783">"סורק..."</string>
+    <string name="media_route_status_connecting" msgid="6422571716007825440">"מתחבר..."</string>
+    <string name="media_route_status_available" msgid="6983258067194649391">"זמין"</string>
+    <string name="media_route_status_not_available" msgid="6739899962681886401">"לא זמין"</string>
+    <string name="display_manager_built_in_display_name" msgid="2583134294292563941">"מסך מובנה"</string>
+    <string name="display_manager_hdmi_display_name" msgid="1555264559227470109">"מסך HDMI"</string>
+    <string name="display_manager_overlay_display_name" msgid="5142365982271620716">"שכבת על #<xliff:g id="ID">%1$d</xliff:g>"</string>
+    <string name="display_manager_overlay_display_title" msgid="652124517672257172">"<xliff:g id="NAME">%1$s</xliff:g>: ‎<xliff:g id="WIDTH">%2$d</xliff:g>x<xliff:g id="HEIGHT">%3$d</xliff:g>‎, ‏<xliff:g id="DPI">%4$d</xliff:g> dpi"</string>
+    <string name="wifi_display_notification_title" msgid="2223050649240326557">"מסך אלחוטי מחובר"</string>
+    <string name="wifi_display_notification_message" msgid="4498802012464170685">"מסך זה מוצג במכשיר אחר"</string>
+    <string name="wifi_display_notification_disconnect" msgid="6183754463561153372">"נתק"</string>
+    <string name="kg_emergency_call_label" msgid="684946192523830531">"שיחת חירום"</string>
+    <string name="kg_forgot_pattern_button_text" msgid="8852021467868220608">"שכחת את הקו"</string>
+    <string name="kg_wrong_pattern" msgid="1850806070801358830">"קו ביטול נעילה שגוי"</string>
+    <string name="kg_wrong_password" msgid="2333281762128113157">"סיסמה שגויה"</string>
+    <string name="kg_wrong_pin" msgid="1131306510833563801">"מספר PIN שגוי"</string>
+    <string name="kg_too_many_failed_attempts_countdown" msgid="6358110221603297548">"נסה שוב בעוד <xliff:g id="NUMBER">%d</xliff:g> שניות."</string>
+    <string name="kg_pattern_instructions" msgid="398978611683075868">"שרטט את קו ביטול הנעילה"</string>
+    <string name="kg_sim_pin_instructions" msgid="2319508550934557331">"הזן מספר PIN ל-SIM"</string>
+    <string name="kg_pin_instructions" msgid="2377242233495111557">"הזן מספר PIN"</string>
+    <string name="kg_password_instructions" msgid="5753646556186936819">"הזן את הסיסמה"</string>
+    <string name="kg_puk_enter_puk_hint" msgid="453227143861735537">"כרטיס ה-SIM מושבת כעת. הזן קוד PUK כדי להמשיך. פנה אל הספק לפרטים."</string>
+    <string name="kg_puk_enter_pin_hint" msgid="7871604527429602024">"הזן את קוד ה-PIN הרצוי"</string>
+    <string name="kg_enter_confirm_pin_hint" msgid="325676184762529976">"אשר את קוד ה-PIN הרצוי"</string>
+    <string name="kg_sim_unlock_progress_dialog_message" msgid="8950398016976865762">"מבטל נעילה של כרטיס SIM…"</string>
+    <string name="kg_password_wrong_pin_code" msgid="1139324887413846912">"קוד PIN שגוי."</string>
+    <string name="kg_invalid_sim_pin_hint" msgid="8795159358110620001">"הקלד מספר PIN שאורכו 4 עד 8 ספרות."</string>
+    <string name="kg_invalid_sim_puk_hint" msgid="7553388325654369575">"קוד PUK צריך להיות בן 8 ספרות או יותר."</string>
+    <string name="kg_invalid_puk" msgid="3638289409676051243">"הזן מחדש את קוד PUK הנכון. ניסיונות חוזרים ישביתו לצמיתות את כרטיס ה-SIM."</string>
+    <string name="kg_invalid_confirm_pin_hint" product="default" msgid="7003469261464593516">"קודי ה-PIN אינם תואמים"</string>
+    <string name="kg_login_too_many_attempts" msgid="6486842094005698475">"ניסיונות רבים מדי לשרטוט קו ביטול נעילה."</string>
+    <string name="kg_login_instructions" msgid="1100551261265506448">"כדי לבטל את הנעילה, היכנס באמצעות חשבון Google שלך."</string>
+    <string name="kg_login_username_hint" msgid="5718534272070920364">"שם משתמש (דוא\"ל)"</string>
+    <string name="kg_login_password_hint" msgid="9057289103827298549">"סיסמה"</string>
+    <string name="kg_login_submit_button" msgid="5355904582674054702">"היכנס"</string>
+    <string name="kg_login_invalid_input" msgid="5754664119319872197">"שם משתמש או סיסמה לא חוקיים."</string>
+    <string name="kg_login_account_recovery_hint" msgid="5690709132841752974">"שכחת את שם המשתמש או הסיסמה?"\n"בקר בכתובת "<b>"google.com/accounts/recovery"</b></string>
+    <string name="kg_login_checking_password" msgid="1052685197710252395">"בודק חשבון…"</string>
+    <string name="kg_too_many_failed_pin_attempts_dialog_message" msgid="8276745642049502550">"הקלדת מספר PIN שגוי <xliff:g id="NUMBER_0">%d</xliff:g> פעמים. "\n\n"נסה שוב בעוד <xliff:g id="NUMBER_1">%d</xliff:g> שניות."</string>
+    <string name="kg_too_many_failed_password_attempts_dialog_message" msgid="7813713389422226531">"הקלדת סיסמה שגויה <xliff:g id="NUMBER_0">%d</xliff:g> פעמים."\n\n"נסה שוב בעוד <xliff:g id="NUMBER_1">%d</xliff:g> שניות."</string>
+    <string name="kg_too_many_failed_pattern_attempts_dialog_message" msgid="74089475965050805">"שרטטת את קו ביטול הנעילה באופן שגוי <xliff:g id="NUMBER_0">%d</xliff:g> פעמים. "\n\n"נסה שוב בעוד <xliff:g id="NUMBER_1">%d</xliff:g> שניות."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="tablet" msgid="1575557200627128949">"ביצעת <xliff:g id="NUMBER_0">%d</xliff:g> ניסיונות שגויים לביטול נעילת הטלפון. לאחר <xliff:g id="NUMBER_1">%d</xliff:g> ניסיונות כושלים נוספים, הטאבלט יעבור איפוס לברירת המחדל של היצרן וכל נתוני המשתמש יאבדו."</string>
+    <string name="kg_failed_attempts_almost_at_wipe" product="default" msgid="4051015943038199910">"ביצעת <xliff:g id="NUMBER_0">%d</xliff:g> ניסיונות שגויים לביטול נעילת הטלפון. לאחר <xliff:g id="NUMBER_1">%d</xliff:g> ניסיונות כושלים נוספים, הטלפון יעבור איפוס לברירת המחדל של היצרן וכל נתוני המשתמש יאבדו."</string>
+    <string name="kg_failed_attempts_now_wiping" product="tablet" msgid="2072996269148483637">"ביצעת <xliff:g id="NUMBER">%d</xliff:g> ניסיונות שגויים לביטול נעילת הטאבלט. הטאבלט יעבור כעת איפוס לברירת המחדל של היצרן."</string>
+    <string name="kg_failed_attempts_now_wiping" product="default" msgid="4817627474419471518">"ביצעת <xliff:g id="NUMBER">%d</xliff:g> ניסיונות שגויים לביטול נעילת הטלפון. הטלפון יעבור כעת איפוס לברירת המחדל של היצרן."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="tablet" msgid="3253575572118914370">"שרטטת את קו ביטול הנעילה באופן שגוי <xliff:g id="NUMBER_0">%d</xliff:g> פעמים. לאחר <xliff:g id="NUMBER_1">%d</xliff:g> ניסיונות כושלים נוספים, תתבקש לבטל את נעילת הטאבלט באמצעות חשבון דוא\"ל‏."\n\n"נסה שוב בעוד <xliff:g id="NUMBER_2">%d</xliff:g> שניות."</string>
+    <string name="kg_failed_attempts_almost_at_login" product="default" msgid="1437638152015574839">"שרטטת את קו ביטול הנעילה באופן שגוי <xliff:g id="NUMBER_0">%d</xliff:g> פעמים. לאחר <xliff:g id="NUMBER_1">%d</xliff:g> ניסיונות כושלים נוספים, תתבקש לבטל את נעילת הטלפון באמצעות חשבון דוא\"ל‏."\n\n"נסה שוב בעוד <xliff:g id="NUMBER_2">%d</xliff:g> שניות."</string>
+    <string name="kg_text_message_separator" product="default" msgid="4160700433287233771">" — "</string>
+    <string name="kg_reordering_delete_drop_target_text" msgid="7899202978204438708">"הסר"</string>
+    <string name="safe_media_volume_warning" product="default" msgid="7324161939475478066">"האם להעלות את עוצמת הקול מעל לרמה המומלצת?"\n"האזנה בעוצמת קול גבוהה למשך זמן ארוך עלולה לפגוע בשמיעה."</string>
+    <string name="continue_to_enable_accessibility" msgid="1626427372316070258">"המשך לגעת בשתי אצבעות כדי להפעיל נגישות."</string>
+    <string name="accessibility_enabled" msgid="1381972048564547685">"נגישות הופעלה."</string>
+    <string name="enable_accessibility_canceled" msgid="3833923257966635673">"נגישות בוטלה."</string>
+    <string name="user_switched" msgid="3768006783166984410">"המשתמש הנוכחי <xliff:g id="NAME">%1$s</xliff:g>."</string>
+    <string name="owner_name" msgid="2716755460376028154">"בעלים"</string>
+    <string name="error_message_title" msgid="4510373083082500195">"שגיאה"</string>
+    <string name="app_no_restricted_accounts" msgid="4011285085817350390">"היישום הזה לא תומך בחשבונות עבור פרופילים מוגבלים"</string>
+    <string name="app_not_found" msgid="3429141853498927379">"לא נמצא יישום שתומך בפעולה זו"</string>
+    <string name="revoke" msgid="5404479185228271586">"בטל"</string>
 </resources>

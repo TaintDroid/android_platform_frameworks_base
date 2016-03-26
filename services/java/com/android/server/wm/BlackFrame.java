@@ -23,6 +23,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.Slog;
 import android.view.Surface;
+import android.view.SurfaceControl;
 import android.view.SurfaceSession;
 
 /**
@@ -33,24 +34,27 @@ public class BlackFrame {
         final int left;
         final int top;
         final int layer;
-        final Surface surface;
+        final SurfaceControl surface;
 
-        BlackSurface(SurfaceSession session, int layer, int l, int t, int r, int b)
-                throws Surface.OutOfResourcesException {
+        BlackSurface(SurfaceSession session, int layer, int l, int t, int r, int b, int layerStack)
+                throws SurfaceControl.OutOfResourcesException {
             left = l;
             top = t;
             this.layer = layer;
             int w = r-l;
             int h = b-t;
+
             if (WindowManagerService.DEBUG_SURFACE_TRACE) {
-                surface = new WindowStateAnimator.SurfaceTrace(session, 0, "BlackSurface("
+                surface = new WindowStateAnimator.SurfaceTrace(session, "BlackSurface("
                         + l + ", " + t + ")",
-                        -1, w, h, PixelFormat.OPAQUE, Surface.FX_SURFACE_DIM);
+                        w, h, PixelFormat.OPAQUE, SurfaceControl.FX_SURFACE_DIM | SurfaceControl.HIDDEN);
             } else {
-                surface = new Surface(session, 0, "BlackSurface",
-                        -1, w, h, PixelFormat.OPAQUE, Surface.FX_SURFACE_DIM);
+                surface = new SurfaceControl(session, "BlackSurface",
+                        w, h, PixelFormat.OPAQUE, SurfaceControl.FX_SURFACE_DIM | SurfaceControl.HIDDEN);
             }
+
             surface.setAlpha(1);
+            surface.setLayerStack(layerStack);
             surface.setLayer(layer);
             surface.show();
             if (WindowManagerService.SHOW_TRANSACTIONS ||
@@ -103,7 +107,7 @@ public class BlackFrame {
     }
 
     public BlackFrame(SurfaceSession session, Rect outer, Rect inner,
-            int layer) throws Surface.OutOfResourcesException {
+            int layer, final int layerStack) throws SurfaceControl.OutOfResourcesException {
         boolean success = false;
 
         mOuterRect = new Rect(outer);
@@ -111,19 +115,19 @@ public class BlackFrame {
         try {
             if (outer.top < inner.top) {
                 mBlackSurfaces[0] = new BlackSurface(session, layer,
-                        outer.left, outer.top, inner.right, inner.top);
+                        outer.left, outer.top, inner.right, inner.top, layerStack);
             }
             if (outer.left < inner.left) {
                 mBlackSurfaces[1] = new BlackSurface(session, layer,
-                        outer.left, inner.top, inner.left, outer.bottom);
+                        outer.left, inner.top, inner.left, outer.bottom, layerStack);
             }
             if (outer.bottom > inner.bottom) {
                 mBlackSurfaces[2] = new BlackSurface(session, layer,
-                        inner.left, inner.bottom, outer.right, outer.bottom);
+                        inner.left, inner.bottom, outer.right, outer.bottom, layerStack);
             }
             if (outer.right > inner.right) {
                 mBlackSurfaces[3] = new BlackSurface(session, layer,
-                        inner.right, outer.top, outer.right, inner.bottom);
+                        inner.right, outer.top, outer.right, inner.bottom, layerStack);
             }
             success = true;
         } finally {

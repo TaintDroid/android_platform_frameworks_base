@@ -24,6 +24,7 @@ import android.graphics.Region;
 import android.os.Bundle;
 import android.view.InputChannel;
 import android.view.IWindow;
+import android.view.IWindowId;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.Surface;
@@ -37,8 +38,13 @@ interface IWindowSession {
     int add(IWindow window, int seq, in WindowManager.LayoutParams attrs,
             in int viewVisibility, out Rect outContentInsets,
             out InputChannel outInputChannel);
+    int addToDisplay(IWindow window, int seq, in WindowManager.LayoutParams attrs,
+            in int viewVisibility, in int layerStackId, out Rect outContentInsets,
+            out InputChannel outInputChannel);
     int addWithoutInputChannel(IWindow window, int seq, in WindowManager.LayoutParams attrs,
             in int viewVisibility, out Rect outContentInsets);
+    int addToDisplayWithoutInputChannel(IWindow window, int seq, in WindowManager.LayoutParams attrs,
+            in int viewVisibility, in int layerStackId, out Rect outContentInsets);
     void remove(IWindow window);
     
     /**
@@ -54,10 +60,13 @@ interface IWindowSession {
      * @param requestedWidth The width the window wants to be.
      * @param requestedHeight The height the window wants to be.
      * @param viewVisibility Window root view's visibility.
-     * @param flags Request flags: {@link WindowManagerImpl#RELAYOUT_INSETS_PENDING},
-     * {@link WindowManagerImpl#RELAYOUT_DEFER_SURFACE_DESTROY}.
+     * @param flags Request flags: {@link WindowManagerGlobal#RELAYOUT_INSETS_PENDING},
+     * {@link WindowManagerGlobal#RELAYOUT_DEFER_SURFACE_DESTROY}.
      * @param outFrame Rect in which is placed the new position/size on
      * screen.
+     * @param outOverscanInsets Rect in which is placed the offsets from
+     * <var>outFrame</var> in which the content of the window are inside
+     * of the display's overlay region.
      * @param outContentInsets Rect in which is placed the offsets from
      * <var>outFrame</var> in which the content of the window should be
      * placed.  This can be used to modify the window layout to ensure its
@@ -74,12 +83,12 @@ interface IWindowSession {
      * was last displayed.
      * @param outSurface Object in which is placed the new display surface.
      * 
-     * @return int Result flags: {@link WindowManagerImpl#RELAYOUT_SHOW_FOCUS},
-     * {@link WindowManagerImpl#RELAYOUT_FIRST_TIME}.
+     * @return int Result flags: {@link WindowManagerGlobal#RELAYOUT_SHOW_FOCUS},
+     * {@link WindowManagerGlobal#RELAYOUT_FIRST_TIME}.
      */
     int relayout(IWindow window, int seq, in WindowManager.LayoutParams attrs,
             int requestedWidth, int requestedHeight, int viewVisibility,
-            int flags, out Rect outFrame,
+            int flags, out Rect outFrame, out Rect outOverscanInsets,
             out Rect outContentInsets, out Rect outVisibleInsets,
             out Configuration outConfig, out Surface outSurface);
 
@@ -172,4 +181,14 @@ interface IWindowSession {
             int z, in Bundle extras, boolean sync);
     
     void wallpaperCommandComplete(IBinder window, in Bundle result);
+
+    void setUniverseTransform(IBinder window, float alpha, float offx, float offy,
+            float dsdx, float dtdx, float dsdy, float dtdy);
+
+    /**
+     * Notifies that a rectangle on the screen has been requested.
+     */
+    void onRectangleOnScreenRequested(IBinder token, in Rect rectangle, boolean immediate);
+
+    IWindowId getWindowId(IBinder window);
 }

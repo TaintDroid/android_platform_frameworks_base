@@ -8,7 +8,7 @@ base = $(LOCAL_PATH)/../../..
 native = $(LOCAL_PATH)/../../../../native
 
 LOCAL_C_INCLUDES := \
-	$(base)/services/sensorservice \
+	$(native)/services/sensorservice \
 	$(native)/services/surfaceflinger \
 	$(JNI_H_INCLUDE)
 
@@ -16,10 +16,11 @@ LOCAL_SHARED_LIBRARIES := \
 	libandroid_runtime \
 	libsensorservice \
 	libsurfaceflinger \
-    libinput \
+	libinput \
 	libutils \
 	libbinder \
-	libcutils
+	libcutils \
+	liblog
 
 LOCAL_MODULE:= libsystem_server
 

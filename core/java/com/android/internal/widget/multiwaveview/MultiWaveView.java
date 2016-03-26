@@ -19,7 +19,6 @@ package com.android.internal.widget.multiwaveview;
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
@@ -33,7 +32,9 @@ import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -594,7 +595,10 @@ public class MultiWaveView extends View {
     }
 
     private void vibrate() {
-        if (mVibrator != null) {
+        final boolean hapticEnabled = Settings.System.getIntForUser(
+                mContext.getContentResolver(), Settings.System.HAPTIC_FEEDBACK_ENABLED, 1,
+                UserHandle.USER_CURRENT) != 0;
+        if (mVibrator != null && hapticEnabled) {
             mVibrator.vibrate(mVibrationDuration);
         }
     }
@@ -970,7 +974,7 @@ public class MultiWaveView extends View {
     }
 
     private void computeInsets(int dx, int dy) {
-        final int layoutDirection = getResolvedLayoutDirection();
+        final int layoutDirection = getLayoutDirection();
         final int absoluteGravity = Gravity.getAbsoluteGravity(mGravity, layoutDirection);
 
         switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {

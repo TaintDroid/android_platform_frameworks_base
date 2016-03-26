@@ -18,6 +18,9 @@ package android.net;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Messenger;
+
+import static com.android.internal.util.Protocol.BASE_NETWORK_STATE_TRACKER;
 
 /**
  * Interface provides the {@link com.android.server.ConnectivityService}
@@ -41,12 +44,6 @@ public interface NetworkStateTracker {
      * -------------------------------------------------------------
      */
 
-    // Share the event space with ConnectivityService (which we can't see, but
-    // must send events to).  If you change these, change ConnectivityService
-    // too.
-    static final int MIN_NETWORK_STATE_TRACKER_EVENT = 1;
-    static final int MAX_NETWORK_STATE_TRACKER_EVENT = 100;
-
     /**
      * The network state has changed and the NetworkInfo object
      * contains the new state.
@@ -54,25 +51,38 @@ public interface NetworkStateTracker {
      * msg.what = EVENT_STATE_CHANGED
      * msg.obj = NetworkInfo object
      */
-    public static final int EVENT_STATE_CHANGED = 1;
+    public static final int EVENT_STATE_CHANGED = BASE_NETWORK_STATE_TRACKER;
 
     /**
      * msg.what = EVENT_CONFIGURATION_CHANGED
      * msg.obj = NetworkInfo object
      */
-    public static final int EVENT_CONFIGURATION_CHANGED = 3;
+    public static final int EVENT_CONFIGURATION_CHANGED = BASE_NETWORK_STATE_TRACKER + 1;
 
     /**
      * msg.what = EVENT_RESTORE_DEFAULT_NETWORK
      * msg.obj = FeatureUser object
      */
-    public static final int EVENT_RESTORE_DEFAULT_NETWORK = 6;
+    public static final int EVENT_RESTORE_DEFAULT_NETWORK = BASE_NETWORK_STATE_TRACKER + 2;
 
     /**
      * msg.what = EVENT_NETWORK_SUBTYPE_CHANGED
      * msg.obj = NetworkInfo object
      */
-    public static final int EVENT_NETWORK_SUBTYPE_CHANGED = 7;
+    public static final int EVENT_NETWORK_SUBTYPE_CHANGED = BASE_NETWORK_STATE_TRACKER + 3;
+
+    /**
+     * msg.what = EVENT_NETWORK_CONNECTED
+     * msg.obj = LinkProperties object
+     */
+    public static final int EVENT_NETWORK_CONNECTED = BASE_NETWORK_STATE_TRACKER + 4;
+
+    /**
+     * msg.what = EVENT_NETWORK_CONNECTION_DISCONNECTED
+     * msg.obj = LinkProperties object, same iface name
+     */
+    public static final int EVENT_NETWORK_DISCONNECTED = BASE_NETWORK_STATE_TRACKER + 5;
+
 
     /**
      * -------------------------------------------------------------
@@ -127,6 +137,11 @@ public interface NetworkStateTracker {
      * @return {@code true} if we're connected or expect to be connected
      */
     public boolean reconnect();
+
+    /**
+     * Ready to switch on to the network after captive portal check
+     */
+    public void captivePortalCheckComplete();
 
     /**
      * Turn the wireless radio off for a network.
@@ -198,4 +213,20 @@ public interface NetworkStateTracker {
      * An external dependency has been met/unmet
      */
     public void setDependencyMet(boolean met);
+
+    /**
+     * Informs the state tracker that another interface is stacked on top of it.
+     **/
+    public void addStackedLink(LinkProperties link);
+
+    /**
+     * Informs the state tracker that a stacked interface has been removed.
+     **/
+    public void removeStackedLink(LinkProperties link);
+
+    /*
+     * Called once to setup async channel between this and
+     * the underlying network specific code.
+     */
+    public void supplyMessenger(Messenger messenger);
 }

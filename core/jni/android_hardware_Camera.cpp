@@ -22,10 +22,13 @@
 #include "jni.h"
 #include "JNIHelp.h"
 #include "android_runtime/AndroidRuntime.h"
+#include <android_runtime/android_graphics_SurfaceTexture.h>
+#include <android_runtime/android_view_Surface.h>
 
+#include <cutils/properties.h>
 #include <utils/Vector.h>
 
-#include <gui/SurfaceTexture.h>
+#include <gui/GLConsumer.h>
 #include <gui/Surface.h>
 #include <camera/Camera.h>
 #include <binder/IMemory.h>
@@ -34,10 +37,9 @@ using namespace android;
 
 struct fields_t {
     jfieldID    context;
-    jfieldID    surface;
-    jfieldID    surfaceTexture;
     jfieldID    facing;
     jfieldID    orientation;
+    jfieldID    canDisableShutterSound;
     jfieldID    face_rect;
     jfieldID    face_score;
     jfieldID    rect_left;
@@ -453,13 +455,26 @@ static void android_hardware_Camera_getCameraInfo(JNIEnv *env, jobject thiz,
     }
     env->SetIntField(info_obj, fields.facing, cameraInfo.facing);
     env->SetIntField(info_obj, fields.orientation, cameraInfo.orientation);
+
+    char value[PROPERTY_VALUE_MAX];
+    property_get("ro.camera.sound.forced", value, "0");
+    jboolean canDisableShutterSound = (strncmp(value, "0", 2) == 0);
+    env->SetBooleanField(info_obj, fields.canDisableShutterSound,
+            canDisableShutterSound);
 }
 
 // connect to camera service
 static void android_hardware_Camera_native_setup(JNIEnv *env, jobject thiz,
-    jobject weak_this, jint cameraId)
+    jobject weak_this, jint cameraId, jstring clientPackageName)
 {
-    sp<Camera> camera = Camera::connect(cameraId);
+    // Convert jstring to String16
+    const char16_t *rawClientName = env->GetStringChars(clientPackageName, NULL);
+    jsize rawClientNameLen = env->GetStringLength(clientPackageName);
+    String16 clientName(rawClientName, rawClientNameLen);
+    env->ReleaseStringChars(clientPackageName, rawClientName);
+
+    sp<Camera> camera = Camera::connect(cameraId, clientName,
+            Camera::USE_CALLING_UID);
 
     if (camera == NULL) {
         jniThrowRuntimeException(env, "Fail to connect to camera service");
@@ -481,7 +496,7 @@ static void android_hardware_Camera_native_setup(JNIEnv *env, jobject thiz,
     // We use a weak reference so the Camera object can be garbage collected.
     // The reference is only used as a proxy for callbacks.
     sp<JNICameraContext> context = new JNICameraContext(env, weak_this, clazz, camera);
-    context->incStrong(thiz);
+    context->incStrong((void*)android_hardware_Camera_native_setup);
     camera->setListener(context);
 
     // save context in opaque field
@@ -519,7 +534,7 @@ static void android_hardware_Camera_release(JNIEnv *env, jobject thiz)
         }
 
         // remove context to prevent further Java access
-        context->decStrong(thiz);
+        context->decStrong((void*)android_hardware_Camera_native_setup);
     }
 }
 
@@ -529,12 +544,17 @@ static void android_hardware_Camera_setPreviewDisplay(JNIEnv *env, jobject thiz,
     sp<Camera> camera = get_native_camera(env, thiz, NULL);
     if (camera == 0) return;
 
-    sp<Surface> surface = NULL;
-    if (jSurface != NULL) {
-        surface = reinterpret_cast<Surface*>(env->GetIntField(jSurface, fields.surface));
+    sp<IGraphicBufferProducer> gbp;
+    sp<Surface> surface;
+    if (jSurface) {
+        surface = android_view_Surface_getSurface(env, jSurface);
+        if (surface != NULL) {
+            gbp = surface->getIGraphicBufferProducer();
+        }
     }
-    if (camera->setPreviewDisplay(surface) != NO_ERROR) {
-        jniThrowException(env, "java/io/IOException", "setPreviewDisplay failed");
+
+    if (camera->setPreviewTexture(gbp) != NO_ERROR) {
+        jniThrowException(env, "java/io/IOException", "setPreviewTexture failed");
     }
 }
 
@@ -547,8 +567,8 @@ static void android_hardware_Camera_setPreviewTexture(JNIEnv *env,
 
     sp<BufferQueue> bufferQueue = NULL;
     if (jSurfaceTexture != NULL) {
-        sp<SurfaceTexture> surfaceTexture = reinterpret_cast<SurfaceTexture*>(env->GetIntField(
-                jSurfaceTexture, fields.surfaceTexture));
+        sp<GLConsumer> surfaceTexture =
+            SurfaceTexture_getSurfaceTexture(env, jSurfaceTexture);
         if (surfaceTexture != NULL) {
             bufferQueue = surfaceTexture->getBufferQueue();
         }
@@ -781,6 +801,25 @@ static void android_hardware_Camera_setDisplayOrientation(JNIEnv *env, jobject t
     }
 }
 
+static jboolean android_hardware_Camera_enableShutterSound(JNIEnv *env, jobject thiz,
+        jboolean enabled)
+{
+    ALOGV("enableShutterSound");
+    sp<Camera> camera = get_native_camera(env, thiz, NULL);
+    if (camera == 0) return JNI_FALSE;
+
+    int32_t value = (enabled == JNI_TRUE) ? 1 : 0;
+    status_t rc = camera->sendCommand(CAMERA_CMD_ENABLE_SHUTTER_SOUND, value, 0);
+    if (rc == NO_ERROR) {
+        return JNI_TRUE;
+    } else if (rc == PERMISSION_DENIED) {
+        return JNI_FALSE;
+    } else {
+        jniThrowRuntimeException(env, "enable shutter sound failed");
+        return JNI_FALSE;
+    }
+}
+
 static void android_hardware_Camera_startFaceDetection(JNIEnv *env, jobject thiz,
         jint type)
 {
@@ -827,11 +866,11 @@ static JNINativeMethod camMethods[] = {
   { "getNumberOfCameras",
     "()I",
     (void *)android_hardware_Camera_getNumberOfCameras },
-  { "getCameraInfo",
+  { "_getCameraInfo",
     "(ILandroid/hardware/Camera$CameraInfo;)V",
     (void*)android_hardware_Camera_getCameraInfo },
   { "native_setup",
-    "(Ljava/lang/Object;I)V",
+    "(Ljava/lang/Object;ILjava/lang/String;)V",
     (void*)android_hardware_Camera_native_setup },
   { "native_release",
     "()V",
@@ -890,6 +929,9 @@ static JNINativeMethod camMethods[] = {
   { "setDisplayOrientation",
     "(I)V",
     (void *)android_hardware_Camera_setDisplayOrientation },
+  { "_enableShutterSound",
+    "(Z)Z",
+    (void *)android_hardware_Camera_enableShutterSound },
   { "_startFaceDetection",
     "(I)V",
     (void *)android_hardware_Camera_startFaceDetection },
@@ -935,11 +977,10 @@ int register_android_hardware_Camera(JNIEnv *env)
 {
     field fields_to_find[] = {
         { "android/hardware/Camera", "mNativeContext",   "I", &fields.context },
-        { "android/view/Surface",    ANDROID_VIEW_SURFACE_JNI_ID, "I", &fields.surface },
-        { "android/graphics/SurfaceTexture",
-          ANDROID_GRAPHICS_SURFACETEXTURE_JNI_ID, "I", &fields.surfaceTexture },
         { "android/hardware/Camera$CameraInfo", "facing",   "I", &fields.facing },
         { "android/hardware/Camera$CameraInfo", "orientation",   "I", &fields.orientation },
+        { "android/hardware/Camera$CameraInfo", "canDisableShutterSound",   "Z",
+          &fields.canDisableShutterSound },
         { "android/hardware/Camera$Face", "rect", "Landroid/graphics/Rect;", &fields.face_rect },
         { "android/hardware/Camera$Face", "score", "I", &fields.face_score },
         { "android/graphics/Rect", "left", "I", &fields.rect_left },

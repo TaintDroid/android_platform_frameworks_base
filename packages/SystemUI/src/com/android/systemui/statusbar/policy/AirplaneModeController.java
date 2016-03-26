@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Slog;
 import android.widget.CompoundButton;
@@ -73,7 +74,7 @@ public class AirplaneModeController extends BroadcastReceiver
 
     private boolean getAirplaneMode() {
         ContentResolver cr = mContext.getContentResolver();
-        return 0 != Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0);
+        return 0 != Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0);
     }
 
     // TODO: Fix this racy API by adding something better to TelephonyManager or
@@ -81,14 +82,14 @@ public class AirplaneModeController extends BroadcastReceiver
     private void unsafe(final boolean enabled) {
         AsyncTask.execute(new Runnable() {
                 public void run() {
-                    Settings.System.putInt(
+                    Settings.Global.putInt(
                             mContext.getContentResolver(),
-                            Settings.System.AIRPLANE_MODE_ON,
+                            Settings.Global.AIRPLANE_MODE_ON,
                             enabled ? 1 : 0);
                     Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
                     intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
                     intent.putExtra("state", enabled);
-                    mContext.sendBroadcast(intent);
+                    mContext.sendBroadcastAsUser(intent, UserHandle.ALL);
                 }
             });
     }

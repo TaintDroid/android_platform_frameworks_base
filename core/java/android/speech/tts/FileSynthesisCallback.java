@@ -20,10 +20,12 @@ import android.os.FileUtils;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 
 /**
  * Speech synthesis request that writes the audio to a WAV file.
@@ -39,16 +41,19 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
     private static final short WAV_FORMAT_PCM = 0x0001;
 
     private final Object mStateLock = new Object();
-    private final File mFileName;
+
     private int mSampleRateInHz;
     private int mAudioFormat;
     private int mChannelCount;
-    private RandomAccessFile mFile;
+
+    private FileChannel mFileChannel;
+
+    private boolean mStarted = false;
     private boolean mStopped = false;
     private boolean mDone = false;
 
-    FileSynthesisCallback(File fileName) {
-        mFileName = fileName;
+    FileSynthesisCallback(FileChannel fileChannel) {
+        mFileChannel = fileChannel;
     }
 
     @Override
@@ -63,35 +68,20 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
      * Must be called while holding the monitor on {@link #mStateLock}.
      */
     private void cleanUp() {
-        closeFileAndWidenPermissions();
-        if (mFile != null) {
-            mFileName.delete();
-        }
+        closeFile();
     }
 
     /**
      * Must be called while holding the monitor on {@link #mStateLock}.
      */
-    private void closeFileAndWidenPermissions() {
+    private void closeFile() {
         try {
-            if (mFile != null) {
-                mFile.close();
-                mFile = null;
+            if (mFileChannel != null) {
+                mFileChannel.close();
+                mFileChannel = null;
             }
         } catch (IOException ex) {
-            Log.e(TAG, "Failed to close " + mFileName + ": " + ex);
-        }
-
-        try {
-            // Make the written file readable and writeable by everyone.
-            // This allows the app that requested synthesis to read the file.
-            //
-            // Note that the directory this file was written must have already
-            // been world writeable in order it to have been
-            // written to in the first place.
-            FileUtils.setPermissions(mFileName.getAbsolutePath(), 0666, -1, -1); //-rw-rw-rw
-        } catch (SecurityException se) {
-            Log.e(TAG, "Security exception setting rw permissions on : " + mFileName);
+            Log.e(TAG, "Failed to close output file descriptor", ex);
         }
     }
 
@@ -116,20 +106,20 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
                 if (DBG) Log.d(TAG, "Request has been aborted.");
                 return TextToSpeech.ERROR;
             }
-            if (mFile != null) {
+            if (mStarted) {
                 cleanUp();
                 throw new IllegalArgumentException("FileSynthesisRequest.start() called twice");
             }
+            mStarted = true;
             mSampleRateInHz = sampleRateInHz;
             mAudioFormat = audioFormat;
             mChannelCount = channelCount;
+
             try {
-                mFile = new RandomAccessFile(mFileName, "rw");
-                // Reserve space for WAV header
-                mFile.write(new byte[WAV_HEADER_LENGTH]);
+                mFileChannel.write(ByteBuffer.allocate(WAV_HEADER_LENGTH));
                 return TextToSpeech.SUCCESS;
             } catch (IOException ex) {
-                Log.e(TAG, "Failed to open " + mFileName + ": " + ex);
+                Log.e(TAG, "Failed to write wav header to output file descriptor" + ex);
                 cleanUp();
                 return TextToSpeech.ERROR;
             }
@@ -147,15 +137,15 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
                 if (DBG) Log.d(TAG, "Request has been aborted.");
                 return TextToSpeech.ERROR;
             }
-            if (mFile == null) {
+            if (mFileChannel == null) {
                 Log.e(TAG, "File not open");
                 return TextToSpeech.ERROR;
             }
             try {
-                mFile.write(buffer, offset, length);
+                mFileChannel.write(ByteBuffer.wrap(buffer,  offset,  length));
                 return TextToSpeech.SUCCESS;
             } catch (IOException ex) {
-                Log.e(TAG, "Failed to write to " + mFileName + ": " + ex);
+                Log.e(TAG, "Failed to write to output file descriptor", ex);
                 cleanUp();
                 return TextToSpeech.ERROR;
             }
@@ -166,25 +156,31 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
     public int done() {
         if (DBG) Log.d(TAG, "FileSynthesisRequest.done()");
         synchronized (mStateLock) {
+            if (mDone) {
+                if (DBG) Log.d(TAG, "Duplicate call to done()");
+                // This preserves existing behaviour. Earlier, if done was called twice
+                // we'd return ERROR because mFile == null and we'd add to logspam.
+                return TextToSpeech.ERROR;
+            }
             if (mStopped) {
                 if (DBG) Log.d(TAG, "Request has been aborted.");
                 return TextToSpeech.ERROR;
             }
-            if (mFile == null) {
+            if (mFileChannel == null) {
                 Log.e(TAG, "File not open");
                 return TextToSpeech.ERROR;
             }
             try {
                 // Write WAV header at start of file
-                mFile.seek(0);
-                int dataLength = (int) (mFile.length() - WAV_HEADER_LENGTH);
-                mFile.write(
+                mFileChannel.position(0);
+                int dataLength = (int) (mFileChannel.size() - WAV_HEADER_LENGTH);
+                mFileChannel.write(
                         makeWavHeader(mSampleRateInHz, mAudioFormat, mChannelCount, dataLength));
-                closeFileAndWidenPermissions();
+                closeFile();
                 mDone = true;
                 return TextToSpeech.SUCCESS;
             } catch (IOException ex) {
-                Log.e(TAG, "Failed to write to " + mFileName + ": " + ex);
+                Log.e(TAG, "Failed to write to output file descriptor", ex);
                 cleanUp();
                 return TextToSpeech.ERROR;
             }
@@ -199,7 +195,7 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
         }
     }
 
-    private byte[] makeWavHeader(int sampleRateInHz, int audioFormat, int channelCount,
+    private ByteBuffer makeWavHeader(int sampleRateInHz, int audioFormat, int channelCount,
             int dataLength) {
         // TODO: is AudioFormat.ENCODING_DEFAULT always the same as ENCODING_PCM_16BIT?
         int sampleSizeInBytes = (audioFormat == AudioFormat.ENCODING_PCM_8BIT ? 1 : 2);
@@ -224,8 +220,9 @@ class FileSynthesisCallback extends AbstractSynthesisCallback {
         header.putShort(bitsPerSample);
         header.put(new byte[]{ 'd', 'a', 't', 'a' });
         header.putInt(dataLength);
+        header.flip();
 
-        return headerBuf;
+        return header;
     }
 
 }

@@ -49,13 +49,6 @@ perform interprocess communication</li>
       LocalService}</a></li>
 </ol>
 
-<h2>Articles</h2>
-<ol>
-  <li><a href="{@docRoot}resources/articles/multitasking-android-way.html">Multitasking the Android Way</a></li>
-  <li><a href="{@docRoot}resources/articles/service-api-changes-starting-with.html">Service API changes starting
-      with Android 2.0</a></li>
-</ol>
-
 <h2>See also</h2>
 <ol>
 <li><a href="{@docRoot}guide/components/bound-services.html">Bound Services</a></li>
@@ -258,19 +251,6 @@ document.</p>
 
 
 <h2 id="CreatingStartedService">Creating a Started Service</h2>
-
-<div class="sidebox-wrapper">
-<div class="sidebox">
-  <h2>Targeting Android 1.6 or lower</h2>
-  <p>If you're building an application for Android 1.6 or lower, you need
-to implement {@link android.app.Service#onStart onStart()}, instead of {@link
-android.app.Service#onStartCommand onStartCommand()} (in Android 2.0,
-{@link android.app.Service#onStart onStart()} was deprecated in favor of {@link
-android.app.Service#onStartCommand onStartCommand()}).</p>
-  <p>For more information about providing compatibility with versions of Android older than 2.0, see
-the {@link android.app.Service#onStartCommand onStartCommand()} documentation.</p>
-</div>
-</div>
 
 <p>A started service is one that another component starts by calling {@link
 android.content.Context#startService startService()}, resulting in a call to the service's
@@ -694,8 +674,11 @@ Intent notificationIntent = new Intent(this, ExampleActivity.class);
 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 notification.setLatestEventInfo(this, getText(R.string.notification_title),
         getText(R.string.notification_message), pendingIntent);
-startForeground(ONGOING_NOTIFICATION, notification);
+startForeground(ONGOING_NOTIFICATION_ID, notification);
 </pre>
+
+<p class="caution"><strong>Caution:</strong> The integer ID you give to {@link
+android.app.Service#startForeground startForeground()} must not be 0.</p>
 
 
 <p>To remove the service from the foreground, call {@link
@@ -703,14 +686,6 @@ android.app.Service#stopForeground stopForeground()}. This method takes a boolea
 whether to remove the status bar notification as well. This method does <em>not</em> stop the
 service. However, if you stop the service while it's still running in the foreground, then the
 notification is also removed.</p>
-
-<p class="note"><strong>Note:</strong> The methods {@link
-android.app.Service#startForeground startForeground()} and {@link
-android.app.Service#stopForeground stopForeground()} were introduced in Android 2.0 (API Level
-5). In order to run your service in the foreground on older versions of the platform, you must
-use the previous {@code setForeground()} method&mdash;see the {@link
-android.app.Service#startForeground startForeground()} documentation for information about how
-to provide backward compatibility.</p>
 
 <p>For more information about notifications, see <a
 href="{@docRoot}guide/topics/ui/notifiers/notifications.html">Creating Status Bar
@@ -762,15 +737,6 @@ stopSelf()} does not actually stop the service until all clients unbind. </p>
 changes in the service's state and perform work at the appropriate times. The following skeleton
 service demonstrates each of the lifecycle methods:</p>
 
-
-<div class="figure" style="width:432px">
-<img src="{@docRoot}images/service_lifecycle.png" alt="" />
-<p class="img-caption"><strong>Figure 2.</strong> The service lifecycle. The diagram on the left
-shows the lifecycle when the service is created with {@link android.content.Context#startService
-startService()} and the diagram on the right shows the lifecycle when the service is created
-with {@link android.content.Context#bindService bindService()}.</p>
-</div>
-
 <pre>
 public class ExampleService extends Service {
     int mStartMode;       // indicates how to behave if the service is killed
@@ -810,6 +776,12 @@ public class ExampleService extends Service {
 
 <p class="note"><strong>Note:</strong> Unlike the activity lifecycle callback methods, you are
 <em>not</em> required to call the superclass implementation of these callback methods.</p>
+
+<img src="{@docRoot}images/service_lifecycle.png" alt="" />
+<p class="img-caption"><strong>Figure 2.</strong> The service lifecycle. The diagram on the left
+shows the lifecycle when the service is created with {@link android.content.Context#startService
+startService()} and the diagram on the right shows the lifecycle when the service is created
+with {@link android.content.Context#bindService bindService()}.</p>
 
 <p>By implementing these methods, you can monitor two nested loops of the service's lifecycle: </p>
 

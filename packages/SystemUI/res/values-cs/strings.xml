@@ -58,6 +58,9 @@
     <string name="label_view" msgid="6304565553218192990">"Zobrazit"</string>
     <string name="always_use_device" msgid="1450287437017315906">"Pro toto zařízení USB použít jako výchozí"</string>
     <string name="always_use_accessory" msgid="1210954576979621596">"Pro toto periferní zařízení USB použít jako výchozí"</string>
+    <string name="usb_debugging_title" msgid="4513918393387141949">"Povolit ladění USB?"</string>
+    <string name="usb_debugging_message" msgid="2220143855912376496">"Digitální otisk RSA počítače je:"\n"<xliff:g id="FINGERPRINT">%1$s</xliff:g>"</string>
+    <string name="usb_debugging_always" msgid="303335496705863070">"Vždy povolit z tohoto počítače"</string>
     <string name="compat_mode_on" msgid="6623839244840638213">"Přiblížit na celou obrazovku"</string>
     <string name="compat_mode_off" msgid="4434467572461327898">"Na celou obrazovku"</string>
     <string name="compat_mode_help_header" msgid="7969493989397529910">"Úprava velikosti z důvodu kompatibility"</string>
@@ -97,21 +100,37 @@
     <string name="accessibility_data_two_bars" msgid="6166018492360432091">"Dvě čárky signálu datové sítě."</string>
     <string name="accessibility_data_three_bars" msgid="9167670452395038520">"Tři čárky signálu datové sítě."</string>
     <string name="accessibility_data_signal_full" msgid="2708384608124519369">"Plný signál datové sítě."</string>
-    <string name="accessibility_no_wifi" msgid="7455607460517331976">"Žádná síť Wi-Fi."</string>
-    <string name="accessibility_wifi_one_bar" msgid="6854947280074467207">"Wi-Fi – jedna čárka."</string>
-    <string name="accessibility_wifi_two_bars" msgid="3344340012058984348">"Wi-Fi – dvě čárky."</string>
-    <string name="accessibility_wifi_three_bars" msgid="928322805193265041">"Wi-Fi – tři čárky."</string>
-    <string name="accessibility_wifi_signal_full" msgid="1275764416228473932">"Plný signál sítě Wi-Fi."</string>
+    <string name="accessibility_wifi_off" msgid="3177380296697933627">"Síť Wi-Fi je vypnuta."</string>
+    <string name="accessibility_no_wifi" msgid="1425476551827924474">"Síť Wi-Fi odpojena."</string>
+    <string name="accessibility_wifi_one_bar" msgid="7735893178010724377">"Jedna čárka signálu sítě Wi-Fi."</string>
+    <string name="accessibility_wifi_two_bars" msgid="4994274250497262434">"Dvě čárky signálu sítě Wi-Fi."</string>
+    <string name="accessibility_wifi_three_bars" msgid="3495755044276588384">"Tři čárky signálu sítě Wi-Fi."</string>
+    <string name="accessibility_wifi_signal_full" msgid="6853561303586480376">"Plný signál sítě Wi-Fi."</string>
     <string name="accessibility_no_wimax" msgid="4329180129727630368">"Žádný signál sítě WiMAX."</string>
     <string name="accessibility_wimax_one_bar" msgid="4170994299011863648">"Jedna čárka signálu sítě WiMAX."</string>
     <string name="accessibility_wimax_two_bars" msgid="9176236858336502288">"Dvě čárky signálu sítě WiMAX."</string>
     <string name="accessibility_wimax_three_bars" msgid="6116551636752103927">"Tři čárky signálu sítě WiMAX."</string>
     <string name="accessibility_wimax_signal_full" msgid="2768089986795579558">"Plný signál sítě WiMAX."</string>
+    <string name="accessibility_no_signal" msgid="7064645320782585167">"Není signál."</string>
+    <string name="accessibility_not_connected" msgid="6395326276213402883">"Nepřipojeno."</string>
+    <string name="accessibility_zero_bars" msgid="3806060224467027887">"Žádná čárka."</string>
+    <string name="accessibility_one_bar" msgid="1685730113192081895">"Jedna čárka."</string>
+    <string name="accessibility_two_bars" msgid="6437363648385206679">"Dvě čárky."</string>
+    <string name="accessibility_three_bars" msgid="2648241415119396648">"Tři čárky."</string>
+    <string name="accessibility_signal_full" msgid="9122922886519676839">"Plný signál."</string>
+    <string name="accessibility_desc_on" msgid="2385254693624345265">"Zapnuto."</string>
+    <string name="accessibility_desc_off" msgid="6475508157786853157">"Vypnuto."</string>
+    <string name="accessibility_desc_connected" msgid="8366256693719499665">"Připojeno."</string>
     <string name="accessibility_data_connection_gprs" msgid="1606477224486747751">"GPRS"</string>
+    <string name="accessibility_data_connection_1x" msgid="994133468120244018">"1 X"</string>
+    <string name="accessibility_data_connection_hspa" msgid="2032328855462645198">"HSPA"</string>
     <string name="accessibility_data_connection_3g" msgid="8628562305003568260">"3G"</string>
     <string name="accessibility_data_connection_3.5g" msgid="8664845609981692001">"3,5G"</string>
     <string name="accessibility_data_connection_4g" msgid="7741000750630089612">"4G"</string>
+    <!-- no translation found for accessibility_data_connection_lte (5413468808637540658) -->
+    <skip />
     <string name="accessibility_data_connection_cdma" msgid="6132648193978823023">"CDMA"</string>
+    <string name="accessibility_data_connection_roaming" msgid="5977362333466556094">"Roaming"</string>
     <string name="accessibility_data_connection_edge" msgid="4477457051631979278">"Edge"</string>
     <string name="accessibility_data_connection_wifi" msgid="2324496756590645221">"Wi-Fi"</string>
     <string name="accessibility_no_sim" msgid="8274017118472455155">"Žádná SIM karta."</string>
@@ -129,6 +148,17 @@
     <string name="accessibility_ringer_vibrate" msgid="666585363364155055">"Vibrační vyzvánění."</string>
     <string name="accessibility_ringer_silent" msgid="9061243307939135383">"Tiché vyzvánění."</string>
     <string name="accessibility_recents_item_dismissed" msgid="6803574935084867070">"Aplikace <xliff:g id="APP">%s</xliff:g> byla odebrána."</string>
+    <string name="accessibility_notification_dismissed" msgid="854211387186306927">"Oznámení je zavřeno."</string>
+    <string name="accessibility_desc_notification_shade" msgid="4690274844447504208">"Panel oznámení."</string>
+    <string name="accessibility_desc_quick_settings" msgid="6186378411582437046">"Rychlé nastavení."</string>
+    <string name="accessibility_desc_recent_apps" msgid="9014032916410590027">"Naposledy použité aplikace"</string>
+    <string name="accessibility_quick_settings_user" msgid="1104846699869476855">"Uživatel <xliff:g id="USER">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_wifi" msgid="6099781031669728709">"<xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="NETWORK">%2$s</xliff:g>"</string>
+    <string name="accessibility_quick_settings_mobile" msgid="4876806564086241341">"Mobil: <xliff:g id="SIGNAL">%1$s</xliff:g>. <xliff:g id="TYPE">%2$s</xliff:g>. <xliff:g id="NETWORK">%3$s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_battery" msgid="1480931583381408972">"Baterie: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_airplane" msgid="4196876722090224753">"Režim V letadle: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_bluetooth" msgid="5749054971341882340">"Bluetooth: <xliff:g id="STATE">%s</xliff:g>."</string>
+    <string name="accessibility_quick_settings_alarm" msgid="3959908972897295660">"Budík je nastaven na <xliff:g id="TIME">%s</xliff:g>."</string>
     <string name="data_usage_disabled_dialog_3g_title" msgid="5257833881698644687">"Datové přenosy 2G a 3G jsou zakázány"</string>
     <string name="data_usage_disabled_dialog_4g_title" msgid="4789143363492682629">"Datové přenosy 4G jsou zakázány"</string>
     <string name="data_usage_disabled_dialog_mobile_title" msgid="1046047248844821202">"Mobilní data jsou zakázána"</string>
@@ -140,11 +170,41 @@
     <string name="gps_notification_searching_text" msgid="8574247005642736060">"Vyhledávání satelitů GPS"</string>
     <string name="gps_notification_found_text" msgid="4619274244146446464">"Poloha nastavena pomocí systému GPS"</string>
     <string name="accessibility_clear_all" msgid="5235938559247164925">"Vymazat všechna oznámení."</string>
-    <string name="dreams_dock_launcher" msgid="3541196417659166245">"Aktivovat spořič obrazovky"</string>
     <string name="status_bar_notification_inspect_item_title" msgid="1163547729015390250">"Informace o aplikaci"</string>
+    <string name="close_universe" msgid="3736513750241754348">"Zavřít"</string>
     <string name="notifications_off_title" msgid="8936620513608443224">"Oznámení jsou vypnuta"</string>
     <string name="notifications_off_text" msgid="2529001315769385273">"Chcete-li oznámení znovu zapnout, klepněte sem."</string>
     <string name="accessibility_rotation_lock_off" msgid="4062780228931590069">"Obrazovka se automaticky otočí."</string>
     <string name="accessibility_rotation_lock_on_landscape" msgid="6731197337665366273">"Obrazovka je uzamčena v orientaci na šířku."</string>
     <string name="accessibility_rotation_lock_on_portrait" msgid="5809367521644012115">"Obrazovka je uzamčena v orientaci na výšku."</string>
+    <string name="jelly_bean_dream_name" msgid="5992026543636816792">"BeanFlinger"</string>
+    <string name="start_dreams" msgid="7219575858348719790">"Spořič obrazovky"</string>
+    <string name="ethernet_label" msgid="7967563676324087464">"Ethernet"</string>
+    <string name="quick_settings_airplane_mode_label" msgid="5510520633448831350">"Režim V letadle"</string>
+    <string name="quick_settings_battery_charging_label" msgid="490074774465309209">"Nabíjení, <xliff:g id="NUMBER">%d</xliff:g> <xliff:g id="PERCENT">%%</xliff:g>"</string>
+    <string name="quick_settings_battery_charged_label" msgid="8865413079414246081">"Nabito"</string>
+    <string name="quick_settings_bluetooth_label" msgid="6304190285170721401">"Bluetooth"</string>
+    <string name="quick_settings_bluetooth_multiple_devices_label" msgid="3912245565613684735">"Bluetooth (<xliff:g id="NUMBER">%d</xliff:g> zařízení)"</string>
+    <string name="quick_settings_bluetooth_off_label" msgid="8159652146149219937">"Rozhraní Bluetooth je vypnuto"</string>
+    <string name="quick_settings_brightness_label" msgid="6968372297018755815">"Jas"</string>
+    <string name="quick_settings_rotation_unlocked_label" msgid="336054930362580584">"Automatické otáčení"</string>
+    <string name="quick_settings_rotation_locked_label" msgid="8058646447242565486">"Otáčení je uzamčeno"</string>
+    <string name="quick_settings_ime_label" msgid="7073463064369468429">"Metoda zadávání dat"</string>
+    <string name="quick_settings_location_label" msgid="3292451598267467545">"Používaná poloha"</string>
+    <string name="quick_settings_media_device_label" msgid="1302906836372603762">"Mediální zařízení"</string>
+    <string name="quick_settings_rssi_label" msgid="7725671335550695589">"RSSI"</string>
+    <string name="quick_settings_rssi_emergency_only" msgid="2713774041672886750">"Pouze tísňová volání"</string>
+    <string name="quick_settings_settings_label" msgid="5326556592578065401">"Nastavení"</string>
+    <string name="quick_settings_time_label" msgid="4635969182239736408">"Doba"</string>
+    <string name="quick_settings_user_label" msgid="5238995632130897840">"Já"</string>
+    <string name="quick_settings_wifi_label" msgid="9135344704899546041">"Wi-Fi"</string>
+    <string name="quick_settings_wifi_not_connected" msgid="7171904845345573431">"Nepřipojeno"</string>
+    <string name="quick_settings_wifi_no_network" msgid="2221993077220856376">"Žádná síť"</string>
+    <string name="quick_settings_wifi_off_label" msgid="7558778100843885864">"Wi-Fi vypnuta"</string>
+    <string name="quick_settings_wifi_display_label" msgid="6893592964463624333">"Displej přes Wi-Fi"</string>
+    <string name="quick_settings_wifi_display_no_connection_label" msgid="2355298740765736918">"Bezdrátový displej"</string>
+    <string name="quick_settings_brightness_dialog_title" msgid="8599674057673605368">"Jas"</string>
+    <string name="quick_settings_brightness_dialog_auto_brightness_label" msgid="5064982743784071218">"AUTOMATICKY"</string>
+    <string name="status_bar_help_title" msgid="1199237744086469217">"Zde se zobrazují oznámení"</string>
+    <string name="status_bar_help_text" msgid="7874607155052076323">"Můžete je kdykoli zobrazit tím, že přejedete prstem dolů."\n"Přejedete-li prstem dolů ještě jednou, zobrazí se ovládací prvky systému."</string>
 </resources>

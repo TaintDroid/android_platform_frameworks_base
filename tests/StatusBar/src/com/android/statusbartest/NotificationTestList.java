@@ -28,17 +28,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.util.Log;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.widget.RemoteViews;
-import android.widget.TextView;
-import android.widget.ProgressBar;
 import android.os.PowerManager;
 
 // private NM API
 import android.app.INotificationManager;
-import com.android.internal.statusbar.StatusBarNotification;
 
 public class NotificationTestList extends TestActivity
 {
@@ -795,10 +793,12 @@ public class NotificationTestList extends TestActivity
                     INotificationManager directLine = mNM.getService();
                     directLine.enqueueNotificationWithTag(
                             getPackageName(),
+                            getPackageName(),
                             null, 
                             100, 
                             n,
-                            idOut);
+                            idOut,
+                            UserHandle.myUserId());
                 } catch (android.os.RemoteException ex) {
                     // oh well
                 }
@@ -819,10 +819,12 @@ public class NotificationTestList extends TestActivity
                     INotificationManager directLine = mNM.getService();
                     directLine.enqueueNotificationWithTag(
                             getPackageName(),
-                            null, 
+                            getPackageName(),
+                            null,
                             200, 
                             n,
-                            idOut);
+                            idOut,
+                            UserHandle.myUserId());
                 } catch (android.os.RemoteException ex) {
                     // oh well
                 }
@@ -843,10 +845,12 @@ public class NotificationTestList extends TestActivity
                     INotificationManager directLine = mNM.getService();
                     directLine.enqueueNotificationWithTag(
                             getPackageName(),
-                            null, 
+                            getPackageName(),
+                            null,
                             1, 
                             n,
-                            idOut);
+                            idOut,
+                            UserHandle.myUserId());
                 } catch (android.os.RemoteException ex) {
                     // oh well
                 }

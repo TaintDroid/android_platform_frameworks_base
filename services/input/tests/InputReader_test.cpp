@@ -138,8 +138,23 @@ public:
 
     void setDisplayInfo(int32_t displayId, int32_t width, int32_t height, int32_t orientation) {
         // Set the size of both the internal and external display at the same time.
-        mConfig.setDisplayInfo(displayId, false /*external*/, width, height, orientation);
-        mConfig.setDisplayInfo(displayId, true /*external*/, width, height, orientation);
+        bool isRotated = (orientation == DISPLAY_ORIENTATION_90
+                || orientation == DISPLAY_ORIENTATION_270);
+        DisplayViewport v;
+        v.displayId = displayId;
+        v.orientation = orientation;
+        v.logicalLeft = 0;
+        v.logicalTop = 0;
+        v.logicalRight = isRotated ? height : width;
+        v.logicalBottom = isRotated ? width : height;
+        v.physicalLeft = 0;
+        v.physicalTop = 0;
+        v.physicalRight = isRotated ? height : width;
+        v.physicalBottom = isRotated ? width : height;
+        v.deviceWidth = isRotated ? height : width;
+        v.deviceHeight = isRotated ? width : height;
+        mConfig.setDisplayInfo(false /*external*/, v);
+        mConfig.setDisplayInfo(true /*external*/, v);
     }
 
     void addExcludedDeviceName(const String8& deviceName) {
@@ -474,6 +489,7 @@ private:
                 return OK;
             }
         }
+        outAxisInfo->clear();
         return -1;
     }
 
@@ -1477,12 +1493,16 @@ TEST_F(SwitchInputMapperTest, Process) {
     addMapperAndConfigure(mapper);
 
     process(mapper, ARBITRARY_TIME, DEVICE_ID, EV_SW, SW_LID, 1);
+    process(mapper, ARBITRARY_TIME, DEVICE_ID, EV_SW, SW_JACK_PHYSICAL_INSERT, 1);
+    process(mapper, ARBITRARY_TIME, DEVICE_ID, EV_SW, SW_HEADPHONE_INSERT, 0);
+    process(mapper, ARBITRARY_TIME, DEVICE_ID, EV_SYN, SYN_REPORT, 0);
 
     NotifySwitchArgs args;
     ASSERT_NO_FATAL_FAILURE(mFakeListener->assertNotifySwitchWasCalled(&args));
     ASSERT_EQ(ARBITRARY_TIME, args.eventTime);
-    ASSERT_EQ(SW_LID, args.switchCode);
-    ASSERT_EQ(1, args.switchValue);
+    ASSERT_EQ((1 << SW_LID) | (1 << SW_JACK_PHYSICAL_INSERT), args.switchValues);
+    ASSERT_EQ((1 << SW_LID) | (1 << SW_JACK_PHYSICAL_INSERT) | (1 << SW_HEADPHONE_INSERT),
+            args.switchMask);
     ASSERT_EQ(uint32_t(0), args.policyFlags);
 }
 

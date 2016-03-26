@@ -1,6 +1,5 @@
-page.title=Grid
-parent.title=Layouts
-parent.link=layout-objects.html
+page.title=Grid View
+page.tags="gridview"
 @jd:body
 <div id="qv-wrapper">
 <div id="qv">
@@ -22,10 +21,15 @@ two-dimensional,
 scrollable grid. The grid items are automatically inserted to the layout using a {@link
 android.widget.ListAdapter}.</p>
 
+<p>For an introduction to how you can dynamically insert views using an adapter, read
+<a href="{@docRoot}guide/topics/ui/declaring-layout.html#AdapterViews">Building Layouts with
+  an Adapter</a>.</p>
+
 <img src="{@docRoot}images/ui/gridview.png" alt="" />
 
 
 <h2 id="example">Example</h2>
+
 <p>In this tutorial, you'll create a grid of image thumbnails. When an item is selected, a
 toast message will display the position of the image.</p>
 
@@ -165,7 +169,7 @@ image is resized and cropped to fit in these dimensions, as appropriate.</li>
 be cropped toward the center (if necessary).</li>
   <li>{@link android.widget.ImageView#setPadding(int,int,int,int)} defines the padding for all
 sides. (Note that, if the images have different aspect-ratios, then less
-padding will cause for more cropping of the image if it does not match
+padding will cause more cropping of the image if it does not match
 the dimensions given to the ImageView.)</li>
 </ul>
 

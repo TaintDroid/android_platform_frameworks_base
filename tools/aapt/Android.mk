@@ -20,6 +20,7 @@ LOCAL_SRC_FILES := \
 	StringPool.cpp \
 	XMLNode.cpp \
 	ResourceFilter.cpp \
+	ResourceIdCache.cpp \
 	ResourceTable.cpp \
 	Images.cpp \
 	Resource.cpp \
@@ -38,14 +39,14 @@ LOCAL_C_INCLUDES += external/libpng
 LOCAL_C_INCLUDES += external/zlib
 LOCAL_C_INCLUDES += build/libs/host/include
 
-#LOCAL_WHOLE_STATIC_LIBRARIES := 
 LOCAL_STATIC_LIBRARIES := \
 	libhost \
 	libandroidfw \
 	libutils \
 	libcutils \
 	libexpat \
-	libpng
+	libpng \
+	liblog
 
 ifeq ($(HOST_OS),linux)
 LOCAL_LDLIBS += -lrt -ldl -lpthread

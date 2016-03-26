@@ -62,6 +62,12 @@ public class ScriptC extends Script {
         setID(id);
     }
 
+    /**
+     * Name of the file that holds the object cache.
+     */
+    private static final String CACHE_PATH = "com.android.renderscript.cache";
+
+    static String mCachePath;
 
     private static synchronized int internalCreate(RenderScript rs, Resources resources, int resourceID) {
         byte[] pgm;
@@ -94,7 +100,13 @@ public class ScriptC extends Script {
 
         String resName = resources.getResourceEntryName(resourceID);
 
-        Log.v(TAG, "Create script for resource = " + resName);
-        return rs.nScriptCCreate(resName, rs.mCachePath, pgm, pgmLength);
+        // Create the RS cache path if we haven't done so already.
+        if (mCachePath == null) {
+            File f = new File(rs.mCacheDir, CACHE_PATH);
+            mCachePath = f.getAbsolutePath();
+            f.mkdirs();
+        }
+        //        Log.v(TAG, "Create script for resource = " + resName);
+        return rs.nScriptCCreate(resName, mCachePath, pgm, pgmLength);
     }
 }

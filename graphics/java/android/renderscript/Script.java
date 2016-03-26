@@ -16,10 +16,105 @@
 
 package android.renderscript;
 
+import android.util.SparseArray;
+
 /**
  *
  **/
 public class Script extends BaseObj {
+
+    /**
+     * KernelID is an identifier for a Script + root function pair. It is used
+     * as an identifier for ScriptGroup creation.
+     *
+     * This class should not be directly created. Instead use the method in the
+     * reflected or intrinsic code "getKernelID_funcname()".
+     *
+     */
+    public static final class KernelID extends BaseObj {
+        Script mScript;
+        int mSlot;
+        int mSig;
+        KernelID(int id, RenderScript rs, Script s, int slot, int sig) {
+            super(id, rs);
+            mScript = s;
+            mSlot = slot;
+            mSig = sig;
+        }
+    }
+
+    private final SparseArray<KernelID> mKIDs = new SparseArray<KernelID>();
+    /**
+     * Only to be used by generated reflected classes.
+     *
+     *
+     * @param slot
+     * @param sig
+     * @param ein
+     * @param eout
+     *
+     * @return KernelID
+     */
+    protected KernelID createKernelID(int slot, int sig, Element ein, Element eout) {
+        KernelID k = mKIDs.get(slot);
+        if (k != null) {
+            return k;
+        }
+
+        int id = mRS.nScriptKernelIDCreate(getID(mRS), slot, sig);
+        if (id == 0) {
+            throw new RSDriverException("Failed to create KernelID");
+        }
+
+        k = new KernelID(id, mRS, this, slot, sig);
+        mKIDs.put(slot, k);
+        return k;
+    }
+
+    /**
+     * FieldID is an identifier for a Script + exported field pair. It is used
+     * as an identifier for ScriptGroup creation.
+     *
+     * This class should not be directly created. Instead use the method in the
+     * reflected or intrinsic code "getFieldID_funcname()".
+     *
+     */
+    public static final class FieldID extends BaseObj {
+        Script mScript;
+        int mSlot;
+        FieldID(int id, RenderScript rs, Script s, int slot) {
+            super(id, rs);
+            mScript = s;
+            mSlot = slot;
+        }
+    }
+
+    private final SparseArray<FieldID> mFIDs = new SparseArray();
+    /**
+     * Only to be used by generated reflected classes.
+     *
+     * @param slot
+     * @param e
+     *
+     * @return FieldID
+     */
+    protected FieldID createFieldID(int slot, Element e) {
+        FieldID f = mFIDs.get(slot);
+        if (f != null) {
+            return f;
+        }
+
+        int id = mRS.nScriptFieldIDCreate(getID(mRS), slot);
+        if (id == 0) {
+            throw new RSDriverException("Failed to create FieldID");
+        }
+
+        f = new FieldID(id, mRS, this, slot);
+        mFIDs.put(slot, f);
+        return f;
+    }
+
+
     /**
      * Only intended for use by generated reflected code.
      *
@@ -71,6 +166,39 @@ public class Script extends BaseObj {
         mRS.nScriptForEach(getID(mRS), slot, in_id, out_id, params);
     }
 
+    /**
+     * Only intended for use by generated reflected code.
+     *
+     * @param slot
+     * @param ain
+     * @param aout
+     * @param v
+     * @param sc
+     */
+    protected void forEach(int slot, Allocation ain, Allocation aout, FieldPacker v, LaunchOptions sc) {
+        if (ain == null && aout == null) {
+            throw new RSIllegalArgumentException(
+                "At least one of ain or aout is required to be non-null.");
+        }
+
+        if (sc == null) {
+            forEach(slot, ain, aout, v);
+            return;
+        }
+        int in_id = 0;
+        if (ain != null) {
+            in_id = ain.getID(mRS);
+        }
+        int out_id = 0;
+        if (aout != null) {
+            out_id = aout.getID(mRS);
+        }
+        byte[] params = null;
+        if (v != null) {
+            params = v.getData();
+        }
+        mRS.nScriptForEachClipped(getID(mRS), slot, in_id, out_id, params, sc.xstart, sc.xend, sc.ystart, sc.yend, sc.zstart, sc.zend);
+    }
 
     Script(int id, RenderScript rs) {
         super(id, rs);
@@ -101,6 +229,9 @@ public class Script extends BaseObj {
     public void setVar(int index, float v) {
         mRS.nScriptSetVarF(getID(mRS), index, v);
     }
+    public float getVarF(int index) {
+        return mRS.nScriptGetVarF(getID(mRS), index);
+    }
 
     /**
      * Only intended for use by generated reflected code.
@@ -110,6 +241,9 @@ public class Script extends BaseObj {
      */
     public void setVar(int index, double v) {
         mRS.nScriptSetVarD(getID(mRS), index, v);
+    }
+    public double getVarD(int index) {
+        return mRS.nScriptGetVarD(getID(mRS), index);
     }
 
     /**
@@ -121,6 +255,10 @@ public class Script extends BaseObj {
     public void setVar(int index, int v) {
         mRS.nScriptSetVarI(getID(mRS), index, v);
     }
+    public int getVarI(int index) {
+        return mRS.nScriptGetVarI(getID(mRS), index);
+    }
+
 
     /**
      * Only intended for use by generated reflected code.
@@ -131,6 +269,10 @@ public class Script extends BaseObj {
     public void setVar(int index, long v) {
         mRS.nScriptSetVarJ(getID(mRS), index, v);
     }
+    public long getVarJ(int index) {
+        return mRS.nScriptGetVarJ(getID(mRS), index);
+    }
+
 
     /**
      * Only intended for use by generated reflected code.
@@ -140,6 +282,9 @@ public class Script extends BaseObj {
      */
     public void setVar(int index, boolean v) {
         mRS.nScriptSetVarI(getID(mRS), index, v ? 1 : 0);
+    }
+    public boolean getVarB(int index) {
+        return mRS.nScriptGetVarI(getID(mRS), index) > 0 ? true : false;
     }
 
     /**
@@ -174,6 +319,16 @@ public class Script extends BaseObj {
         mRS.nScriptSetVarVE(getID(mRS), index, v.getData(), e.getID(mRS), dims);
     }
 
+    /**
+     * Only intended for use by generated reflected code.
+     *
+     * @param index
+     * @param v
+     */
+    public void getVarV(int index, FieldPacker v) {
+        mRS.nScriptGetVarV(getID(mRS), index, v.getData());
+    }
+
     public void setTimeZone(String timeZone) {
         mRS.validate();
         try {
@@ -192,6 +347,10 @@ public class Script extends BaseObj {
     }
 
 
+    /**
+     * Only intended for use by generated reflected code.
+     *
+     */
     public static class FieldBase {
         protected Element mElement;
         protected Allocation mAllocation;
@@ -222,6 +381,126 @@ public class Script extends BaseObj {
         //@Override
         public void updateAllocation() {
         }
+    }
+
+
+    /**
+     * Class used to specify clipping for a kernel launch.
+     *
+     */
+    public static final class LaunchOptions {
+        private int xstart = 0;
+        private int ystart = 0;
+        private int xend = 0;
+        private int yend = 0;
+        private int zstart = 0;
+        private int zend = 0;
+        private int strategy;
+
+        /**
+         * Set the X range.  If the end value is set to 0 the X dimension is not
+         * clipped.
+         *
+         * @param xstartArg Must be >= 0
+         * @param xendArg Must be >= xstartArg
+         *
+         * @return LaunchOptions
+         */
+        public LaunchOptions setX(int xstartArg, int xendArg) {
+            if (xstartArg < 0 || xendArg <= xstartArg) {
+                throw new RSIllegalArgumentException("Invalid dimensions");
+            }
+            xstart = xstartArg;
+            xend = xendArg;
+            return this;
+        }
+
+        /**
+         * Set the Y range.  If the end value is set to 0 the Y dimension is not
+         * clipped.
+         *
+         * @param ystartArg Must be >= 0
+         * @param yendArg Must be >= ystartArg
+         *
+         * @return LaunchOptions
+         */
+        public LaunchOptions setY(int ystartArg, int yendArg) {
+            if (ystartArg < 0 || yendArg <= ystartArg) {
+                throw new RSIllegalArgumentException("Invalid dimensions");
+            }
+            ystart = ystartArg;
+            yend = yendArg;
+            return this;
+        }
+
+        /**
+         * Set the Z range.  If the end value is set to 0 the Z dimension is not
+         * clipped.
+         *
+         * @param zstartArg Must be >= 0
+         * @param zendArg Must be >= zstartArg
+         *
+         * @return LaunchOptions
+         */
+        public LaunchOptions setZ(int zstartArg, int zendArg) {
+            if (zstartArg < 0 || zendArg <= zstartArg) {
+                throw new RSIllegalArgumentException("Invalid dimensions");
+            }
+            zstart = zstartArg;
+            zend = zendArg;
+            return this;
+        }
+
+
+        /**
+         * Returns the current X start
+         *
+         * @return int current value
+         */
+        public int getXStart() {
+            return xstart;
+        }
+        /**
+         * Returns the current X end
+         *
+         * @return int current value
+         */
+        public int getXEnd() {
+            return xend;
+        }
+        /**
+         * Returns the current Y start
+         *
+         * @return int current value
+         */
+        public int getYStart() {
+            return ystart;
+        }
+        /**
+         * Returns the current Y end
+         *
+         * @return int current value
+         */
+        public int getYEnd() {
+            return yend;
+        }
+        /**
+         * Returns the current Z start
+         *
+         * @return int current value
+         */
+        public int getZStart() {
+            return zstart;
+        }
+        /**
+         * Returns the current Z end
+         *
+         * @return int current value
+         */
+        public int getZEnd() {
+            return zend;
+        }
+
     }
 }
 

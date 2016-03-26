@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class Installer {
+public final class Installer {
     private static final String TAG = "Installer";
 
     private static final boolean LOCAL_DEBUG = false;
@@ -188,7 +188,7 @@ class Installer {
         }
     }
 
-    public int install(String name, int uid, int gid) {
+    public int install(String name, int uid, int gid, String seinfo) {
         StringBuilder builder = new StringBuilder("install");
         builder.append(' ');
         builder.append(name);
@@ -196,6 +196,8 @@ class Installer {
         builder.append(uid);
         builder.append(' ');
         builder.append(gid);
+        builder.append(' ');
+        builder.append(seinfo != null ? seinfo : "!");
         return execute(builder.toString());
     }
 
@@ -254,10 +256,12 @@ class Installer {
         return execute(builder.toString());
     }
 
-    public int deleteCacheFiles(String name) {
+    public int deleteCacheFiles(String name, int userId) {
         StringBuilder builder = new StringBuilder("rmcache");
         builder.append(' ');
         builder.append(name);
+        builder.append(' ');
+        builder.append(userId);
         return execute(builder.toString());
     }
 
@@ -288,27 +292,6 @@ class Installer {
         return execute(builder.toString());
     }
 
-    /**
-     * Clone all the package data directories from srcUserId to targetUserId. If copyData is true,
-     * some of the data is also copied, otherwise just empty directories are created with the
-     * correct access rights.
-     * @param srcUserId user to copy the data directories from
-     * @param targetUserId user to copy the data directories to
-     * @param copyData whether the data itself is to be copied. If false, empty directories are
-     * created.
-     * @return success/error code
-     */
-    public int cloneUserData(int srcUserId, int targetUserId, boolean copyData) {
-        StringBuilder builder = new StringBuilder("cloneuserdata");
-        builder.append(' ');
-        builder.append(srcUserId);
-        builder.append(' ');
-        builder.append(targetUserId);
-        builder.append(' ');
-        builder.append(copyData ? '1' : '0');
-        return execute(builder.toString());
-    }
-
     public boolean ping() {
         if (execute("ping") < 0) {
             return false;
@@ -324,27 +307,17 @@ class Installer {
         return execute(builder.toString());
     }
 
-    /*
-     * @param packagePathSuffix The name of the path relative to install
-     * directory. Say if the path name is /data/app/com.test-1.apk, the package
-     * suffix path will be com.test-1
-     */
-    public int setForwardLockPerm(String packagePathSuffix, int gid) {
-        StringBuilder builder = new StringBuilder("protect");
-        builder.append(' ');
-        builder.append(packagePathSuffix);
-        builder.append(' ');
-        builder.append(gid);
-        return execute(builder.toString());
-    }
-
-    public int getSizeInfo(String pkgName, String apkPath, String fwdLockApkPath,
-            String asecPath, PackageStats pStats) {
+    public int getSizeInfo(String pkgName, int persona, String apkPath, String libDirPath,
+            String fwdLockApkPath, String asecPath, PackageStats pStats) {
         StringBuilder builder = new StringBuilder("getsize");
         builder.append(' ');
         builder.append(pkgName);
         builder.append(' ');
+        builder.append(persona);
+        builder.append(' ');
         builder.append(apkPath);
+        builder.append(' ');
+        builder.append(libDirPath != null ? libDirPath : "!");
         builder.append(' ');
         builder.append(fwdLockApkPath != null ? fwdLockApkPath : "!");
         builder.append(' ');
@@ -371,12 +344,20 @@ class Installer {
         return execute("movefiles");
     }
 
-    public int linkNativeLibraryDirectory(String dataPath, String nativeLibPath) {
+    /**
+     * Links the native library directory in an application's directory to its
+     * real location.
+     *
+     * @param dataPath data directory where the application is
+     * @param nativeLibPath target native library path
+     * @return -1 on error
+     */
+    public int linkNativeLibraryDirectory(String dataPath, String nativeLibPath, int userId) {
         if (dataPath == null) {
-            Slog.e(TAG, "unlinkNativeLibraryDirectory dataPath is null");
+            Slog.e(TAG, "linkNativeLibraryDirectory dataPath is null");
             return -1;
         } else if (nativeLibPath == null) {
-            Slog.e(TAG, "unlinkNativeLibraryDirectory nativeLibPath is null");
+            Slog.e(TAG, "linkNativeLibraryDirectory nativeLibPath is null");
             return -1;
         }
 
@@ -384,18 +365,8 @@ class Installer {
         builder.append(dataPath);
         builder.append(' ');
         builder.append(nativeLibPath);
-
-        return execute(builder.toString());
-    }
-
-    public int unlinkNativeLibraryDirectory(String dataPath) {
-        if (dataPath == null) {
-            Slog.e(TAG, "unlinkNativeLibraryDirectory dataPath is null");
-            return -1;
-        }
-
-        StringBuilder builder = new StringBuilder("unlinklib ");
-        builder.append(dataPath);
+        builder.append(' ');
+        builder.append(userId);
 
         return execute(builder.toString());
     }

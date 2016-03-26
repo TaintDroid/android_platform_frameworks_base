@@ -367,7 +367,7 @@ public class MediaMetadataRetriever
      * counterparts in include/media/mediametadataretriever.h!
      */
     /**
-     * The metadata key to retrieve the numberic string describing the
+     * The metadata key to retrieve the numeric string describing the
      * order of the audio data source on its original recording.
      */
     public static final int METADATA_KEY_CD_TRACK_NUMBER = 0;
@@ -483,5 +483,10 @@ public class MediaMetadataRetriever
      * of 180 degrees will be retrieved as "-90.0000+180.0000", for instance.
      */
     public static final int METADATA_KEY_LOCATION        = 23;
+    /**
+     * This key retrieves the video rotation angle in degrees, if available.
+     * The video rotation angle may be 0, 90, 180, or 270 degrees.
+     */
+    public static final int METADATA_KEY_VIDEO_ROTATION = 24;
     // Add more here...
 }

@@ -36,10 +36,10 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.os.Process;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.LogPrinter;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.IWindowSession;
 import android.view.InputChannel;
@@ -50,9 +50,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewRootImpl;
 import android.view.WindowManager;
-import android.view.WindowManagerImpl;
+import android.view.WindowManagerGlobal;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -85,7 +84,7 @@ public abstract class WallpaperService extends Service {
      * tag.
      */
     public static final String SERVICE_META_DATA = "android.service.wallpaper";
-    
+
     static final String TAG = "WallpaperService";
     static final boolean DEBUG = false;
     
@@ -98,9 +97,9 @@ public abstract class WallpaperService extends Service {
     private static final int MSG_WALLPAPER_OFFSETS = 10020;
     private static final int MSG_WALLPAPER_COMMAND = 10025;
     private static final int MSG_WINDOW_RESIZED = 10030;
+    private static final int MSG_WINDOW_MOVED = 10035;
     private static final int MSG_TOUCH_EVENT = 10040;
     
-    private Looper mCallbackLooper;
     private final ArrayList<Engine> mActiveEngines
             = new ArrayList<Engine>();
     
@@ -154,6 +153,7 @@ public abstract class WallpaperService extends Service {
         int mCurWindowPrivateFlags = mWindowPrivateFlags;
         final Rect mVisibleInsets = new Rect();
         final Rect mWinFrame = new Rect();
+        final Rect mOverscanInsets = new Rect();
         final Rect mContentInsets = new Rect();
         final Configuration mConfiguration = new Configuration();
         
@@ -253,13 +253,19 @@ public abstract class WallpaperService extends Service {
 
         final BaseIWindow mWindow = new BaseIWindow() {
             @Override
-            public void resized(int w, int h, Rect contentInsets,
+            public void resized(Rect frame, Rect overscanInsets, Rect contentInsets,
                     Rect visibleInsets, boolean reportDraw, Configuration newConfig) {
                 Message msg = mCaller.obtainMessageI(MSG_WINDOW_RESIZED,
                         reportDraw ? 1 : 0);
                 mCaller.sendMessage(msg);
             }
-            
+
+            @Override
+            public void moved(int newX, int newY) {
+                Message msg = mCaller.obtainMessageII(MSG_WINDOW_MOVED, newX, newY);
+                mCaller.sendMessage(msg);
+            }
+
             @Override
             public void dispatchAppVisibility(boolean visible) {
                 // We don't do this in preview mode; we'll let the preview
@@ -290,7 +296,8 @@ public abstract class WallpaperService extends Service {
                     }
                 }
             }
-            
+
+            @Override
             public void dispatchWallpaperCommand(String action, int x, int y,
                     int z, Bundle extras, boolean sync) {
                 synchronized (mLock) {
@@ -567,7 +574,8 @@ public abstract class WallpaperService extends Service {
             final boolean flagsChanged = mCurWindowFlags != mWindowFlags ||
                     mCurWindowPrivateFlags != mWindowPrivateFlags;
             if (forceRelayout || creating || surfaceCreating || formatChanged || sizeChanged
-                    || typeChanged || flagsChanged || redrawNeeded) {
+                    || typeChanged || flagsChanged || redrawNeeded
+                    || !mIWallpaperEngine.mShownReported) {
 
                 if (DEBUG) Log.v(TAG, "Changes: creating=" + creating
                         + " format=" + formatChanged + " size=" + sizeChanged);
@@ -599,13 +607,13 @@ public abstract class WallpaperService extends Service {
 
                     if (!mCreated) {
                         mLayout.type = mIWallpaperEngine.mWindowType;
-                        mLayout.gravity = Gravity.LEFT|Gravity.TOP;
+                        mLayout.gravity = Gravity.START|Gravity.TOP;
                         mLayout.setTitle(WallpaperService.this.getClass().getName());
                         mLayout.windowAnimations =
                                 com.android.internal.R.style.Animation_Wallpaper;
                         mInputChannel = new InputChannel();
-                        if (mSession.add(mWindow, mWindow.mSeq, mLayout, View.VISIBLE, mContentInsets,
-                                mInputChannel) < 0) {
+                        if (mSession.addToDisplay(mWindow, mWindow.mSeq, mLayout, View.VISIBLE,
+                            Display.DEFAULT_DISPLAY, mContentInsets, mInputChannel) < 0) {
                             Log.w(TAG, "Failed to add window while updating wallpaper surface.");
                             return;
                         }
@@ -620,7 +628,7 @@ public abstract class WallpaperService extends Service {
 
                     final int relayoutResult = mSession.relayout(
                         mWindow, mWindow.mSeq, mLayout, mWidth, mHeight,
-                            View.VISIBLE, 0, mWinFrame, mContentInsets,
+                            View.VISIBLE, 0, mWinFrame, mOverscanInsets, mContentInsets,
                             mVisibleInsets, mConfiguration, mSurfaceHolder.mSurface);
 
                     if (DEBUG) Log.v(TAG, "New surface: " + mSurfaceHolder.mSurface
@@ -665,8 +673,8 @@ public abstract class WallpaperService extends Service {
                             }
                         }
 
-                        redrawNeeded |= creating
-                                || (relayoutResult&WindowManagerImpl.RELAYOUT_RES_FIRST_TIME) != 0;
+                        redrawNeeded |= creating || (relayoutResult
+                                & WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0;
 
                         if (forceReport || creating || surfaceCreating
                                 || formatChanged || sizeChanged) {
@@ -732,6 +740,7 @@ public abstract class WallpaperService extends Service {
                         if (redrawNeeded) {
                             mSession.finishDrawing(mWindow);
                         }
+                        mIWallpaperEngine.reportShown();
                     }
                 } catch (RemoteException ex) {
                 }
@@ -753,7 +762,7 @@ public abstract class WallpaperService extends Service {
             mWindowToken = wrapper.mWindowToken;
             mSurfaceHolder.setSizeFromLayout();
             mInitializing = true;
-            mSession = ViewRootImpl.getWindowSession(getMainLooper());
+            mSession = WindowManagerGlobal.getWindowSession();
             
             mWindow.setSession(mSession);
 
@@ -943,6 +952,7 @@ public abstract class WallpaperService extends Service {
         final IBinder mWindowToken;
         final int mWindowType;
         final boolean mIsPreview;
+        boolean mShownReported;
         int mReqWidth;
         int mReqHeight;
         
@@ -951,13 +961,7 @@ public abstract class WallpaperService extends Service {
         IWallpaperEngineWrapper(WallpaperService context,
                 IWallpaperConnection conn, IBinder windowToken,
                 int windowType, boolean isPreview, int reqWidth, int reqHeight) {
-            if (DEBUG && mCallbackLooper != null) {
-                mCallbackLooper.setMessageLogging(new LogPrinter(Log.VERBOSE, TAG));
-            }
-            mCaller = new HandlerCaller(context,
-                    mCallbackLooper != null
-                            ? mCallbackLooper : context.getMainLooper(),
-                    this);
+            mCaller = new HandlerCaller(context, context.getMainLooper(), this, true);
             mConnection = conn;
             mWindowToken = windowToken;
             mWindowType = windowType;
@@ -992,6 +996,18 @@ public abstract class WallpaperService extends Service {
                 int z, Bundle extras) {
             if (mEngine != null) {
                 mEngine.mWindow.dispatchWallpaperCommand(action, x, y, z, extras, false);
+            }
+        }
+
+        public void reportShown() {
+            if (!mShownReported) {
+                mShownReported = true;
+                try {
+                    mConnection.engineShown(this);
+                } catch (RemoteException e) {
+                    Log.w(TAG, "Wallpaper host disappeared", e);
+                    return;
+                }
             }
         }
 
@@ -1044,6 +1060,9 @@ public abstract class WallpaperService extends Service {
                     mEngine.updateSurface(true, false, reportDraw);
                     mEngine.doOffsetsChanged(true);
                 } break;
+                case MSG_WINDOW_MOVED: {
+                    // Do nothing. What does it mean for a Wallpaper to move?
+                } break;
                 case MSG_TOUCH_EVENT: {
                     boolean skip = false;
                     MotionEvent ev = (MotionEvent)message.obj;
@@ -1080,13 +1099,14 @@ public abstract class WallpaperService extends Service {
             mTarget = context;
         }
 
+        @Override
         public void attach(IWallpaperConnection conn, IBinder windowToken,
                 int windowType, boolean isPreview, int reqWidth, int reqHeight) {
             new IWallpaperEngineWrapper(mTarget, conn, windowToken,
                     windowType, isPreview, reqWidth, reqHeight);
         }
     }
-    
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -1109,20 +1129,7 @@ public abstract class WallpaperService extends Service {
     public final IBinder onBind(Intent intent) {
         return new IWallpaperServiceWrapper(this);
     }
-    
-    /**
-     * This allows subclasses to change the thread that most callbacks
-     * occur on.  Currently hidden because it is mostly needed for the
-     * image wallpaper (which runs in the system process and doesn't want
-     * to get stuck running on that seriously in use main thread).  Not
-     * exposed right now because the semantics of this are not totally
-     * well defined and some callbacks can still happen on the main thread).
-     * @hide
-     */
-    public void setCallbackLooper(Looper looper) {
-        mCallbackLooper = looper;
-    }
-    
+
     /**
      * Must be implemented to return a new instance of the wallpaper's engine.
      * Note that multiple instances may be active at the same time, such as

@@ -31,6 +31,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +49,8 @@ class HTML5VideoViewProxy extends Handler
                           MediaPlayer.OnCompletionListener,
                           MediaPlayer.OnErrorListener,
                           MediaPlayer.OnInfoListener,
-                          SurfaceTexture.OnFrameAvailableListener {
+                          SurfaceTexture.OnFrameAvailableListener,
+                          View.OnKeyListener {
     // Logging tag.
     private static final String LOGTAG = "HTML5VideoViewProxy";
 
@@ -59,6 +62,7 @@ class HTML5VideoViewProxy extends Handler
     private static final int LOAD_DEFAULT_POSTER = 104;
     private static final int BUFFERING_START     = 105;
     private static final int BUFFERING_END       = 106;
+    private static final int ENTER_FULLSCREEN    = 107;
 
     // Message Ids to be handled on the WebCore thread
     private static final int PREPARED          = 200;
@@ -93,9 +97,6 @@ class HTML5VideoViewProxy extends Handler
         private static HTML5VideoView mHTML5VideoView;
 
         private static boolean isVideoSelfEnded = false;
-        // By using the baseLayer and the current video Layer ID, we can
-        // identify the exact layer on the UI thread to use the SurfaceTexture.
-        private static int mBaseLayer = 0;
 
         private static void setPlayerBuffering(boolean playerBuffering) {
             mHTML5VideoView.setPlayerBuffering(playerBuffering);
@@ -108,9 +109,7 @@ class HTML5VideoViewProxy extends Handler
             // Don't do this for full screen mode.
             if (mHTML5VideoView != null
                 && !mHTML5VideoView.isFullScreenMode()
-                && !mHTML5VideoView.surfaceTextureDeleted()) {
-                mBaseLayer = layer;
-
+                && !mHTML5VideoView.isReleased()) {
                 int currentVideoLayerId = mHTML5VideoView.getVideoLayerId();
                 SurfaceTexture surfTexture =
                         HTML5VideoInline.getSurfaceTexture(currentVideoLayerId);
@@ -126,7 +125,6 @@ class HTML5VideoViewProxy extends Handler
                     if (playerState >= HTML5VideoView.STATE_PREPARED
                             && !foundInTree) {
                         mHTML5VideoView.pauseAndDispatch(mCurrentProxy);
-                        mHTML5VideoView.deleteSurfaceTexture();
                     }
                 }
             }
@@ -136,9 +134,6 @@ class HTML5VideoViewProxy extends Handler
         public static void pauseAndDispatch() {
             if (mHTML5VideoView != null) {
                 mHTML5VideoView.pauseAndDispatch(mCurrentProxy);
-                // When switching out, clean the video content on the old page
-                // by telling the layer not readyToUseSurfTex.
-                setBaseLayer(mBaseLayer);
             }
         }
 
@@ -217,9 +212,16 @@ class HTML5VideoViewProxy extends Handler
                 }
             }
 
+            boolean skipPrepare = false;
+            boolean createInlineView = false;
             if (backFromFullScreenMode
+                && currentVideoLayerId == videoLayerId
+                && !mHTML5VideoView.isReleased()) {
+                skipPrepare = true;
+                createInlineView = true;
+            } else if(backFromFullScreenMode
                 || currentVideoLayerId != videoLayerId
-                || mHTML5VideoView.surfaceTextureDeleted()) {
+                || HTML5VideoInline.surfaceTextureDeleted()) {
                 // Here, we handle the case when switching to a new video,
                 // either inside a WebView or across WebViews
                 // For switching videos within a WebView or across the WebView,
@@ -231,12 +233,18 @@ class HTML5VideoViewProxy extends Handler
                     }
                     mHTML5VideoView.reset();
                 }
+                createInlineView = true;
+            }
+            if (createInlineView) {
                 mCurrentProxy = proxy;
-                mHTML5VideoView = new HTML5VideoInline(videoLayerId, time);
+                mHTML5VideoView = new HTML5VideoInline(videoLayerId, time, skipPrepare);
 
                 mHTML5VideoView.setVideoURI(url, mCurrentProxy);
                 mHTML5VideoView.prepareDataAndDisplayMode(proxy);
-            } else if (mCurrentProxy == proxy) {
+                return;
+            }
+
+            if (mCurrentProxy == proxy) {
                 // Here, we handle the case when we keep playing with one video
                 if (!mHTML5VideoView.isPlaying()) {
                     mHTML5VideoView.seekTo(time);
@@ -278,9 +286,6 @@ class HTML5VideoViewProxy extends Handler
             if (!mHTML5VideoView.isFullScreenMode()) {
                 mHTML5VideoView.start();
             }
-            if (mBaseLayer != 0) {
-                setBaseLayer(mBaseLayer);
-            }
         }
 
         public static void end() {
@@ -297,6 +302,7 @@ class HTML5VideoViewProxy extends Handler
 
     // A bunch event listeners for our VideoView
     // MediaPlayer.OnPreparedListener
+    @Override
     public void onPrepared(MediaPlayer mp) {
         VideoPlayer.onPrepared();
         Message msg = Message.obtain(mWebCoreHandler, PREPARED);
@@ -309,6 +315,7 @@ class HTML5VideoViewProxy extends Handler
     }
 
     // MediaPlayer.OnCompletionListener;
+    @Override
     public void onCompletion(MediaPlayer mp) {
         // The video ended by itself, so we need to
         // send a message to the UI thread to dismiss
@@ -318,6 +325,7 @@ class HTML5VideoViewProxy extends Handler
     }
 
     // MediaPlayer.OnErrorListener
+    @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         sendMessage(obtainMessage(ERROR));
         return false;
@@ -333,8 +341,9 @@ class HTML5VideoViewProxy extends Handler
         mWebCoreHandler.sendMessage(msg);
     }
 
-    public void dispatchOnStopFullScreen() {
+    public void dispatchOnStopFullScreen(boolean stillPlaying) {
         Message msg = Message.obtain(mWebCoreHandler, STOPFULLSCREEN);
+        msg.arg1 = stillPlaying ? 1 : 0;
         mWebCoreHandler.sendMessage(msg);
     }
 
@@ -366,6 +375,15 @@ class HTML5VideoViewProxy extends Handler
                 int videoLayerID = msg.arg1;
                 if (client != null) {
                     VideoPlayer.play(url, mSeekPosition, this, client, videoLayerID);
+                }
+                break;
+            }
+            case ENTER_FULLSCREEN:{
+                String url = (String) msg.obj;
+                WebChromeClient client = mWebView.getWebChromeClient();
+                int videoLayerID = msg.arg1;
+                if (client != null) {
+                    VideoPlayer.enterFullScreenVideo(videoLayerID, url, this, mWebView);
                 }
                 break;
             }
@@ -473,6 +491,7 @@ class HTML5VideoViewProxy extends Handler
             releaseQueue();
         }
         // EventHandler methods. Executed on the network thread.
+        @Override
         public void status(int major_version,
                 int minor_version,
                 int code,
@@ -480,10 +499,12 @@ class HTML5VideoViewProxy extends Handler
             mStatusCode = code;
         }
 
+        @Override
         public void headers(Headers headers) {
             mHeaders = headers;
         }
 
+        @Override
         public void data(byte[] data, int len) {
             if (mPosterBytes == null) {
                 mPosterBytes = new ByteArrayOutputStream();
@@ -491,6 +512,7 @@ class HTML5VideoViewProxy extends Handler
             mPosterBytes.write(data, 0, len);
         }
 
+        @Override
         public void endData() {
             if (mStatusCode == 200) {
                 if (mPosterBytes.size() > 0) {
@@ -508,6 +530,7 @@ class HTML5VideoViewProxy extends Handler
                 }
                 if (mUrl != null) {
                     mHandler.post(new Runnable() {
+                       @Override
                        public void run() {
                            if (mRequestHandle != null) {
                                mRequestHandle.setupRedirect(mUrl.toString(), mStatusCode,
@@ -519,14 +542,17 @@ class HTML5VideoViewProxy extends Handler
             }
         }
 
+        @Override
         public void certificate(SslCertificate certificate) {
             // Don't care.
         }
 
+        @Override
         public void error(int id, String description) {
             cleanup();
         }
 
+        @Override
         public boolean handleSslErrorRequest(SslError error) {
             // Don't care. If this happens, data() will never be called so
             // mPosterBytes will never be created, so no need to call cleanup.
@@ -613,7 +639,7 @@ class HTML5VideoViewProxy extends Handler
                         nativeOnTimeupdate(msg.arg1, mNativePointer);
                         break;
                     case STOPFULLSCREEN:
-                        nativeOnStopFullscreen(mNativePointer);
+                        nativeOnStopFullscreen(msg.arg1, mNativePointer);
                         break;
                     case RESTORESTATE:
                         nativeOnRestoreState(mNativePointer);
@@ -658,6 +684,21 @@ class HTML5VideoViewProxy extends Handler
             seek(position);
         }
         Message message = obtainMessage(PLAY);
+        message.arg1 = videoLayerID;
+        message.obj = url;
+        sendMessage(message);
+    }
+
+    /**
+     * Play a video stream in full screen mode.
+     * @param url is the URL of the video stream.
+     */
+    public void enterFullscreenForVideoLayer(String url, int videoLayerID) {
+        if (url == null) {
+            return;
+        }
+
+        Message message = obtainMessage(ENTER_FULLSCREEN);
         message.arg1 = videoLayerID;
         message.obj = url;
         sendMessage(message);
@@ -748,7 +789,7 @@ class HTML5VideoViewProxy extends Handler
     private native void nativeOnPaused(int nativePointer);
     private native void nativeOnPosterFetched(Bitmap poster, int nativePointer);
     private native void nativeOnTimeupdate(int position, int nativePointer);
-    private native void nativeOnStopFullscreen(int nativePointer);
+    private native void nativeOnStopFullscreen(int stillPlaying, int nativePointer);
     private native void nativeOnRestoreState(int nativePointer);
     private native static boolean nativeSendSurfaceTexture(SurfaceTexture texture,
             int baseLayer, int videoLayerId, int textureName,
@@ -760,6 +801,19 @@ class HTML5VideoViewProxy extends Handler
             sendMessage(obtainMessage(BUFFERING_START, what, extra));
         } else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END) {
             sendMessage(obtainMessage(BUFFERING_END, what, extra));
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                return true;
+            } else if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
+                VideoPlayer.exitFullScreenVideo(this, mWebView);
+                return true;
+            }
         }
         return false;
     }

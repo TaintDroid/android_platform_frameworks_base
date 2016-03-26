@@ -17,10 +17,8 @@
 package android.webkit;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -33,10 +31,6 @@ import android.os.SystemClock;
 import android.provider.Browser;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
 import com.android.internal.R;
 
 import java.net.MalformedURLException;
@@ -71,7 +65,7 @@ class CallbackProxy extends Handler {
     // Start with 100 to indicate it is not in load for the empty page.
     private volatile int mLatestProgress = 100;
     // Back/Forward list
-    private final WebBackForwardList mBackForwardList;
+    private final WebBackForwardListClassic mBackForwardList;
     // Back/Forward list client
     private volatile WebBackForwardListClient mWebBackForwardListClient;
     // Used to call startActivity during url override.
@@ -92,10 +86,7 @@ class CallbackProxy extends Handler {
     private static final int CREATE_WINDOW                        = 109;
     private static final int CLOSE_WINDOW                         = 110;
     private static final int SAVE_PASSWORD                        = 111;
-    private static final int JS_ALERT                             = 112;
-    private static final int JS_CONFIRM                           = 113;
-    private static final int JS_PROMPT                            = 114;
-    private static final int JS_UNLOAD                            = 115;
+    private static final int JS_DIALOG                            = 112;
     private static final int ASYNC_KEYEVENTS                      = 116;
     private static final int DOWNLOAD_FILE                        = 118;
     private static final int REPORT_ERROR                         = 119;
@@ -117,12 +108,8 @@ class CallbackProxy extends Handler {
     private static final int ADD_HISTORY_ITEM                     = 135;
     private static final int HISTORY_INDEX_CHANGED                = 136;
     private static final int AUTH_CREDENTIALS                     = 137;
-    private static final int SET_INSTALLABLE_WEBAPP               = 138;
-    private static final int NOTIFY_SEARCHBOX_LISTENERS           = 139;
     private static final int AUTO_LOGIN                           = 140;
     private static final int CLIENT_CERT_REQUEST                  = 141;
-    private static final int SEARCHBOX_IS_SUPPORTED_CALLBACK      = 142;
-    private static final int SEARCHBOX_DISPATCH_COMPLETE_CALLBACK = 143;
     private static final int PROCEEDED_AFTER_SSL_ERROR            = 144;
 
     // Message triggered by the client to resume execution
@@ -188,7 +175,7 @@ class CallbackProxy extends Handler {
         // Used to start a default activity.
         mContext = context;
         mWebView = w;
-        mBackForwardList = new WebBackForwardList(this);
+        mBackForwardList = new WebBackForwardListClassic(this);
     }
 
     protected synchronized void blockMessages() {
@@ -249,7 +236,7 @@ class CallbackProxy extends Handler {
      * Get the Back/Forward list to return to the user or to update the cached
      * history list.
      */
-    public WebBackForwardList getBackForwardList() {
+    public WebBackForwardListClassic getBackForwardList() {
         return mBackForwardList;
     }
 
@@ -403,17 +390,18 @@ class CallbackProxy extends Handler {
                 break;
 
             case PROCEEDED_AFTER_SSL_ERROR:
-                if (mWebViewClient != null) {
-                    mWebViewClient.onProceededAfterSslError(mWebView.getWebView(),
+                if (mWebViewClient != null && mWebViewClient instanceof WebViewClientClassicExt) {
+                    ((WebViewClientClassicExt) mWebViewClient).onProceededAfterSslError(
+                            mWebView.getWebView(),
                             (SslError) msg.obj);
                 }
                 break;
 
             case CLIENT_CERT_REQUEST:
-                if (mWebViewClient != null) {
-                    HashMap<String, Object> map =
-                        (HashMap<String, Object>) msg.obj;
-                    mWebViewClient.onReceivedClientCertRequest(mWebView.getWebView(),
+                if (mWebViewClient != null  && mWebViewClient instanceof WebViewClientClassicExt) {
+                    HashMap<String, Object> map = (HashMap<String, Object>) msg.obj;
+                    ((WebViewClientClassicExt) mWebViewClient).onReceivedClientCertRequest(
+                            mWebView.getWebView(),
                             (ClientCertRequestHandler) map.get("handler"),
                             (String) map.get("host_and_port"));
                 }
@@ -452,10 +440,16 @@ class CallbackProxy extends Handler {
                     String contentDisposition =
                         msg.getData().getString("contentDisposition");
                     String mimetype = msg.getData().getString("mimetype");
+                    String referer = msg.getData().getString("referer");
                     Long contentLength = msg.getData().getLong("contentLength");
 
-                    mDownloadListener.onDownloadStart(url, userAgent,
-                            contentDisposition, mimetype, contentLength);
+                    if (mDownloadListener instanceof BrowserDownloadListener) {
+                        ((BrowserDownloadListener) mDownloadListener).onDownloadStart(url,
+                             userAgent, contentDisposition, mimetype, referer, contentLength);
+                    } else {
+                        mDownloadListener.onDownloadStart(url, userAgent,
+                             contentDisposition, mimetype, contentLength);
+                    }
                 }
                 break;
 
@@ -563,180 +557,12 @@ class CallbackProxy extends Handler {
                 }
                 break;
 
-            case JS_ALERT:
+            case JS_DIALOG:
                 if (mWebChromeClient != null) {
                     final JsResultReceiver receiver = (JsResultReceiver) msg.obj;
-                    final JsResult res = receiver.mJsResult;
-                    String message = msg.getData().getString("message");
-                    String url = msg.getData().getString("url");
-                    if (!mWebChromeClient.onJsAlert(mWebView.getWebView(), url, message,
-                            res)) {
-                        if (!canShowAlertDialog()) {
-                            res.cancel();
-                            receiver.setReady();
-                            break;
-                        }
-                        new AlertDialog.Builder(mContext)
-                                .setTitle(getJsDialogTitle(url))
-                                .setMessage(message)
-                                .setPositiveButton(R.string.ok,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                res.confirm();
-                                            }
-                                        })
-                                .setOnCancelListener(
-                                        new DialogInterface.OnCancelListener() {
-                                            public void onCancel(
-                                                    DialogInterface dialog) {
-                                                res.cancel();
-                                            }
-                                        })
-                                .show();
-                    }
-                    receiver.setReady();
-                }
-                break;
-
-            case JS_CONFIRM:
-                if (mWebChromeClient != null) {
-                    final JsResultReceiver receiver = (JsResultReceiver) msg.obj;
-                    final JsResult res = receiver.mJsResult;
-                    String message = msg.getData().getString("message");
-                    String url = msg.getData().getString("url");
-                    if (!mWebChromeClient.onJsConfirm(mWebView.getWebView(), url, message,
-                            res)) {
-                        if (!canShowAlertDialog()) {
-                            res.cancel();
-                            receiver.setReady();
-                            break;
-                        }
-                        new AlertDialog.Builder(mContext)
-                                .setTitle(getJsDialogTitle(url))
-                                .setMessage(message)
-                                .setPositiveButton(R.string.ok,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                res.confirm();
-                                            }})
-                                .setNegativeButton(R.string.cancel,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                res.cancel();
-                                            }})
-                                .setOnCancelListener(
-                                        new DialogInterface.OnCancelListener() {
-                                            public void onCancel(
-                                                    DialogInterface dialog) {
-                                                res.cancel();
-                                            }
-                                        })
-                                .show();
-                    }
-                    // Tell the JsResult that it is ready for client
-                    // interaction.
-                    receiver.setReady();
-                }
-                break;
-
-            case JS_PROMPT:
-                if (mWebChromeClient != null) {
-                    final JsResultReceiver receiver = (JsResultReceiver) msg.obj;
-                    final JsPromptResult res = receiver.mJsResult;
-                    String message = msg.getData().getString("message");
-                    String defaultVal = msg.getData().getString("default");
-                    String url = msg.getData().getString("url");
-                    if (!mWebChromeClient.onJsPrompt(mWebView.getWebView(), url, message,
-                                defaultVal, res)) {
-                        if (!canShowAlertDialog()) {
-                            res.cancel();
-                            receiver.setReady();
-                            break;
-                        }
-                        final LayoutInflater factory = LayoutInflater
-                                .from(mContext);
-                        final View view = factory.inflate(R.layout.js_prompt,
-                                null);
-                        final EditText v = (EditText) view
-                                .findViewById(R.id.value);
-                        v.setText(defaultVal);
-                        ((TextView) view.findViewById(R.id.message))
-                                .setText(message);
-                        new AlertDialog.Builder(mContext)
-                                .setTitle(getJsDialogTitle(url))
-                                .setView(view)
-                                .setPositiveButton(R.string.ok,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int whichButton) {
-                                                res.confirm(v.getText()
-                                                        .toString());
-                                            }
-                                        })
-                                .setNegativeButton(R.string.cancel,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int whichButton) {
-                                                res.cancel();
-                                            }
-                                        })
-                                .setOnCancelListener(
-                                        new DialogInterface.OnCancelListener() {
-                                            public void onCancel(
-                                                    DialogInterface dialog) {
-                                                res.cancel();
-                                            }
-                                        })
-                                .show();
-                    }
-                    // Tell the JsResult that it is ready for client
-                    // interaction.
-                    receiver.setReady();
-                }
-                break;
-
-            case JS_UNLOAD:
-                if (mWebChromeClient != null) {
-                    final JsResultReceiver receiver = (JsResultReceiver) msg.obj;
-                    final JsResult res = receiver.mJsResult;
-                    String message = msg.getData().getString("message");
-                    String url = msg.getData().getString("url");
-                    if (!mWebChromeClient.onJsBeforeUnload(mWebView.getWebView(), url,
-                            message, res)) {
-                        if (!canShowAlertDialog()) {
-                            res.cancel();
-                            receiver.setReady();
-                            break;
-                        }
-                        final String m = mContext.getString(
-                                R.string.js_dialog_before_unload, message);
-                        new AlertDialog.Builder(mContext)
-                                .setMessage(m)
-                                .setPositiveButton(R.string.ok,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                res.confirm();
-                                            }
-                                        })
-                                .setNegativeButton(R.string.cancel,
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                res.cancel();
-                                            }
-                                        })
-                                .show();
+                    JsDialogHelper helper = new JsDialogHelper(receiver.mJsResult, msg);
+                    if (!helper.invokeCallback(mWebChromeClient, mWebView.getWebView())) {
+                        helper.showDialog(mContext);
                     }
                     receiver.setReady();
                 }
@@ -746,7 +572,7 @@ class CallbackProxy extends Handler {
                 if(mWebChromeClient != null) {
                     final JsResultReceiver receiver = (JsResultReceiver) msg.obj;
                     final JsResult res = receiver.mJsResult;
-                    if(mWebChromeClient.onJsTimeout()) {
+                    if (mWebChromeClient.onJsTimeout()) {
                         res.confirm();
                     } else {
                         res.cancel();
@@ -857,19 +683,6 @@ class CallbackProxy extends Handler {
                         host, realm, username, password);
                 break;
             }
-            case SET_INSTALLABLE_WEBAPP:
-                if (mWebChromeClient != null) {
-                    mWebChromeClient.setInstallableWebApp();
-                }
-                break;
-            case NOTIFY_SEARCHBOX_LISTENERS: {
-                SearchBoxImpl searchBox = (SearchBoxImpl) mWebView.getSearchBox();
-
-                @SuppressWarnings("unchecked")
-                List<String> suggestions = (List<String>) msg.obj;
-                searchBox.handleSuggestions(msg.getData().getString("query"), suggestions);
-                break;
-            }
             case AUTO_LOGIN: {
                 if (mWebViewClient != null) {
                     String realm = msg.getData().getString("realm");
@@ -878,19 +691,6 @@ class CallbackProxy extends Handler {
                     mWebViewClient.onReceivedLoginRequest(mWebView.getWebView(), realm,
                             account, args);
                 }
-                break;
-            }
-            case SEARCHBOX_IS_SUPPORTED_CALLBACK: {
-                SearchBoxImpl searchBox = (SearchBoxImpl) mWebView.getSearchBox();
-                Boolean supported = (Boolean) msg.obj;
-                searchBox.handleIsSupportedCallback(supported);
-                break;
-            }
-            case SEARCHBOX_DISPATCH_COMPLETE_CALLBACK: {
-                SearchBoxImpl searchBox = (SearchBoxImpl) mWebView.getSearchBox();
-                Boolean success = (Boolean) msg.obj;
-                searchBox.handleDispatchCompleteCallback(msg.getData().getString("function"),
-                        msg.getData().getInt("id"), success);
                 break;
             }
         }
@@ -908,24 +708,6 @@ class CallbackProxy extends Handler {
      */
     void switchOutDrawHistory() {
         sendMessage(obtainMessage(SWITCH_OUT_HISTORY));
-    }
-
-    private String getJsDialogTitle(String url) {
-        String title = url;
-        if (URLUtil.isDataUrl(url)) {
-            // For data: urls, we just display 'JavaScript' similar to Safari.
-            title = mContext.getString(R.string.js_dialog_title_default);
-        } else {
-            try {
-                URL aUrl = new URL(url);
-                // For example: "The page at 'http://www.mit.edu' says:"
-                title = mContext.getString(R.string.js_dialog_title,
-                        aUrl.getProtocol() + "://" + aUrl.getHost());
-            } catch (MalformedURLException ex) {
-                // do nothing. just use the url as the title
-            }
-        }
-        return title;
     }
 
     //--------------------------------------------------------------------------
@@ -1081,7 +863,7 @@ class CallbackProxy extends Handler {
     }
 
     public void onProceededAfterSslError(SslError error) {
-        if (mWebViewClient == null) {
+        if (mWebViewClient == null || !(mWebViewClient instanceof WebViewClientClassicExt)) {
             return;
         }
         Message msg = obtainMessage(PROCEEDED_AFTER_SSL_ERROR);
@@ -1092,7 +874,7 @@ class CallbackProxy extends Handler {
     public void onReceivedClientCertRequest(ClientCertRequestHandler handler, String host_and_port) {
         // Do an unsynchronized quick check to avoid posting if no callback has
         // been set.
-        if (mWebViewClient == null) {
+        if (mWebViewClient == null || !(mWebViewClient instanceof WebViewClientClassicExt)) {
             handler.cancel();
             return;
         }
@@ -1176,7 +958,8 @@ class CallbackProxy extends Handler {
      * return false.
      */
     public boolean onDownloadStart(String url, String userAgent,
-            String contentDisposition, String mimetype, long contentLength) {
+            String contentDisposition, String mimetype, String referer,
+            long contentLength) {
         // Do an unsynchronized quick check to avoid posting if no callback has
         // been set.
         if (mDownloadListener == null) {
@@ -1189,6 +972,7 @@ class CallbackProxy extends Handler {
         bundle.putString("url", url);
         bundle.putString("userAgent", userAgent);
         bundle.putString("mimetype", mimetype);
+        bundle.putString("referer", referer);
         bundle.putLong("contentLength", contentLength);
         bundle.putString("contentDisposition", contentDisposition);
         sendMessage(msg);
@@ -1301,7 +1085,7 @@ class CallbackProxy extends Handler {
     public void onReceivedIcon(Bitmap icon) {
         // The current item might be null if the icon was already stored in the
         // database and this is a new WebView.
-        WebHistoryItem i = mBackForwardList.getCurrentItem();
+        WebHistoryItemClassic i = mBackForwardList.getCurrentItem();
         if (i != null) {
             i.setFavicon(icon);
         }
@@ -1316,7 +1100,7 @@ class CallbackProxy extends Handler {
     /* package */ void onReceivedTouchIconUrl(String url, boolean precomposed) {
         // We should have a current item but we do not want to crash so check
         // for null.
-        WebHistoryItem i = mBackForwardList.getCurrentItem();
+        WebHistoryItemClassic i = mBackForwardList.getCurrentItem();
         if (i != null) {
             i.setTouchIconUrl(url, precomposed);
         }
@@ -1345,9 +1129,10 @@ class CallbackProxy extends Handler {
             return;
         }
         JsResultReceiver result = new JsResultReceiver();
-        Message alert = obtainMessage(JS_ALERT, result);
+        Message alert = obtainMessage(JS_DIALOG, result);
         alert.getData().putString("message", message);
         alert.getData().putString("url", url);
+        alert.getData().putInt("type", JsDialogHelper.ALERT);
         sendMessageToUiThreadSync(alert);
     }
 
@@ -1358,9 +1143,10 @@ class CallbackProxy extends Handler {
             return false;
         }
         JsResultReceiver result = new JsResultReceiver();
-        Message confirm = obtainMessage(JS_CONFIRM, result);
+        Message confirm = obtainMessage(JS_DIALOG, result);
         confirm.getData().putString("message", message);
         confirm.getData().putString("url", url);
+        confirm.getData().putInt("type", JsDialogHelper.CONFIRM);
         sendMessageToUiThreadSync(confirm);
         return result.mJsResult.getResult();
     }
@@ -1372,10 +1158,11 @@ class CallbackProxy extends Handler {
             return null;
         }
         JsResultReceiver result = new JsResultReceiver();
-        Message prompt = obtainMessage(JS_PROMPT, result);
+        Message prompt = obtainMessage(JS_DIALOG, result);
         prompt.getData().putString("message", message);
         prompt.getData().putString("default", defaultValue);
         prompt.getData().putString("url", url);
+        prompt.getData().putInt("type", JsDialogHelper.PROMPT);
         sendMessageToUiThreadSync(prompt);
         return result.mJsResult.getStringResult();
     }
@@ -1387,10 +1174,11 @@ class CallbackProxy extends Handler {
             return true;
         }
         JsResultReceiver result = new JsResultReceiver();
-        Message confirm = obtainMessage(JS_UNLOAD, result);
-        confirm.getData().putString("message", message);
-        confirm.getData().putString("url", url);
-        sendMessageToUiThreadSync(confirm);
+        Message unload = obtainMessage(JS_DIALOG, result);
+        unload.getData().putString("message", message);
+        unload.getData().putString("url", url);
+        unload.getData().putInt("type", JsDialogHelper.UNLOAD);
+        sendMessageToUiThreadSync(unload);
         return result.mJsResult.getResult();
     }
 
@@ -1605,46 +1393,6 @@ class CallbackProxy extends Handler {
             return;
         }
         Message msg = obtainMessage(HISTORY_INDEX_CHANGED, index, 0, item);
-        sendMessage(msg);
-    }
-
-    void setInstallableWebApp() {
-        if (mWebChromeClient == null) {
-            return;
-        }
-        sendMessage(obtainMessage(SET_INSTALLABLE_WEBAPP));
-    }
-
-    boolean canShowAlertDialog() {
-        // We can only display the alert dialog if mContext is
-        // an Activity context.
-        // FIXME: Should we display dialogs if mContext does
-        // not have the window focus (e.g. if the user is viewing
-        // another Activity when the alert should be displayed?
-        // See bug 3166409
-        return mContext instanceof Activity;
-    }
-
-    void onSearchboxSuggestionsReceived(String query, List<String> suggestions) {
-        Message msg = obtainMessage(NOTIFY_SEARCHBOX_LISTENERS);
-        msg.obj = suggestions;
-        msg.getData().putString("query", query);
-
-        sendMessage(msg);
-    }
-
-    void onIsSupportedCallback(boolean isSupported) {
-        Message msg = obtainMessage(SEARCHBOX_IS_SUPPORTED_CALLBACK);
-        msg.obj = Boolean.valueOf(isSupported);
-        sendMessage(msg);
-    }
-
-    void onSearchboxDispatchCompleteCallback(String function, int id, boolean success) {
-        Message msg = obtainMessage(SEARCHBOX_DISPATCH_COMPLETE_CALLBACK);
-        msg.obj = Boolean.valueOf(success);
-        msg.getData().putString("function", function);
-        msg.getData().putInt("id", id);
-
         sendMessage(msg);
     }
 

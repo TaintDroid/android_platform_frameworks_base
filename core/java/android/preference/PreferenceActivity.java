@@ -84,6 +84,13 @@ import java.util.List;
  * items.  Doing this implicitly switches the class into its new "headers
  * + fragments" mode rather than the old style of just showing a single
  * preferences list.
+ * 
+ * <div class="special reference">
+ * <h3>Developer Guides</h3>
+ * <p>For information about using {@code PreferenceActivity},
+ * read the <a href="{@docRoot}guide/topics/ui/settings.html">Settings</a>
+ * guide.</p>
+ * </div>
  *
  * <a name="SampleCode"></a>
  * <h3>Sample Code</h3>
@@ -696,7 +703,13 @@ public abstract class PreferenceActivity extends ListActivity implements
      * show for the initial UI.
      */
     public Header onGetInitialHeader() {
-        return mHeaders.get(0);
+        for (int i=0; i<mHeaders.size(); i++) {
+            Header h = mHeaders.get(i);
+            if (h.fragment != null) {
+                return h;
+            }
+        }
+        throw new IllegalStateException("Must have at least one header with a fragment");
     }
 
     /**
@@ -1076,6 +1089,12 @@ public abstract class PreferenceActivity extends ListActivity implements
                 }
                 return;
             }
+            if (mSinglePane) {
+                mFragmentBreadCrumbs.setVisibility(View.GONE);
+                // Hide the breadcrumb section completely for single-pane
+                View bcSection = findViewById(com.android.internal.R.id.breadcrumb_section);
+                if (bcSection != null) bcSection.setVisibility(View.GONE);
+            }
             mFragmentBreadCrumbs.setMaxVisible(2);
             mFragmentBreadCrumbs.setActivity(this);
         }
@@ -1154,6 +1173,9 @@ public abstract class PreferenceActivity extends ListActivity implements
             getFragmentManager().popBackStack(BACK_STACK_PREFS,
                     FragmentManager.POP_BACK_STACK_INCLUSIVE);
         } else {
+            if (header.fragment == null) {
+                throw new IllegalStateException("can't switch to header that has no fragment");
+            }
             int direction = mHeaders.indexOf(header) - mHeaders.indexOf(mCurHeader);
             switchToHeaderInner(header.fragment, header.fragmentArguments, direction);
             setSelectedHeader(header);

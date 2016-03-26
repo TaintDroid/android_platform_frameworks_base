@@ -30,6 +30,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -39,6 +40,9 @@ import android.view.ViewDebug;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.RemoteViews.RemoteView;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Displays an arbitrary image, such as an icon.  The ImageView class
@@ -89,6 +93,9 @@ public class ImageView extends View {
 
     private int mBaseline = -1;
     private boolean mBaselineAlignBottom = false;
+
+    // AdjustViewBounds behavior will be in compatibility mode for older apps.
+    private boolean mAdjustViewBoundsCompat = false;
 
     private static final ScaleType[] sScaleTypeArray = {
         ScaleType.MATRIX,
@@ -164,6 +171,8 @@ public class ImageView extends View {
     private void initImageView() {
         mMatrix     = new Matrix();
         mScaleType  = ScaleType.FIT_CENTER;
+        mAdjustViewBoundsCompat = mContext.getApplicationInfo().targetSdkVersion <=
+                Build.VERSION_CODES.JELLY_BEAN_MR1;
     }
 
     @Override
@@ -193,18 +202,9 @@ public class ImageView extends View {
         }
     }
 
-    /**
-     * @hide
-     */
-    @Override
-    public int getResolvedLayoutDirection(Drawable dr) {
-        return (dr == mDrawable) ?
-                getResolvedLayoutDirection() : super.getResolvedLayoutDirection(dr);
-    }
-
     @Override
     public boolean hasOverlappingRendering() {
-        return (getBackground() != null);
+        return (getBackground() != null && getBackground().getCurrent() != null);
     }
 
     @Override
@@ -234,8 +234,15 @@ public class ImageView extends View {
     /**
      * Set this to true if you want the ImageView to adjust its bounds
      * to preserve the aspect ratio of its drawable.
+     *
+     * <p><strong>Note:</strong> If the application targets API level 17 or lower,
+     * adjustViewBounds will allow the drawable to shrink the view bounds, but not grow
+     * to fill available measured space in all cases. This is for compatibility with
+     * legacy {@link android.view.View.MeasureSpec MeasureSpec} and
+     * {@link android.widget.RelativeLayout RelativeLayout} behavior.</p>
+     *
      * @param adjustViewBounds Whether to adjust the bounds of this view
-     * to presrve the original aspect ratio of the drawable
+     * to preserve the original aspect ratio of the drawable.
      * 
      * @see #getAdjustViewBounds()
      *
@@ -341,7 +348,7 @@ public class ImageView extends View {
      * {@link #setImageBitmap(android.graphics.Bitmap)} and
      * {@link android.graphics.BitmapFactory} instead.</p>
      *
-     * @param resId the resource identifier of the the drawable
+     * @param resId the resource identifier of the drawable
      *
      * @attr ref android.R.styleable#ImageView_src
      */
@@ -351,8 +358,15 @@ public class ImageView extends View {
             updateDrawable(null);
             mResource = resId;
             mUri = null;
+
+            final int oldWidth = mDrawableWidth;
+            final int oldHeight = mDrawableHeight;
+
             resolveUri();
-            requestLayout();
+
+            if (oldWidth != mDrawableWidth || oldHeight != mDrawableHeight) {
+                requestLayout();
+            }
             invalidate();
         }
     }
@@ -376,8 +390,15 @@ public class ImageView extends View {
             updateDrawable(null);
             mResource = 0;
             mUri = uri;
+
+            final int oldWidth = mDrawableWidth;
+            final int oldHeight = mDrawableHeight;
+
             resolveUri();
-            requestLayout();
+
+            if (oldWidth != mDrawableWidth || oldHeight != mDrawableHeight) {
+                requestLayout();
+            }
             invalidate();
         }
     }
@@ -392,8 +413,8 @@ public class ImageView extends View {
             mResource = 0;
             mUri = null;
 
-            int oldWidth = mDrawableWidth;
-            int oldHeight = mDrawableHeight;
+            final int oldWidth = mDrawableWidth;
+            final int oldHeight = mDrawableHeight;
 
             updateDrawable(drawable);
 
@@ -541,12 +562,16 @@ public class ImageView extends View {
 
     /** Return the view's optional matrix. This is applied to the
         view's drawable when it is drawn. If there is not matrix,
-        this method will return null.
-        Do not change this matrix in place. If you want a different matrix
-        applied to the drawable, be sure to call setImageMatrix().
+        this method will return an identity matrix.
+        Do not change this matrix in place but make a copy.
+        If you want a different matrix applied to the drawable,
+        be sure to call setImageMatrix().
     */
     public Matrix getImageMatrix() {
-        return mMatrix;
+        if (mDrawMatrix == null) {
+            return new Matrix(Matrix.IDENTITY_MATRIX);
+        }
+        return mDrawMatrix;
     }
 
     public void setImageMatrix(Matrix matrix) {
@@ -627,20 +652,27 @@ public class ImageView extends View {
                 }
             } else if (ContentResolver.SCHEME_CONTENT.equals(scheme)
                     || ContentResolver.SCHEME_FILE.equals(scheme)) {
+                InputStream stream = null;
                 try {
-                    d = Drawable.createFromStream(
-                        mContext.getContentResolver().openInputStream(mUri),
-                        null);
+                    stream = mContext.getContentResolver().openInputStream(mUri);
+                    d = Drawable.createFromStream(stream, null);
                 } catch (Exception e) {
                     Log.w("ImageView", "Unable to open content: " + mUri, e);
+                } finally {
+                    if (stream != null) {
+                        try {
+                            stream.close();
+                        } catch (IOException e) {
+                            Log.w("ImageView", "Unable to close content: " + mUri, e);
+                        }
+                    }
                 }
-            } else {
+        } else {
                 d = Drawable.createFromPath(mUri.toString());
             }
     
             if (d == null) {
-                System.out.println("resolveUri failed on bad bitmap uri: "
-                                   + mUri);
+                System.out.println("resolveUri failed on bad bitmap uri: " + mUri);
                 // Don't try again.
                 mUri = null;
             }
@@ -675,6 +707,7 @@ public class ImageView extends View {
                 d.setState(getDrawableState());
             }
             d.setLevel(mLevel);
+            d.setLayoutDirection(getLayoutDirection());
             mDrawableWidth = d.getIntrinsicWidth();
             mDrawableHeight = d.getIntrinsicHeight();
             applyColorMod();
@@ -783,6 +816,12 @@ public class ImageView extends View {
                     if (resizeWidth) {
                         int newWidth = (int)(desiredAspect * (heightSize - ptop - pbottom)) +
                                 pleft + pright;
+
+                        // Allow the width to outgrow its original estimate if height is fixed.
+                        if (!resizeHeight && !mAdjustViewBoundsCompat) {
+                            widthSize = resolveAdjustedSize(newWidth, mMaxWidth, widthMeasureSpec);
+                        }
+
                         if (newWidth <= widthSize) {
                             widthSize = newWidth;
                             done = true;
@@ -793,6 +832,13 @@ public class ImageView extends View {
                     if (!done && resizeHeight) {
                         int newHeight = (int)((widthSize - pleft - pright) / desiredAspect) +
                                 ptop + pbottom;
+
+                        // Allow the height to outgrow its original estimate if width is fixed.
+                        if (!resizeWidth && !mAdjustViewBoundsCompat) {
+                            heightSize = resolveAdjustedSize(newHeight, mMaxHeight,
+                                    heightMeasureSpec);
+                        }
+
                         if (newHeight <= heightSize) {
                             heightSize = newHeight;
                         }

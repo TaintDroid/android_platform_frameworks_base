@@ -44,7 +44,16 @@ public final class MediaCodecInfo {
         return MediaCodecList.getSupportedTypes(mIndex);
     }
 
+    /**
+     * Encapsulates the capabilities of a given codec component,
+     * i.e. what profile/level combinations it supports and what colorspaces
+     * it is capable of providing the decoded data in.
+     */
     public static final class CodecCapabilities {
+        // Enumerates supported profile/level combinations as defined
+        // by the type of encoded data. These combinations impose restrictions
+        // on video resolution, bitrate... and limit the available encoder tools
+        // such as B-frame support, arithmetic coding...
         public CodecProfileLevel[] profileLevels;
 
         // from OMX_COLOR_FORMATTYPE
@@ -93,6 +102,9 @@ public final class MediaCodecInfo {
         public final static int COLOR_Format24BitABGR6666           = 43;
 
         public final static int COLOR_TI_FormatYUV420PackedSemiPlanar = 0x7f000100;
+        // COLOR_FormatSurface indicates that the data will be a GraphicBuffer metadata reference.
+        // In OMX this is called OMX_COLOR_FormatAndroidOpaque.
+        public final static int COLOR_FormatSurface                   = 0x7F000789;
         public final static int COLOR_QCOM_FormatYUV420SemiPlanar     = 0x7fa30c00;
 
         /**
@@ -191,21 +203,36 @@ public final class MediaCodecInfo {
         public static final int AACObjectHE_PS      = 29;
         public static final int AACObjectELD        = 39;
 
+        // from OMX_VIDEO_VP8LEVELTYPE
+        public static final int VP8Level_Version0 = 0x01;
+        public static final int VP8Level_Version1 = 0x02;
+        public static final int VP8Level_Version2 = 0x04;
+        public static final int VP8Level_Version3 = 0x08;
+
+        // from OMX_VIDEO_VP8PROFILETYPE
+        public static final int VP8ProfileMain = 0x01;
+
+
         /**
          * Defined in the OpenMAX IL specs, depending on the type of media
          * this can be OMX_VIDEO_AVCPROFILETYPE, OMX_VIDEO_H263PROFILETYPE,
-         * or OMX_VIDEO_MPEG4PROFILETYPE.
+         * OMX_VIDEO_MPEG4PROFILETYPE or OMX_VIDEO_VP8PROFILETYPE.
          */
         public int profile;
 
         /**
          * Defined in the OpenMAX IL specs, depending on the type of media
          * this can be OMX_VIDEO_AVCLEVELTYPE, OMX_VIDEO_H263LEVELTYPE
-         * or OMX_VIDEO_MPEG4LEVELTYPE.
+         * OMX_VIDEO_MPEG4LEVELTYPE or OMX_VIDEO_VP8LEVELTYPE.
          */
         public int level;
     };
 
+    /**
+     * Enumerates the capabilities of the codec component. Since a single
+     * component can support data of a variety of types, the type has to be
+     * specified to yield a meaningful result.
+     */
     public final CodecCapabilities getCapabilitiesForType(
             String type) {
         return MediaCodecList.getCodecCapabilities(mIndex, type);

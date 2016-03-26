@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Slog;
@@ -845,14 +846,38 @@ public class SearchManager
      *
      * @hide
      */
-    public static final Intent getAssistIntent(Context context) {
-        PackageManager pm = context.getPackageManager();
-        Intent intent = new Intent(Intent.ACTION_ASSIST);
-        ComponentName component = intent.resolveActivity(pm);
-        if (component != null) {
-            intent.setComponent(component);
+    public Intent getAssistIntent(Context context, boolean inclContext) {
+        return getAssistIntent(context, inclContext, UserHandle.myUserId());
+    }
+
+    /**
+     * Gets an intent for launching installed assistant activity, or null if not available.
+     * @return The assist intent.
+     *
+     * @hide
+     */
+    public Intent getAssistIntent(Context context, boolean inclContext, int userHandle) {
+        try {
+            if (mService == null) {
+                return null;
+            }
+            ComponentName comp = mService.getAssistIntent(userHandle);
+            if (comp == null) {
+                return null;
+            }
+            Intent intent = new Intent(Intent.ACTION_ASSIST);
+            intent.setComponent(comp);
+            if (inclContext) {
+                IActivityManager am = ActivityManagerNative.getDefault();
+                Bundle extras = am.getTopActivityExtras(0);
+                if (extras != null) {
+                    intent.replaceExtras(extras);
+                }
+            }
             return intent;
+        } catch (RemoteException re) {
+            Log.e(TAG, "getAssistIntent() failed: " + re);
+            return null;
         }
-        return null;
     }
 }

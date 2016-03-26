@@ -28,6 +28,7 @@
     <!-- Size of application thumbnail -->
     <dimen name="status_bar_recents_thumbnail_width">164dp</dimen>
     <dimen name="status_bar_recents_thumbnail_height">145dp</dimen>
+    <dimen name="status_bar_recents_thumbnail_bg_padding">4dp</dimen>
 
     <!-- Size of application label text -->
     <dimen name="status_bar_recents_app_label_text_size">14dip</dimen>
@@ -39,6 +40,24 @@
     <dimen name="status_bar_recents_scroll_fading_edge_length">10dip</dimen>
     <!-- Margin between recents container and glow on the right -->
     <dimen name="status_bar_recents_right_glow_margin">100dip</dimen>
+    <!-- How far the thumbnail for a recent app appears from left edge -->
+    <dimen name="status_bar_recents_thumbnail_left_margin">20dp</dimen>
+    <!-- Padding for text descriptions -->
+    <dimen name="status_bar_recents_text_description_padding">8dp</dimen>
+    <!-- Width of application label text -->
+    <dimen name="status_bar_recents_app_label_width">88dip</dimen>
+    <!-- Left margin of application label text -->
+    <dimen name="status_bar_recents_app_label_left_margin">0dip</dimen>
+    <!-- Padding between recents items -->
+    <dimen name="status_bar_recents_item_padding">0dip</dimen>
+    <!-- When recents first appears, how far the icon and label of the primary activity
+         travel -->
+    <dimen name="status_bar_recents_app_icon_translate_distance">35dip</dimen>
+
+    <!-- Where to place the app icon over the thumbnail -->
+    <dimen name="status_bar_recents_app_icon_left_margin">0dp</dimen>
+    <dimen name="status_bar_recents_app_icon_top_margin">8dp</dimen>
+
     <!-- Amount to offset bottom of notification peek window from top of status bar. -->
     <dimen name="peek_window_y_offset">-12dp</dimen>
 
@@ -48,6 +67,8 @@
     <!-- thickness (height) of the dead zone at the top of the navigation bar,
          reducing false presses on navbar buttons; approx 2mm -->
     <dimen name="navigation_bar_deadzone_size">12dp</dimen>
+    <!-- size of the dead zone when touches have recently occurred elsewhere on screen -->
+    <dimen name="navigation_bar_deadzone_size_max">32dp</dimen>
 
     <!-- Height of notification icons in the status bar -->
     <dimen name="status_bar_icon_size">@*android:dimen/status_bar_icon_size</dimen>
@@ -82,13 +103,16 @@
     <!-- Initial velocity of the shade when collapsing on its own -->
     <dimen name="self_collapse_velocity">2000dp</dimen>
     <!-- Minimum final velocity of gestures interpreted as expand requests -->
-    <dimen name="fling_expand_min_velocity">200dp</dimen>
+    <dimen name="fling_expand_min_velocity">100dp</dimen>
     <!-- Minimum final velocity of gestures interpreted as collapse requests -->
-    <dimen name="fling_collapse_min_velocity">200dp</dimen>
+    <dimen name="fling_collapse_min_velocity">100dp</dimen>
     <!-- Cap on contribution of x dimension of gesture to overall velocity -->
     <dimen name="fling_gesture_max_x_velocity">200dp</dimen>
     <!-- Cap on overall resulting fling speed (s^-1) -->
     <dimen name="fling_gesture_max_output_velocity">3000dp</dimen>
+
+    <!-- Minimum distance a fling must travel (anti-jitter) -->
+    <dimen name="fling_gesture_min_dist">20dp</dimen>
 
     <!-- Minimum fraction of the display a gesture must travel, at any velocity, to qualify as a
          collapse request -->
@@ -126,10 +150,10 @@
     <dimen name="navbar_search_panel_height">230dip</dimen>
 
     <!-- Height of the draggable handle at the bottom of the phone notification panel -->
-    <dimen name="close_handle_height">32dp</dimen>
+    <dimen name="close_handle_height">36dp</dimen>
 
-    <!-- Amount of close_handle that will not overlap the notification list -->
-    <dimen name="close_handle_underlap">18dp</dimen>
+    <!-- Amount of close_handle that will NOT overlap the notification list -->
+    <dimen name="close_handle_underlap">32dp</dimen>
 
     <!-- Height of the notification panel header bar -->
     <dimen name="notification_panel_header_height">48dp</dimen>
@@ -144,10 +168,48 @@
     <dimen name="notification_panel_margin_bottom">0dp</dimen>
     <dimen name="notification_panel_margin_left">0dp</dimen>
 
-    <!-- Gravity for the notification panel -->
+    <!-- Gravity for the notification & quick settings panels -->
     <!-- 0x37 = fill_horizontal|top -->
     <integer name="notification_panel_layout_gravity">0x37</integer>
+    <integer name="settings_panel_layout_gravity">0x37</integer>
+
+    <!-- Fraction of the status bar that, when dragged, will produce the quick settings panel
+         instead of the notification panel. See also @dimen/settings_panel_dragzone_min.
+         If zero, the settings panel will not be directly draggable from the status bar. -->
+    <item type="dimen" name="settings_panel_dragzone_fraction">0%</item>
+
+    <!-- Quick settings dragzone, if used, should be at least this big (may be zero). -->
+    <dimen name="settings_panel_dragzone_min">100dp</dimen>
 
     <!-- Height of the carrier/wifi name label -->
     <dimen name="carrier_label_height">24dp</dimen>
+
+    <!-- The distance you can pull a notification before it pops open -->
+    <dimen name="one_finger_pop_limit">32dp</dimen>
+
+    <!-- The fixed height of each tile -->
+    <dimen name="quick_settings_cell_height">110dp</dimen>
+
+    <!-- The padding between each tile within the QuickSettings layout -->
+    <dimen name="quick_settings_cell_gap">4dp</dimen>
+
+    <!-- Minimum fraction of the screen that should be taken up by the notification panel.
+         Not used at this screen size. -->
+    <item type="dimen" name="notification_panel_min_height_frac">0%</item>
+
+    <dimen name="blinds_pop_threshold">32dp</dimen>
+
+    <!-- The size of the gesture span needed to activate the "pull" notification expansion -->
+    <dimen name="pull_span_min">25dp</dimen>
+
+    <!-- How far to slide the panel out when you touch it -->
+    <!-- For phones, this is close_handle_height + header_height -->
+    <dimen name="peek_height">84dp</dimen>
+
+    <!-- Quick Settings tile geometry: top interior margin, above icon -->
+    <dimen name="qs_tile_margin_above_icon">27dp</dimen>
+    <!-- Quick Settings tile geometry: gap between icon and text -->
+    <dimen name="qs_tile_margin_below_icon">17dp</dimen>
+    <!-- Quick Settings tile geometry: icon size -->
+    <dimen name="qs_tile_icon_size">32dp</dimen>
 </resources>

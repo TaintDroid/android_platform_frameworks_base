@@ -19,16 +19,18 @@ package android.webkit;
 import android.os.Handler;
 
 /**
- * SslErrorHandler: class responsible for handling SSL errors.
- * This class is passed as a parameter to BrowserCallback.displaySslErrorDialog
- * and is meant to receive the user's response.
+ * Represents a request for handling an SSL error. Instances of this class are
+ * created by the WebView and passed to
+ * {@link WebViewClient#onReceivedSslError}. The host application must call
+ * either {@link #proceed} or {@link #cancel} to set the WebView's response
+ * to the request.
  */
 public class SslErrorHandler extends Handler {
 
     /**
-     * Package-private constructor needed for API compatibility.
+     * @hide Only for use by WebViewProvider implementations.
      */
-    SslErrorHandler() {}
+    public SslErrorHandler() {}
 
     /**
      * Proceed with the SSL certificate.

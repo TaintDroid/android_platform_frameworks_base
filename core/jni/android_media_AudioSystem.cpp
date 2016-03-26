@@ -75,6 +75,23 @@ android_media_AudioSystem_isStreamActive(JNIEnv *env, jobject thiz, jint stream,
     return state;
 }
 
+static jboolean
+android_media_AudioSystem_isStreamActiveRemotely(JNIEnv *env, jobject thiz, jint stream,
+        jint inPastMs)
+{
+    bool state = false;
+    AudioSystem::isStreamActiveRemotely((audio_stream_type_t) stream, &state, inPastMs);
+    return state;
+}
+
+static jboolean
+android_media_AudioSystem_isSourceActive(JNIEnv *env, jobject thiz, jint source)
+{
+    bool state = false;
+    AudioSystem::isSourceActive((audio_source_t) source, &state);
+    return state;
+}
+
 static int
 android_media_AudioSystem_setParameters(JNIEnv *env, jobject thiz, jstring keyValuePairs)
 {
@@ -242,6 +259,29 @@ android_media_AudioSystem_getDevicesForStream(JNIEnv *env, jobject thiz, jint st
     return (jint) AudioSystem::getDevicesForStream(static_cast <audio_stream_type_t>(stream));
 }
 
+static jint
+android_media_AudioSystem_getPrimaryOutputSamplingRate(JNIEnv *env, jobject clazz)
+{
+    return (jint) AudioSystem::getPrimaryOutputSamplingRate();
+}
+
+static jint
+android_media_AudioSystem_getPrimaryOutputFrameCount(JNIEnv *env, jobject clazz)
+{
+    return (jint) AudioSystem::getPrimaryOutputFrameCount();
+}
+
+static jint
+android_media_AudioSystem_getOutputLatency(JNIEnv *env, jobject clazz, jint stream)
+{
+    uint32_t afLatency;
+    if (AudioSystem::getOutputLatency(&afLatency, static_cast <audio_stream_type_t>(stream))
+            != NO_ERROR) {
+        afLatency = -1;
+    }
+    return (jint) afLatency;
+}
+
 // ----------------------------------------------------------------------------
 
 static JNINativeMethod gMethods[] = {
@@ -249,7 +289,9 @@ static JNINativeMethod gMethods[] = {
     {"getParameters",        "(Ljava/lang/String;)Ljava/lang/String;", (void *)android_media_AudioSystem_getParameters},
     {"muteMicrophone",      "(Z)I",     (void *)android_media_AudioSystem_muteMicrophone},
     {"isMicrophoneMuted",   "()Z",      (void *)android_media_AudioSystem_isMicrophoneMuted},
-    {"isStreamActive",      "(II)Z",     (void *)android_media_AudioSystem_isStreamActive},
+    {"isStreamActive",      "(II)Z",    (void *)android_media_AudioSystem_isStreamActive},
+    {"isStreamActiveRemotely","(II)Z",  (void *)android_media_AudioSystem_isStreamActiveRemotely},
+    {"isSourceActive",      "(I)Z",     (void *)android_media_AudioSystem_isSourceActive},
     {"setDeviceConnectionState", "(IILjava/lang/String;)I", (void *)android_media_AudioSystem_setDeviceConnectionState},
     {"getDeviceConnectionState", "(ILjava/lang/String;)I",  (void *)android_media_AudioSystem_getDeviceConnectionState},
     {"setPhoneState",       "(I)I",     (void *)android_media_AudioSystem_setPhoneState},
@@ -263,6 +305,9 @@ static JNINativeMethod gMethods[] = {
     {"setMasterMute",       "(Z)I",     (void *)android_media_AudioSystem_setMasterMute},
     {"getMasterMute",       "()Z",      (void *)android_media_AudioSystem_getMasterMute},
     {"getDevicesForStream", "(I)I",     (void *)android_media_AudioSystem_getDevicesForStream},
+    {"getPrimaryOutputSamplingRate", "()I", (void *)android_media_AudioSystem_getPrimaryOutputSamplingRate},
+    {"getPrimaryOutputFrameCount",   "()I", (void *)android_media_AudioSystem_getPrimaryOutputFrameCount},
+    {"getOutputLatency",    "(I)I",     (void *)android_media_AudioSystem_getOutputLatency},
 };
 
 int register_android_media_AudioSystem(JNIEnv *env)

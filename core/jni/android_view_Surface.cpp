@@ -18,319 +18,164 @@
 
 #include <stdio.h>
 
-#include "android_util_Binder.h"
+#include "jni.h"
+#include "JNIHelp.h"
+#include "android_os_Parcel.h"
 #include "android/graphics/GraphicsJNI.h"
 
-#include <binder/IMemory.h>
+#include <android_runtime/AndroidRuntime.h>
+#include <android_runtime/android_view_Surface.h>
+#include <android_runtime/android_graphics_SurfaceTexture.h>
+
+#include <binder/Parcel.h>
 
 #include <gui/Surface.h>
-#include <gui/SurfaceComposerClient.h>
-#include <gui/SurfaceTexture.h>
+#include <gui/SurfaceControl.h>
+#include <gui/GLConsumer.h>
 
 #include <ui/Rect.h>
 #include <ui/Region.h>
 
-#include <EGL/egl.h>
-
 #include <SkCanvas.h>
 #include <SkBitmap.h>
 #include <SkRegion.h>
-#include <SkPixelRef.h>
 
-#include "jni.h"
-#include "JNIHelp.h"
-#include <android_runtime/AndroidRuntime.h>
-#include <android_runtime/android_view_Surface.h>
-#include <android_runtime/android_graphics_SurfaceTexture.h>
 #include <utils/misc.h>
+#include <utils/Log.h>
 
+#include <ScopedUtfChars.h>
 
 // ----------------------------------------------------------------------------
 
 namespace android {
 
-enum {
-    // should match Parcelable.java
-    PARCELABLE_WRITE_RETURN_VALUE = 0x0001
-};
-
-// ----------------------------------------------------------------------------
-
 static const char* const OutOfResourcesException =
     "android/view/Surface$OutOfResourcesException";
 
-const char* const kSurfaceSessionClassPathName = "android/view/SurfaceSession";
-const char* const kSurfaceClassPathName = "android/view/Surface";
+static struct {
+    jclass clazz;
+    jfieldID mNativeObject;
+    jfieldID mLock;
+    jmethodID ctor;
+} gSurfaceClassInfo;
 
-struct sso_t {
-    jfieldID client;
-};
-static sso_t sso;
+static struct {
+    jfieldID left;
+    jfieldID top;
+    jfieldID right;
+    jfieldID bottom;
+} gRectClassInfo;
 
-struct so_t {
-    jfieldID surfaceControl;
-    jfieldID surfaceGenerationId;
-    jfieldID surface;
-    jfieldID saveCount;
-    jfieldID canvas;
-};
-static so_t so;
+static struct {
+    jfieldID mFinalizer;
+    jfieldID mNativeCanvas;
+    jfieldID mSurfaceFormat;
+} gCanvasClassInfo;
 
-struct ro_t {
-    jfieldID l;
-    jfieldID t;
-    jfieldID r;
-    jfieldID b;
-};
-static ro_t ro;
-
-struct po_t {
-    jfieldID x;
-    jfieldID y;
-};
-static po_t po;
-
-struct co_t {
-    jfieldID surfaceFormat;
-};
-static co_t co;
-
-struct no_t {
-    jfieldID native_canvas;
-    jfieldID native_region;
-    jfieldID native_parcel;
-};
-static no_t no;
-
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
-static void SurfaceSession_init(JNIEnv* env, jobject clazz)
-{
-    sp<SurfaceComposerClient> client = new SurfaceComposerClient;
-    client->incStrong(clazz);
-    env->SetIntField(clazz, sso.client, (int)client.get());
-}
-
-static void SurfaceSession_destroy(JNIEnv* env, jobject clazz)
-{
-    SurfaceComposerClient* client =
-            (SurfaceComposerClient*)env->GetIntField(clazz, sso.client);
-    if (client != 0) {
-        client->decStrong(clazz);
-        env->SetIntField(clazz, sso.client, 0);
-    }
-}
-
-static void SurfaceSession_kill(JNIEnv* env, jobject clazz)
-{
-    SurfaceComposerClient* client =
-            (SurfaceComposerClient*)env->GetIntField(clazz, sso.client);
-    if (client != 0) {
-        client->dispose();
-        client->decStrong(clazz);
-        env->SetIntField(clazz, sso.client, 0);
-    }
-}
+static struct {
+    jfieldID mNativeCanvas;
+} gCanvasFinalizerClassInfo;
 
 // ----------------------------------------------------------------------------
 
-static sp<SurfaceControl> getSurfaceControl(JNIEnv* env, jobject clazz)
-{
-    SurfaceControl* const p =
-        (SurfaceControl*)env->GetIntField(clazz, so.surfaceControl);
-    return sp<SurfaceControl>(p);
+// this is just a pointer we use to pass to inc/decStrong
+static const void *sRefBaseOwner;
+
+bool android_view_Surface_isInstanceOf(JNIEnv* env, jobject obj) {
+    return env->IsInstanceOf(obj, gSurfaceClassInfo.clazz);
 }
 
-static void setSurfaceControl(JNIEnv* env, jobject clazz,
-        const sp<SurfaceControl>& surface)
-{
-    SurfaceControl* const p =
-        (SurfaceControl*)env->GetIntField(clazz, so.surfaceControl);
-    if (surface.get()) {
-        surface->incStrong(clazz);
-    }
-    if (p) {
-        p->decStrong(clazz);
-    }
-    env->SetIntField(clazz, so.surfaceControl, (int)surface.get());
+sp<ANativeWindow> android_view_Surface_getNativeWindow(JNIEnv* env, jobject surfaceObj) {
+    return android_view_Surface_getSurface(env, surfaceObj);
 }
 
-static sp<Surface> getSurface(JNIEnv* env, jobject clazz)
-{
-    sp<Surface> result(Surface_getSurface(env, clazz));
-    if (result == 0) {
-        /*
-         * if this method is called from the WindowManager's process, it means
-         * the client is is not remote, and therefore is allowed to have
-         * a Surface (data), so we create it here.
-         * If we don't have a SurfaceControl, it means we're in a different
-         * process.
-         */
+sp<Surface> android_view_Surface_getSurface(JNIEnv* env, jobject surfaceObj) {
+    sp<Surface> sur;
+    jobject lock = env->GetObjectField(surfaceObj,
+            gSurfaceClassInfo.mLock);
+    if (env->MonitorEnter(lock) == JNI_OK) {
+        sur = reinterpret_cast<Surface *>(
+                env->GetIntField(surfaceObj, gSurfaceClassInfo.mNativeObject));
+        env->MonitorExit(lock);
+    }
+    return sur;
+}
 
-        SurfaceControl* const control =
-            (SurfaceControl*)env->GetIntField(clazz, so.surfaceControl);
-        if (control) {
-            result = control->getSurface();
-            if (result != 0) {
-                result->incStrong(clazz);
-                env->SetIntField(clazz, so.surface, (int)result.get());
-            }
+jobject android_view_Surface_createFromIGraphicBufferProducer(JNIEnv* env,
+        const sp<IGraphicBufferProducer>& bufferProducer) {
+    if (bufferProducer == NULL) {
+        return NULL;
+    }
+
+    sp<Surface> surface(new Surface(bufferProducer));
+    if (surface == NULL) {
+        return NULL;
+    }
+
+    jobject surfaceObj = env->NewObject(gSurfaceClassInfo.clazz, gSurfaceClassInfo.ctor, surface.get());
+    if (surfaceObj == NULL) {
+        if (env->ExceptionCheck()) {
+            ALOGE("Could not create instance of Surface from IGraphicBufferProducer.");
+            LOGE_EX(env);
+            env->ExceptionClear();
         }
+        return NULL;
     }
-    return result;
-}
-
-sp<ANativeWindow> android_Surface_getNativeWindow(
-        JNIEnv* env, jobject clazz) {
-    return getSurface(env, clazz);
-}
-
-bool android_Surface_isInstanceOf(JNIEnv* env, jobject obj) {
-    jclass surfaceClass = env->FindClass(kSurfaceClassPathName);
-    return env->IsInstanceOf(obj, surfaceClass);
-}
-
-sp<Surface> Surface_getSurface(JNIEnv* env, jobject clazz) {
-    sp<Surface> surface((Surface*)env->GetIntField(clazz, so.surface));
-    return surface;
-}
-
-void setSurface(JNIEnv* env, jobject clazz, const sp<Surface>& surface)
-{
-    Surface* const p = (Surface*)env->GetIntField(clazz, so.surface);
-    if (surface.get()) {
-        surface->incStrong(clazz);
-    }
-    if (p) {
-        p->decStrong(clazz);
-    }
-    env->SetIntField(clazz, so.surface, (int)surface.get());
-    // This test is conservative and it would be better to compare the ISurfaces
-    if (p && p != surface.get()) {
-        jint generationId = env->GetIntField(clazz, so.surfaceGenerationId);
-        generationId++;
-        env->SetIntField(clazz, so.surfaceGenerationId, generationId);
-    }
+    surface->incStrong(&sRefBaseOwner);
+    return surfaceObj;
 }
 
 // ----------------------------------------------------------------------------
 
-static void Surface_init(
-        JNIEnv* env, jobject clazz,
-        jobject session,
-        jint, jstring jname, jint dpy, jint w, jint h, jint format, jint flags)
-{
-    if (session == NULL) {
-        doThrowNPE(env);
-        return;
-    }
-
-    SurfaceComposerClient* client =
-            (SurfaceComposerClient*)env->GetIntField(session, sso.client);
-
-    sp<SurfaceControl> surface;
-    if (jname == NULL) {
-        surface = client->createSurface(dpy, w, h, format, flags);
-    } else {
-        const jchar* str = env->GetStringCritical(jname, 0);
-        const String8 name(str, env->GetStringLength(jname));
-        env->ReleaseStringCritical(jname, str);
-        surface = client->createSurface(name, dpy, w, h, format, flags);
-    }
-
-    if (surface == 0) {
-        jniThrowException(env, OutOfResourcesException, NULL);
-        return;
-    }
-    setSurfaceControl(env, clazz, surface);
+static inline bool isSurfaceValid(const sp<Surface>& sur) {
+    return Surface::isValid(sur);
 }
 
-static void Surface_initFromSurfaceTexture(
-        JNIEnv* env, jobject clazz, jobject jst)
-{
-    sp<SurfaceTexture> st(SurfaceTexture_getSurfaceTexture(env, jst));
+// ----------------------------------------------------------------------------
 
+static jint nativeCreateFromSurfaceTexture(JNIEnv* env, jclass clazz,
+        jobject surfaceTextureObj) {
+    sp<GLConsumer> st(SurfaceTexture_getSurfaceTexture(env, surfaceTextureObj));
     if (st == NULL) {
         jniThrowException(env, "java/lang/IllegalArgumentException",
                 "SurfaceTexture has already been released");
-        return;
+        return 0;
     }
-    sp<ISurfaceTexture> bq = st->getBufferQueue();
 
+    sp<IGraphicBufferProducer> bq = st->getBufferQueue();
     sp<Surface> surface(new Surface(bq));
     if (surface == NULL) {
         jniThrowException(env, OutOfResourcesException, NULL);
-        return;
-    }
-    setSurfaceControl(env, clazz, NULL);
-    setSurface(env, clazz, surface);
-}
-
-static void Surface_initParcel(JNIEnv* env, jobject clazz, jobject argParcel)
-{
-    Parcel* parcel = (Parcel*)env->GetIntField(argParcel, no.native_parcel);
-    if (parcel == NULL) {
-        doThrowNPE(env);
-        return;
-    }
-
-    sp<Surface> sur(Surface::readFromParcel(*parcel));
-    setSurface(env, clazz, sur);
-}
-
-static jint Surface_getIdentity(JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& control(getSurfaceControl(env, clazz));
-    if (control != 0) return (jint) control->getIdentity();
-    const sp<Surface>& surface(getSurface(env, clazz));
-    if (surface != 0) return (jint) surface->getIdentity();
-    return -1;
-}
-
-static void Surface_destroy(JNIEnv* env, jobject clazz, uintptr_t *ostack)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (SurfaceControl::isValid(surface)) {
-        surface->clear();
-    }
-    setSurfaceControl(env, clazz, 0);
-    setSurface(env, clazz, 0);
-}
-
-static void Surface_release(JNIEnv* env, jobject clazz, uintptr_t *ostack)
-{
-    setSurfaceControl(env, clazz, 0);
-    setSurface(env, clazz, 0);
-}
-
-static jboolean Surface_isValid(JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& surfaceControl(getSurfaceControl(env, clazz));
-    if (surfaceControl != 0) {
-        return SurfaceControl::isValid(surfaceControl) ? JNI_TRUE : JNI_FALSE;
-    }
-    const sp<Surface>& surface(getSurface(env, clazz));
-    return Surface::isValid(surface) ? JNI_TRUE : JNI_FALSE;
-}
-
-static jboolean Surface_isConsumerRunningBehind(JNIEnv* env, jobject clazz)
-{
-    int value = 0;
-    const sp<Surface>& surface(getSurface(env, clazz));
-    if (!Surface::isValid(surface)) {
-        doThrowIAE(env);
         return 0;
     }
-    ANativeWindow* anw = static_cast<ANativeWindow *>(surface.get());
-    anw->query(anw, NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND, &value);
-    return (jboolean)value;
+
+    surface->incStrong(&sRefBaseOwner);
+    return int(surface.get());
 }
 
-static inline SkBitmap::Config convertPixelFormat(PixelFormat format)
-{
+static void nativeRelease(JNIEnv* env, jclass clazz, jint nativeObject) {
+    sp<Surface> sur(reinterpret_cast<Surface *>(nativeObject));
+    sur->decStrong(&sRefBaseOwner);
+}
+
+static jboolean nativeIsValid(JNIEnv* env, jclass clazz, jint nativeObject) {
+    sp<Surface> sur(reinterpret_cast<Surface *>(nativeObject));
+    return isSurfaceValid(sur) ? JNI_TRUE : JNI_FALSE;
+}
+
+static jboolean nativeIsConsumerRunningBehind(JNIEnv* env, jclass clazz, jint nativeObject) {
+    sp<Surface> sur(reinterpret_cast<Surface *>(nativeObject));
+    if (!isSurfaceValid(sur)) {
+        doThrowIAE(env);
+        return JNI_FALSE;
+    }
+    int value = 0;
+    ANativeWindow* anw = static_cast<ANativeWindow*>(sur.get());
+    anw->query(anw, NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND, &value);
+    return value;
+}
+
+static inline SkBitmap::Config convertPixelFormat(PixelFormat format) {
     /* note: if PIXEL_FORMAT_RGBX_8888 means that all alpha bytes are 0xFF, then
         we can map to SkBitmap::kARGB_8888_Config, and optionally call
         bitmap.setIsOpaque(true) on the resulting SkBitmap (as an accelerator)
@@ -345,57 +190,69 @@ static inline SkBitmap::Config convertPixelFormat(PixelFormat format)
     }
 }
 
-static jobject Surface_lockCanvas(JNIEnv* env, jobject clazz, jobject dirtyRect)
-{
-    const sp<Surface>& surface(getSurface(env, clazz));
-    if (!Surface::isValid(surface)) {
+static inline void swapCanvasPtr(JNIEnv* env, jobject canvasObj, SkCanvas* newCanvas) {
+  jobject canvasFinalizerObj = env->GetObjectField(canvasObj, gCanvasClassInfo.mFinalizer);
+  SkCanvas* previousCanvas = reinterpret_cast<SkCanvas*>(
+          env->GetIntField(canvasObj, gCanvasClassInfo.mNativeCanvas));
+  env->SetIntField(canvasObj, gCanvasClassInfo.mNativeCanvas, (int)newCanvas);
+  env->SetIntField(canvasFinalizerObj, gCanvasFinalizerClassInfo.mNativeCanvas, (int)newCanvas);
+  SkSafeUnref(previousCanvas);
+}
+
+static void nativeLockCanvas(JNIEnv* env, jclass clazz,
+        jint nativeObject, jobject canvasObj, jobject dirtyRectObj) {
+    sp<Surface> surface(reinterpret_cast<Surface *>(nativeObject));
+
+    if (!isSurfaceValid(surface)) {
         doThrowIAE(env);
-        return 0;
+        return;
     }
 
     // get dirty region
     Region dirtyRegion;
-    if (dirtyRect) {
+    if (dirtyRectObj) {
         Rect dirty;
-        dirty.left  = env->GetIntField(dirtyRect, ro.l);
-        dirty.top   = env->GetIntField(dirtyRect, ro.t);
-        dirty.right = env->GetIntField(dirtyRect, ro.r);
-        dirty.bottom= env->GetIntField(dirtyRect, ro.b);
+        dirty.left = env->GetIntField(dirtyRectObj, gRectClassInfo.left);
+        dirty.top = env->GetIntField(dirtyRectObj, gRectClassInfo.top);
+        dirty.right = env->GetIntField(dirtyRectObj, gRectClassInfo.right);
+        dirty.bottom = env->GetIntField(dirtyRectObj, gRectClassInfo.bottom);
         if (!dirty.isEmpty()) {
             dirtyRegion.set(dirty);
         }
     } else {
-        dirtyRegion.set(Rect(0x3FFF,0x3FFF));
+        dirtyRegion.set(Rect(0x3FFF, 0x3FFF));
     }
 
-    Surface::SurfaceInfo info;
-    status_t err = surface->lock(&info, &dirtyRegion);
+    ANativeWindow_Buffer outBuffer;
+    Rect dirtyBounds(dirtyRegion.getBounds());
+    status_t err = surface->lock(&outBuffer, &dirtyBounds);
+    dirtyRegion.set(dirtyBounds);
     if (err < 0) {
         const char* const exception = (err == NO_MEMORY) ?
-            OutOfResourcesException :
-            "java/lang/IllegalArgumentException";
+                OutOfResourcesException :
+                "java/lang/IllegalArgumentException";
         jniThrowException(env, exception, NULL);
-        return 0;
+        return;
     }
 
     // Associate a SkCanvas object to this surface
-    jobject canvas = env->GetObjectField(clazz, so.canvas);
-    env->SetIntField(canvas, co.surfaceFormat, info.format);
+    env->SetIntField(canvasObj, gCanvasClassInfo.mSurfaceFormat, outBuffer.format);
 
-    SkCanvas* nativeCanvas = (SkCanvas*)env->GetIntField(canvas, no.native_canvas);
     SkBitmap bitmap;
-    ssize_t bpr = info.s * bytesPerPixel(info.format);
-    bitmap.setConfig(convertPixelFormat(info.format), info.w, info.h, bpr);
-    if (info.format == PIXEL_FORMAT_RGBX_8888) {
+    ssize_t bpr = outBuffer.stride * bytesPerPixel(outBuffer.format);
+    bitmap.setConfig(convertPixelFormat(outBuffer.format), outBuffer.width, outBuffer.height, bpr);
+    if (outBuffer.format == PIXEL_FORMAT_RGBX_8888) {
         bitmap.setIsOpaque(true);
     }
-    if (info.w > 0 && info.h > 0) {
-        bitmap.setPixels(info.bits);
+    if (outBuffer.width > 0 && outBuffer.height > 0) {
+        bitmap.setPixels(outBuffer.bits);
     } else {
         // be safe with an empty bitmap.
         bitmap.setPixels(NULL);
     }
-    nativeCanvas->setBitmapDevice(bitmap);
+
+    SkCanvas* nativeCanvas = SkNEW_ARGS(SkCanvas, (bitmap));
+    swapCanvasPtr(env, canvasObj, nativeCanvas);
 
     SkRegion clipReg;
     if (dirtyRegion.isRect()) { // very common case
@@ -412,39 +269,25 @@ static jobject Surface_lockCanvas(JNIEnv* env, jobject clazz, jobject dirtyRect)
 
     nativeCanvas->clipRegion(clipReg);
 
-    int saveCount = nativeCanvas->save();
-    env->SetIntField(clazz, so.saveCount, saveCount);
-
-    if (dirtyRect) {
+    if (dirtyRectObj) {
         const Rect& bounds(dirtyRegion.getBounds());
-        env->SetIntField(dirtyRect, ro.l, bounds.left);
-        env->SetIntField(dirtyRect, ro.t, bounds.top);
-        env->SetIntField(dirtyRect, ro.r, bounds.right);
-        env->SetIntField(dirtyRect, ro.b, bounds.bottom);
+        env->SetIntField(dirtyRectObj, gRectClassInfo.left, bounds.left);
+        env->SetIntField(dirtyRectObj, gRectClassInfo.top, bounds.top);
+        env->SetIntField(dirtyRectObj, gRectClassInfo.right, bounds.right);
+        env->SetIntField(dirtyRectObj, gRectClassInfo.bottom, bounds.bottom);
     }
-
-    return canvas;
 }
 
-static void Surface_unlockCanvasAndPost(
-        JNIEnv* env, jobject clazz, jobject argCanvas)
-{
-    jobject canvas = env->GetObjectField(clazz, so.canvas);
-    if (env->IsSameObject(canvas, argCanvas) == JNI_FALSE) {
-        doThrowIAE(env);
+static void nativeUnlockCanvasAndPost(JNIEnv* env, jclass clazz,
+        jint nativeObject, jobject canvasObj) {
+    sp<Surface> surface(reinterpret_cast<Surface *>(nativeObject));
+    if (!isSurfaceValid(surface)) {
         return;
     }
 
-    const sp<Surface>& surface(getSurface(env, clazz));
-    if (!Surface::isValid(surface))
-        return;
-
     // detach the canvas from the surface
-    SkCanvas* nativeCanvas = (SkCanvas*)env->GetIntField(canvas, no.native_canvas);
-    int saveCount = env->GetIntField(clazz, so.saveCount);
-    nativeCanvas->restoreToCount(saveCount);
-    nativeCanvas->setBitmapDevice(SkBitmap());
-    env->SetIntField(clazz, so.saveCount, 0);
+    SkCanvas* nativeCanvas = SkNEW(SkCanvas);
+    swapCanvasPtr(env, canvasObj, nativeCanvas);
 
     // unlock surface
     status_t err = surface->unlockAndPost();
@@ -453,507 +296,121 @@ static void Surface_unlockCanvasAndPost(
     }
 }
 
-static void Surface_unlockCanvas(
-        JNIEnv* env, jobject clazz, jobject argCanvas)
-{
-    // XXX: this API has been removed
-    doThrowIAE(env);
-}
-
-static void Surface_openTransaction(
-        JNIEnv* env, jobject clazz)
-{
-    SurfaceComposerClient::openGlobalTransaction();
-}
-
-static void Surface_closeTransaction(
-        JNIEnv* env, jobject clazz)
-{
-    SurfaceComposerClient::closeGlobalTransaction();
-}
-
-static void Surface_setOrientation(
-        JNIEnv* env, jobject clazz, jint display, jint orientation, jint flags)
-{
-    int err = SurfaceComposerClient::setOrientation(display, orientation, flags);
-    if (err < 0) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_freezeDisplay(
-        JNIEnv* env, jobject clazz, jint display)
-{
-    int err = SurfaceComposerClient::freezeDisplay(display, 0);
-    if (err < 0) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_unfreezeDisplay(
-        JNIEnv* env, jobject clazz, jint display)
-{
-    int err = SurfaceComposerClient::unfreezeDisplay(display, 0);
-    if (err < 0) {
-        doThrowIAE(env);
-    }
-}
-
-class ScreenshotPixelRef : public SkPixelRef {
-public:
-    ScreenshotPixelRef(SkColorTable* ctable) {
-        fCTable = ctable;
-        SkSafeRef(ctable);
-        setImmutable();
-    }
-    virtual ~ScreenshotPixelRef() {
-        SkSafeUnref(fCTable);
-    }
-
-    status_t update(int width, int height, int minLayer, int maxLayer, bool allLayers) {
-        status_t res = (width > 0 && height > 0)
-                ? (allLayers
-                        ? mScreenshot.update(width, height)
-                        : mScreenshot.update(width, height, minLayer, maxLayer))
-                : mScreenshot.update();
-        if (res != NO_ERROR) {
-            return res;
-        }
-
-        return NO_ERROR;
-    }
-
-    uint32_t getWidth() const {
-        return mScreenshot.getWidth();
-    }
-
-    uint32_t getHeight() const {
-        return mScreenshot.getHeight();
-    }
-
-    uint32_t getStride() const {
-        return mScreenshot.getStride();
-    }
-
-    uint32_t getFormat() const {
-        return mScreenshot.getFormat();
-    }
-
-protected:
-    // overrides from SkPixelRef
-    virtual void* onLockPixels(SkColorTable** ct) {
-        *ct = fCTable;
-        return (void*)mScreenshot.getPixels();
-    }
-
-    virtual void onUnlockPixels() {
-    }
-
-private:
-    ScreenshotClient mScreenshot;
-    SkColorTable*    fCTable;
-
-    typedef SkPixelRef INHERITED;
-};
-
-static jobject doScreenshot(JNIEnv* env, jobject clazz, jint width, jint height,
-        jint minLayer, jint maxLayer, bool allLayers)
-{
-    ScreenshotPixelRef* pixels = new ScreenshotPixelRef(NULL);
-    if (pixels->update(width, height, minLayer, maxLayer, allLayers) != NO_ERROR) {
-        delete pixels;
-        return 0;
-    }
-
-    uint32_t w = pixels->getWidth();
-    uint32_t h = pixels->getHeight();
-    uint32_t s = pixels->getStride();
-    uint32_t f = pixels->getFormat();
-    ssize_t bpr = s * android::bytesPerPixel(f);
-
-    SkBitmap* bitmap = new SkBitmap();
-    bitmap->setConfig(convertPixelFormat(f), w, h, bpr);
-    if (f == PIXEL_FORMAT_RGBX_8888) {
-        bitmap->setIsOpaque(true);
-    }
-
-    if (w > 0 && h > 0) {
-        bitmap->setPixelRef(pixels)->unref();
-        bitmap->lockPixels();
-    } else {
-        // be safe with an empty bitmap.
-        delete pixels;
-        bitmap->setPixels(NULL);
-    }
-
-    return GraphicsJNI::createBitmap(env, bitmap, false, NULL);
-}
-
-static jobject Surface_screenshotAll(JNIEnv* env, jobject clazz, jint width, jint height)
-{
-    return doScreenshot(env, clazz, width, height, 0, 0, true);
-}
-
-static jobject Surface_screenshot(JNIEnv* env, jobject clazz, jint width, jint height,
-        jint minLayer, jint maxLayer)
-{
-    return doScreenshot(env, clazz, width, height, minLayer, maxLayer, false);
-}
-
-static void Surface_setLayer(
-        JNIEnv* env, jobject clazz, jint zorder)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setLayer(zorder);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setPosition(
-        JNIEnv* env, jobject clazz, jfloat x, jfloat y)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setPosition(x, y);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setSize(
-        JNIEnv* env, jobject clazz, jint w, jint h)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setSize(w, h);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_hide(
-        JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->hide();
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_show(
-        JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->show();
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_freeze(
-        JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->freeze();
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_unfreeze(
-        JNIEnv* env, jobject clazz)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->unfreeze();
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setFlags(
-        JNIEnv* env, jobject clazz, jint flags, jint mask)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setFlags(flags, mask);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setTransparentRegion(
-        JNIEnv* env, jobject clazz, jobject argRegion)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    SkRegion* nativeRegion = (SkRegion*)env->GetIntField(argRegion, no.native_region);
-
-    const SkIRect& b(nativeRegion->getBounds());
-    Region reg(Rect(b.fLeft, b.fTop, b.fRight, b.fBottom));
-    if (nativeRegion->isComplex()) {
-        SkRegion::Iterator it(*nativeRegion);
-        while (!it.done()) {
-            const SkIRect& r(it.rect());
-            reg.addRectUnchecked(r.fLeft, r.fTop, r.fRight, r.fBottom);
-            it.next();
-        }
-    }
-
-    status_t err = surface->setTransparentRegionHint(reg);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setAlpha(
-        JNIEnv* env, jobject clazz, jfloat alpha)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setAlpha(alpha);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setMatrix(
-        JNIEnv* env, jobject clazz,
-        jfloat dsdx, jfloat dtdx, jfloat dsdy, jfloat dtdy)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setMatrix(dsdx, dtdx, dsdy, dtdy);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setFreezeTint(
-        JNIEnv* env, jobject clazz,
-        jint tint)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, clazz));
-    if (surface == 0) return;
-    status_t err = surface->setFreezeTint(tint);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
-static void Surface_setWindowCrop(JNIEnv* env, jobject thiz, jobject crop)
-{
-    const sp<SurfaceControl>& surface(getSurfaceControl(env, thiz));
-    if (surface == 0) return;
-
-    Rect nativeCrop;
-    if (crop) {
-        nativeCrop.left  = env->GetIntField(crop, ro.l);
-        nativeCrop.top   = env->GetIntField(crop, ro.t);
-        nativeCrop.right = env->GetIntField(crop, ro.r);
-        nativeCrop.bottom= env->GetIntField(crop, ro.b);
-    } else {
-        nativeCrop.left = nativeCrop.top = nativeCrop.right =
-                nativeCrop.bottom = 0;
-    }
-
-    status_t err = surface->setCrop(nativeCrop);
-    if (err<0 && err!=NO_INIT) {
-        doThrowIAE(env);
-    }
-}
-
 // ----------------------------------------------------------------------------
 
-static void Surface_copyFrom(
-        JNIEnv* env, jobject clazz, jobject other)
-{
-    if (clazz == other)
-        return;
-
-    if (other == NULL) {
-        doThrowNPE(env);
-        return;
-    }
-
+static jint nativeCreateFromSurfaceControl(JNIEnv* env, jclass clazz,
+        jint surfaceControlNativeObj) {
     /*
      * This is used by the WindowManagerService just after constructing
      * a Surface and is necessary for returning the Surface reference to
      * the caller. At this point, we should only have a SurfaceControl.
      */
 
-    const sp<SurfaceControl>& surface = getSurfaceControl(env, clazz);
-    const sp<SurfaceControl>& rhs = getSurfaceControl(env, other);
-    if (!SurfaceControl::isSameSurface(surface, rhs)) {
-        // we reassign the surface only if it's a different one
-        // otherwise we would loose our client-side state.
-        setSurfaceControl(env, clazz, rhs);
+    sp<SurfaceControl> ctrl(reinterpret_cast<SurfaceControl *>(surfaceControlNativeObj));
+    sp<Surface> surface(ctrl->getSurface());
+    if (surface != NULL) {
+        surface->incStrong(&sRefBaseOwner);
     }
+    return reinterpret_cast<jint>(surface.get());
 }
 
-static void Surface_transferFrom(
-        JNIEnv* env, jobject clazz, jobject other)
-{
-    if (clazz == other)
-        return;
-
-    if (other == NULL) {
+static jint nativeReadFromParcel(JNIEnv* env, jclass clazz,
+        jint nativeObject, jobject parcelObj) {
+    Parcel* parcel = parcelForJavaObject(env, parcelObj);
+    if (parcel == NULL) {
         doThrowNPE(env);
-        return;
+        return 0;
     }
 
-    sp<SurfaceControl> control(getSurfaceControl(env, other));
-    sp<Surface> surface(Surface_getSurface(env, other));
-    setSurfaceControl(env, clazz, control);
-    setSurface(env, clazz, surface);
-    setSurfaceControl(env, other, 0);
-    setSurface(env, other, 0);
+    sp<Surface> self(reinterpret_cast<Surface *>(nativeObject));
+    sp<IBinder> binder(parcel->readStrongBinder());
+
+    // update the Surface only if the underlying IGraphicBufferProducer
+    // has changed.
+    if (self != NULL
+            && (self->getIGraphicBufferProducer()->asBinder() == binder)) {
+        // same IGraphicBufferProducer, return ourselves
+        return int(self.get());
+    }
+
+    sp<Surface> sur;
+    sp<IGraphicBufferProducer> gbp(interface_cast<IGraphicBufferProducer>(binder));
+    if (gbp != NULL) {
+        // we have a new IGraphicBufferProducer, create a new Surface for it
+        sur = new Surface(gbp);
+        // and keep a reference before passing to java
+        sur->incStrong(&sRefBaseOwner);
+    }
+
+    if (self != NULL) {
+        // and loose the java reference to ourselves
+        self->decStrong(&sRefBaseOwner);
+    }
+
+    return int(sur.get());
 }
 
-static void Surface_readFromParcel(
-        JNIEnv* env, jobject clazz, jobject argParcel)
-{
-    Parcel* parcel = (Parcel*)env->GetIntField( argParcel, no.native_parcel);
+static void nativeWriteToParcel(JNIEnv* env, jclass clazz,
+        jint nativeObject, jobject parcelObj) {
+    Parcel* parcel = parcelForJavaObject(env, parcelObj);
     if (parcel == NULL) {
         doThrowNPE(env);
         return;
     }
-
-    sp<Surface> sur(Surface::readFromParcel(*parcel));
-    setSurface(env, clazz, sur);
-}
-
-static void Surface_writeToParcel(
-        JNIEnv* env, jobject clazz, jobject argParcel, jint flags)
-{
-    Parcel* parcel = (Parcel*)env->GetIntField(
-            argParcel, no.native_parcel);
-
-    if (parcel == NULL) {
-        doThrowNPE(env);
-        return;
-    }
-
-    // The Java instance may have a SurfaceControl (in the case of the
-    // WindowManager or a system app). In that case, we defer to the
-    // SurfaceControl to send its ISurface. Otherwise, if the Surface is
-    // available we let it parcel itself. Finally, if the Surface is also
-    // NULL we fall back to using the SurfaceControl path which sends an
-    // empty surface; this matches legacy behavior.
-    const sp<SurfaceControl>& control(getSurfaceControl(env, clazz));
-    if (control != NULL) {
-        SurfaceControl::writeSurfaceToParcel(control, parcel);
-    } else {
-        sp<Surface> surface(Surface_getSurface(env, clazz));
-        if (surface != NULL) {
-            Surface::writeToParcel(surface, parcel);
-        } else {
-            SurfaceControl::writeSurfaceToParcel(NULL, parcel);
-        }
-    }
-    if (flags & PARCELABLE_WRITE_RETURN_VALUE) {
-        setSurfaceControl(env, clazz, NULL);
-        setSurface(env, clazz, NULL);
-    }
+    sp<Surface> self(reinterpret_cast<Surface *>(nativeObject));
+    parcel->writeStrongBinder( self != 0 ? self->getIGraphicBufferProducer()->asBinder() : NULL);
 }
 
 // ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-
-static void nativeClassInit(JNIEnv* env, jclass clazz);
-
-static JNINativeMethod gSurfaceSessionMethods[] = {
-    {"init",     "()V",  (void*)SurfaceSession_init },
-    {"destroy",  "()V",  (void*)SurfaceSession_destroy },
-    {"kill",     "()V",  (void*)SurfaceSession_kill },
-};
 
 static JNINativeMethod gSurfaceMethods[] = {
-    {"nativeClassInit",     "()V",  (void*)nativeClassInit },
-    {"init",                "(Landroid/view/SurfaceSession;ILjava/lang/String;IIIII)V",  (void*)Surface_init },
-    {"init",                "(Landroid/os/Parcel;)V",  (void*)Surface_initParcel },
-    {"initFromSurfaceTexture", "(Landroid/graphics/SurfaceTexture;)V", (void*)Surface_initFromSurfaceTexture },
-    {"getIdentity",         "()I",  (void*)Surface_getIdentity },
-    {"destroy",             "()V",  (void*)Surface_destroy },
-    {"release",             "()V",  (void*)Surface_release },
-    {"copyFrom",            "(Landroid/view/Surface;)V",  (void*)Surface_copyFrom },
-    {"transferFrom",        "(Landroid/view/Surface;)V",  (void*)Surface_transferFrom },
-    {"isValid",             "()Z",  (void*)Surface_isValid },
-    {"lockCanvasNative",    "(Landroid/graphics/Rect;)Landroid/graphics/Canvas;",  (void*)Surface_lockCanvas },
-    {"unlockCanvasAndPost", "(Landroid/graphics/Canvas;)V", (void*)Surface_unlockCanvasAndPost },
-    {"unlockCanvas",        "(Landroid/graphics/Canvas;)V", (void*)Surface_unlockCanvas },
-    {"openTransaction",     "()V",  (void*)Surface_openTransaction },
-    {"closeTransaction",    "()V",  (void*)Surface_closeTransaction },
-    {"setOrientation",      "(III)V", (void*)Surface_setOrientation },
-    {"freezeDisplay",       "(I)V", (void*)Surface_freezeDisplay },
-    {"unfreezeDisplay",     "(I)V", (void*)Surface_unfreezeDisplay },
-    {"screenshot",          "(II)Landroid/graphics/Bitmap;", (void*)Surface_screenshotAll },
-    {"screenshot",          "(IIII)Landroid/graphics/Bitmap;", (void*)Surface_screenshot },
-    {"setLayer",            "(I)V", (void*)Surface_setLayer },
-    {"setPosition",         "(FF)V",(void*)Surface_setPosition },
-    {"setSize",             "(II)V",(void*)Surface_setSize },
-    {"hide",                "()V",  (void*)Surface_hide },
-    {"show",                "()V",  (void*)Surface_show },
-    {"freeze",              "()V",  (void*)Surface_freeze },
-    {"unfreeze",            "()V",  (void*)Surface_unfreeze },
-    {"setFlags",            "(II)V",(void*)Surface_setFlags },
-    {"setTransparentRegionHint","(Landroid/graphics/Region;)V", (void*)Surface_setTransparentRegion },
-    {"setAlpha",            "(F)V", (void*)Surface_setAlpha },
-    {"setMatrix",           "(FFFF)V",  (void*)Surface_setMatrix },
-    {"setFreezeTint",       "(I)V",  (void*)Surface_setFreezeTint },
-    {"readFromParcel",      "(Landroid/os/Parcel;)V", (void*)Surface_readFromParcel },
-    {"writeToParcel",       "(Landroid/os/Parcel;I)V", (void*)Surface_writeToParcel },
-    {"isConsumerRunningBehind", "()Z", (void*)Surface_isConsumerRunningBehind },
-    {"setWindowCrop",       "(Landroid/graphics/Rect;)V", (void*)Surface_setWindowCrop },
+    {"nativeCreateFromSurfaceTexture", "(Landroid/graphics/SurfaceTexture;)I",
+            (void*)nativeCreateFromSurfaceTexture },
+    {"nativeRelease", "(I)V",
+            (void*)nativeRelease },
+    {"nativeIsValid", "(I)Z",
+            (void*)nativeIsValid },
+    {"nativeIsConsumerRunningBehind", "(I)Z",
+            (void*)nativeIsConsumerRunningBehind },
+    {"nativeLockCanvas", "(ILandroid/graphics/Canvas;Landroid/graphics/Rect;)V",
+            (void*)nativeLockCanvas },
+    {"nativeUnlockCanvasAndPost", "(ILandroid/graphics/Canvas;)V",
+            (void*)nativeUnlockCanvasAndPost },
+    {"nativeCreateFromSurfaceControl", "(I)I",
+            (void*)nativeCreateFromSurfaceControl },
+    {"nativeReadFromParcel", "(ILandroid/os/Parcel;)I",
+            (void*)nativeReadFromParcel },
+    {"nativeWriteToParcel", "(ILandroid/os/Parcel;)V",
+            (void*)nativeWriteToParcel },
 };
-
-void nativeClassInit(JNIEnv* env, jclass clazz)
-{
-    so.surface = env->GetFieldID(clazz, ANDROID_VIEW_SURFACE_JNI_ID, "I");
-    so.surfaceGenerationId = env->GetFieldID(clazz, "mSurfaceGenerationId", "I");
-    so.surfaceControl = env->GetFieldID(clazz, "mSurfaceControl", "I");
-    so.saveCount = env->GetFieldID(clazz, "mSaveCount", "I");
-    so.canvas    = env->GetFieldID(clazz, "mCanvas", "Landroid/graphics/Canvas;");
-
-    jclass surfaceSession = env->FindClass("android/view/SurfaceSession");
-    sso.client = env->GetFieldID(surfaceSession, "mClient", "I");
-
-    jclass canvas = env->FindClass("android/graphics/Canvas");
-    no.native_canvas = env->GetFieldID(canvas, "mNativeCanvas", "I");
-    co.surfaceFormat = env->GetFieldID(canvas, "mSurfaceFormat", "I");
-
-    jclass region = env->FindClass("android/graphics/Region");
-    no.native_region = env->GetFieldID(region, "mNativeRegion", "I");
-
-    jclass parcel = env->FindClass("android/os/Parcel");
-    no.native_parcel = env->GetFieldID(parcel, "mNativePtr", "I");
-
-    jclass rect = env->FindClass("android/graphics/Rect");
-    ro.l = env->GetFieldID(rect, "left", "I");
-    ro.t = env->GetFieldID(rect, "top", "I");
-    ro.r = env->GetFieldID(rect, "right", "I");
-    ro.b = env->GetFieldID(rect, "bottom", "I");
-
-    jclass point = env->FindClass("android/graphics/Point");
-    po.x = env->GetFieldID(point, "x", "I");
-    po.y = env->GetFieldID(point, "y", "I");
-}
 
 int register_android_view_Surface(JNIEnv* env)
 {
-    int err;
-    err = AndroidRuntime::registerNativeMethods(env, kSurfaceSessionClassPathName,
-            gSurfaceSessionMethods, NELEM(gSurfaceSessionMethods));
-
-    err |= AndroidRuntime::registerNativeMethods(env, kSurfaceClassPathName,
+    int err = AndroidRuntime::registerNativeMethods(env, "android/view/Surface",
             gSurfaceMethods, NELEM(gSurfaceMethods));
+
+    jclass clazz = env->FindClass("android/view/Surface");
+    gSurfaceClassInfo.clazz = jclass(env->NewGlobalRef(clazz));
+    gSurfaceClassInfo.mNativeObject =
+            env->GetFieldID(gSurfaceClassInfo.clazz, "mNativeSurface", "I");
+    gSurfaceClassInfo.mLock =
+            env->GetFieldID(gSurfaceClassInfo.clazz, "mLock", "Ljava/lang/Object;");
+    gSurfaceClassInfo.ctor = env->GetMethodID(gSurfaceClassInfo.clazz, "<init>", "(I)V");
+
+    clazz = env->FindClass("android/graphics/Canvas");
+    gCanvasClassInfo.mFinalizer = env->GetFieldID(clazz, "mFinalizer", "Landroid/graphics/Canvas$CanvasFinalizer;");
+    gCanvasClassInfo.mNativeCanvas = env->GetFieldID(clazz, "mNativeCanvas", "I");
+    gCanvasClassInfo.mSurfaceFormat = env->GetFieldID(clazz, "mSurfaceFormat", "I");
+
+    clazz = env->FindClass("android/graphics/Canvas$CanvasFinalizer");
+    gCanvasFinalizerClassInfo.mNativeCanvas = env->GetFieldID(clazz, "mNativeCanvas", "I");
+
+    clazz = env->FindClass("android/graphics/Rect");
+    gRectClassInfo.left = env->GetFieldID(clazz, "left", "I");
+    gRectClassInfo.top = env->GetFieldID(clazz, "top", "I");
+    gRectClassInfo.right = env->GetFieldID(clazz, "right", "I");
+    gRectClassInfo.bottom = env->GetFieldID(clazz, "bottom", "I");
+
     return err;
 }
 

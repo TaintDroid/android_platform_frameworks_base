@@ -37,6 +37,7 @@ import android.view.inputmethod.InputConnection;
 import android.webkit.WebView.HitTestResult;
 import android.webkit.WebView.PictureListener;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.util.Map;
 
@@ -220,8 +221,6 @@ public interface WebViewProvider {
 
     public WebSettings getSettings();
 
-    public void emulateShiftHeld();
-
     public void setMapTrackballToArrowKeys(boolean setMap);
 
     public void flingScroll(int vx, int vy);
@@ -236,10 +235,12 @@ public interface WebViewProvider {
 
     public boolean zoomOut();
 
-    public void debugDump();
+    public void dumpViewHierarchyWithProperties(BufferedWriter out, int level);
+
+    public View findHierarchyView(String className, int hashCode);
 
     //-------------------------------------------------------------------------
-    // Provider glue methods
+    // Provider internal methods
     //-------------------------------------------------------------------------
 
     /**
@@ -253,6 +254,12 @@ public interface WebViewProvider {
      * returned by getViewDelegate().
      */
     /* package */ ScrollDelegate getScrollDelegate();
+
+    /**
+     * Only used by FindActionModeCallback to inform providers that the find dialog has
+     * been dismissed.
+     */
+    public void notifyFindDialogDismissed();
 
     //-------------------------------------------------------------------------
     // View / ViewGroup delegation methods
@@ -340,6 +347,8 @@ public interface WebViewProvider {
         public void setBackgroundColor(int color);
 
         public void setLayerType(int layerType, Paint paint);
+
+        public void preDispatchDraw(Canvas canvas);
     }
 
     interface ScrollDelegate {

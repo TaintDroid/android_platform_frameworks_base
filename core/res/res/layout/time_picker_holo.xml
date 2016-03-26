@@ -25,40 +25,47 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <!-- hour -->
-    <NumberPicker
-        android:id="@+id/hour"
+    <LinearLayout android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dip"
-        android:layout_marginBottom="16dip"
-        android:layout_marginLeft="16dip"
-        android:layout_marginRight="6dip"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        />
+        android:layoutDirection="ltr">
 
-    <!-- divider -->
-    <TextView
-        android:id="@+id/divider"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:importantForAccessibility="no"
-        />
+        <!-- hour -->
+        <NumberPicker
+            android:id="@+id/hour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dip"
+            android:layout_marginBottom="16dip"
+            android:layout_marginStart="16dip"
+            android:layout_marginEnd="6dip"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            />
 
-    <!-- minute -->
-    <NumberPicker
-        android:id="@+id/minute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dip"
-        android:layout_marginBottom="16dip"
-        android:layout_marginLeft="6dip"
-        android:layout_marginRight="8dip"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        />
+        <!-- divider -->
+        <TextView
+            android:id="@+id/divider"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:importantForAccessibility="no"
+            />
+
+        <!-- minute -->
+        <NumberPicker
+            android:id="@+id/minute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dip"
+            android:layout_marginBottom="16dip"
+            android:layout_marginStart="6dip"
+            android:layout_marginEnd="8dip"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            />
+
+    </LinearLayout>
 
     <!-- AM / PM -->
     <NumberPicker
@@ -67,8 +74,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dip"
         android:layout_marginBottom="16dip"
-        android:layout_marginLeft="8dip"
-        android:layout_marginRight="16dip"
+        android:layout_marginStart="8dip"
+        android:layout_marginEnd="16dip"
         android:focusable="true"
         android:focusableInTouchMode="true"
         />

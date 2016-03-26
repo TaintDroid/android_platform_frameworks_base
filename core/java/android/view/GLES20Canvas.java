@@ -144,22 +144,46 @@ class GLES20Canvas extends HardwareCanvas {
         }
     }
 
+    @Override
+    public void setName(String name) {
+        super.setName(name);
+        nSetName(mRenderer, name);
+    }
+
+    private static native void nSetName(int renderer, String name);
+
     ///////////////////////////////////////////////////////////////////////////
     // Hardware layers
     ///////////////////////////////////////////////////////////////////////////
-    
+
+    @Override
+    void pushLayerUpdate(HardwareLayer layer) {
+        nPushLayerUpdate(mRenderer, ((GLES20RenderLayer) layer).mLayer);
+    }
+
+    @Override
+    void clearLayerUpdates() {
+        nClearLayerUpdates(mRenderer);
+    }
+
     static native int nCreateTextureLayer(boolean opaque, int[] layerInfo);
     static native int nCreateLayer(int width, int height, boolean isOpaque, int[] layerInfo);
-    static native void nResizeLayer(int layerId, int width, int height, int[] layerInfo);
+    static native boolean nResizeLayer(int layerId, int width, int height, int[] layerInfo);
+    static native void nSetOpaqueLayer(int layerId, boolean isOpaque);
+    static native void nSetLayerPaint(int layerId, int nativePaint);
+    static native void nSetLayerColorFilter(int layerId, int nativeColorFilter);
     static native void nUpdateTextureLayer(int layerId, int width, int height, boolean opaque,
             SurfaceTexture surface);
+    static native void nClearLayerTexture(int layerId);
     static native void nSetTextureLayerTransform(int layerId, int matrix);
     static native void nDestroyLayer(int layerId);
     static native void nDestroyLayerDeferred(int layerId);
-    static native void nFlushLayer(int layerId);
     static native void nUpdateRenderLayer(int layerId, int renderer, int displayList,
             int left, int top, int right, int bottom);
     static native boolean nCopyLayer(int layerId, int bitmap);
+
+    private static native void nClearLayerUpdates(int renderer);
+    private static native void nPushLayerUpdate(int renderer, int layer);
 
     ///////////////////////////////////////////////////////////////////////////
     // Canvas management
@@ -353,24 +377,13 @@ class GLES20Canvas extends HardwareCanvas {
     }
 
     private static native int nGetDisplayList(int renderer, int displayList);
-    
-    static void destroyDisplayList(int displayList) {
-        nDestroyDisplayList(displayList);
+
+    @Override
+    void outputDisplayList(DisplayList displayList) {
+        nOutputDisplayList(mRenderer, ((GLES20DisplayList) displayList).getNativeDisplayList());
     }
 
-    private static native void nDestroyDisplayList(int displayList);
-
-    static int getDisplayListSize(int displayList) {
-        return nGetDisplayListSize(displayList);
-    }
-
-    private static native int nGetDisplayListSize(int displayList);
-
-    static void setDisplayListName(int displayList, String name) {
-        nSetDisplayListName(displayList, name);
-    }
-
-    private static native void nSetDisplayListName(int displayList, String name);
+    private static native void nOutputDisplayList(int renderer, int displayList);
 
     @Override
     public int drawDisplayList(DisplayList displayList, Rect dirty, int flags) {
@@ -381,29 +394,18 @@ class GLES20Canvas extends HardwareCanvas {
     private static native int nDrawDisplayList(int renderer, int displayList,
             Rect dirty, int flags);
 
-    @Override
-    void outputDisplayList(DisplayList displayList) {
-        nOutputDisplayList(mRenderer, ((GLES20DisplayList) displayList).getNativeDisplayList());
-    }
-
-    private static native void nOutputDisplayList(int renderer, int displayList);
-
     ///////////////////////////////////////////////////////////////////////////
     // Hardware layer
     ///////////////////////////////////////////////////////////////////////////
     
     void drawHardwareLayer(HardwareLayer layer, float x, float y, Paint paint) {
+        layer.setLayerPaint(paint);
+
         final GLES20Layer glLayer = (GLES20Layer) layer;
-        int modifier = paint != null ? setupColorFilter(paint) : MODIFIER_NONE;
-        try {
-            final int nativePaint = paint == null ? 0 : paint.mNativePaint;
-            nDrawLayer(mRenderer, glLayer.getLayer(), x, y, nativePaint);
-        } finally {
-            if (modifier != MODIFIER_NONE) nResetModifiers(mRenderer, modifier);
-        }
+        nDrawLayer(mRenderer, glLayer.getLayer(), x, y);
     }
 
-    private static native void nDrawLayer(int renderer, int layer, float x, float y, int paint);
+    private static native void nDrawLayer(int renderer, int layer, float x, float y);
 
     void interrupt() {
         nInterrupt(mRenderer);
@@ -422,19 +424,15 @@ class GLES20Canvas extends HardwareCanvas {
 
     @Override
     public boolean clipPath(Path path) {
-        // TODO: Implement
-        path.computeBounds(mPathBounds, true);
-        return nClipRect(mRenderer, mPathBounds.left, mPathBounds.top,
-                mPathBounds.right, mPathBounds.bottom, Region.Op.INTERSECT.nativeInt);
+        return nClipPath(mRenderer, path.mNativePath, Region.Op.INTERSECT.nativeInt);
     }
 
     @Override
     public boolean clipPath(Path path, Region.Op op) {
-        // TODO: Implement
-        path.computeBounds(mPathBounds, true);
-        return nClipRect(mRenderer, mPathBounds.left, mPathBounds.top,
-                mPathBounds.right, mPathBounds.bottom, op.nativeInt);
+        return nClipPath(mRenderer, path.mNativePath, op.nativeInt);
     }
+
+    private static native boolean nClipPath(int renderer, int path, int op);
 
     @Override
     public boolean clipRect(float left, float top, float right, float bottom) {
@@ -454,8 +452,8 @@ class GLES20Canvas extends HardwareCanvas {
         return nClipRect(mRenderer, left, top, right, bottom, Region.Op.INTERSECT.nativeInt);
     }
     
-    private static native boolean nClipRect(int renderer, int left, int top, int right, int bottom,
-            int op);
+    private static native boolean nClipRect(int renderer, int left, int top,
+            int right, int bottom, int op);
 
     @Override
     public boolean clipRect(Rect rect) {
@@ -481,19 +479,15 @@ class GLES20Canvas extends HardwareCanvas {
 
     @Override
     public boolean clipRegion(Region region) {
-        // TODO: Implement
-        region.getBounds(mClipBounds);
-        return nClipRect(mRenderer, mClipBounds.left, mClipBounds.top,
-                mClipBounds.right, mClipBounds.bottom, Region.Op.INTERSECT.nativeInt);
+        return nClipRegion(mRenderer, region.mNativeRegion, Region.Op.INTERSECT.nativeInt);
     }
 
     @Override
     public boolean clipRegion(Region region, Region.Op op) {
-        // TODO: Implement
-        region.getBounds(mClipBounds);
-        return nClipRect(mRenderer, mClipBounds.left, mClipBounds.top,
-                mClipBounds.right, mClipBounds.bottom, op.nativeInt);
+        return nClipRegion(mRenderer, region.mNativeRegion, op.nativeInt);
     }
+
+    private static native boolean nClipRegion(int renderer, int region, int op);
 
     @Override
     public boolean getClipBounds(Rect bounds) {
@@ -504,22 +498,22 @@ class GLES20Canvas extends HardwareCanvas {
 
     @Override
     public boolean quickReject(float left, float top, float right, float bottom, EdgeType type) {
-        return nQuickReject(mRenderer, left, top, right, bottom, type.nativeInt);
+        return nQuickReject(mRenderer, left, top, right, bottom);
     }
     
     private static native boolean nQuickReject(int renderer, float left, float top,
-            float right, float bottom, int edge);
+            float right, float bottom);
 
     @Override
     public boolean quickReject(Path path, EdgeType type) {
         path.computeBounds(mPathBounds, true);
         return nQuickReject(mRenderer, mPathBounds.left, mPathBounds.top,
-                mPathBounds.right, mPathBounds.bottom, type.nativeInt);
+                mPathBounds.right, mPathBounds.bottom);
     }
 
     @Override
     public boolean quickReject(RectF rect, EdgeType type) {
-        return nQuickReject(mRenderer, rect.left, rect.top, rect.right, rect.bottom, type.nativeInt);
+        return nQuickReject(mRenderer, rect.left, rect.top, rect.right, rect.bottom);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -890,9 +884,9 @@ class GLES20Canvas extends HardwareCanvas {
         final int count = (meshWidth + 1) * (meshHeight + 1);
         checkRange(verts.length, vertOffset, count * 2);
 
-        // TODO: Colors are ignored for now
-        colors = null;
-        colorOffset = 0;
+        if (colors != null) {
+            checkRange(colors.length, colorOffset, count);
+        }
 
         int modifiers = paint != null ? setupModifiers(bitmap, paint) : MODIFIER_NONE;
         try {
@@ -944,6 +938,8 @@ class GLES20Canvas extends HardwareCanvas {
 
     @Override
     public void drawLines(float[] pts, int offset, int count, Paint paint) {
+        if (count < 4) return;
+
         if ((offset | count) < 0 || offset + count > pts.length) {
             throw new IllegalArgumentException("The lines array must contain 4 elements per line.");
         }
@@ -1002,6 +998,17 @@ class GLES20Canvas extends HardwareCanvas {
     private static native void nDrawPath(int renderer, int path, int paint);
     private static native void nDrawRects(int renderer, int region, int paint);
 
+    void drawRects(float[] rects, int count, Paint paint) {
+        int modifiers = setupModifiers(paint, MODIFIER_COLOR_FILTER | MODIFIER_SHADER);
+        try {
+            nDrawRects(mRenderer, rects, count, paint.mNativePaint);
+        } finally {
+            if (modifiers != MODIFIER_NONE) nResetModifiers(mRenderer, modifiers);
+        }
+    }
+
+    private static native void nDrawRects(int renderer, float[] rects, int count, int paint);
+
     @Override
     public void drawPicture(Picture picture) {
         if (picture.createdFromStream) {
@@ -1056,6 +1063,8 @@ class GLES20Canvas extends HardwareCanvas {
 
     @Override
     public void drawPoints(float[] pts, int offset, int count, Paint paint) {
+        if (count < 2) return;
+
         int modifiers = setupModifiers(paint, MODIFIER_COLOR_FILTER | MODIFIER_SHADER);
         try {
             nDrawPoints(mRenderer, pts, offset, count, paint.mNativePaint);

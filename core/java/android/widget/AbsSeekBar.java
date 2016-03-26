@@ -107,6 +107,9 @@ public abstract class AbsSeekBar extends ProgressBar {
         }
         if (thumb != null) {
             thumb.setCallback(this);
+            if (canResolveLayoutDirection()) {
+                thumb.setLayoutDirection(getLayoutDirection());
+            }
 
             // Assuming the thumb drawable is symmetric, set the thumb offset
             // such that the thumb will hang halfway off either edge of the
@@ -238,6 +241,7 @@ public abstract class AbsSeekBar extends ProgressBar {
     
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
         updateThumbPos(w, h);
     }
 
@@ -301,9 +305,22 @@ public abstract class AbsSeekBar extends ProgressBar {
         }
         
         // Canvas will be translated, so 0,0 is where we start drawing
-        thumb.setBounds(thumbPos, topBound, thumbPos + thumbWidth, bottomBound);
+        final int left = (isLayoutRtl() && mMirrorForRtl) ? available - thumbPos : thumbPos;
+        thumb.setBounds(left, topBound, left + thumbWidth, bottomBound);
     }
-    
+
+    /**
+     * @hide
+     */
+    @Override
+    public void onResolveDrawables(int layoutDirection) {
+        super.onResolveDrawables(layoutDirection);
+
+        if (mThumb != null) {
+            mThumb.setLayoutDirection(layoutDirection);
+        }
+    }
+
     @Override
     protected synchronized void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -409,15 +426,25 @@ public abstract class AbsSeekBar extends ProgressBar {
         int x = (int)event.getX();
         float scale;
         float progress = 0;
-        if (x < mPaddingLeft) {
-            scale = 0.0f;
-        } else if (x > width - mPaddingRight) {
-            scale = 1.0f;
+        if (isLayoutRtl() && mMirrorForRtl) {
+            if (x > width - mPaddingRight) {
+                scale = 0.0f;
+            } else if (x < mPaddingLeft) {
+                scale = 1.0f;
+            } else {
+                scale = (float)(available - x + mPaddingLeft) / (float)available;
+                progress = mTouchProgressOffset;
+            }
         } else {
-            scale = (float)(x - mPaddingLeft) / (float)available;
-            progress = mTouchProgressOffset;
+            if (x < mPaddingLeft) {
+                scale = 0.0f;
+            } else if (x > width - mPaddingRight) {
+                scale = 1.0f;
+            } else {
+                scale = (float)(x - mPaddingLeft) / (float)available;
+                progress = mTouchProgressOffset;
+            }
         }
-        
         final int max = getMax();
         progress += scale * max;
         
@@ -528,5 +555,24 @@ public abstract class AbsSeekBar extends ProgressBar {
             }
         }
         return false;
+    }
+
+    @Override
+    public void onRtlPropertiesChanged(int layoutDirection) {
+        super.onRtlPropertiesChanged(layoutDirection);
+
+        int max = getMax();
+        float scale = max > 0 ? (float) getProgress() / (float) max : 0;
+
+        Drawable thumb = mThumb;
+        if (thumb != null) {
+            setThumbPos(getWidth(), thumb, scale, Integer.MIN_VALUE);
+            /*
+             * Since we draw translated, the drawable's bounds that it signals
+             * for invalidation won't be the actual bounds we want invalidated,
+             * so just invalidate this whole view.
+             */
+            invalidate();
+        }
     }
 }

@@ -1,5 +1,13 @@
 page.title=Text Fields
+page.tags="text","edittext","input"
 @jd:body
+
+<a class="notice-developers" href="{@docRoot}guide/topics/ui/controls/text.html">
+  <div>
+    <h3>Developer Docs</h3>
+    <p>Text Fields</p>
+  </div>
+</a>
 
 <p>Text fields allow the user to type text into your app. They can be either single line or multi-line.
 Touching a text field places the cursor and automatically displays the keyboard. In addition to
@@ -68,3 +76,4 @@ Selection mode includes:</p>
 
   </div>
 </div>
+

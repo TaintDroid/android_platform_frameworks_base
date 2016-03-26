@@ -28,6 +28,10 @@ import android.os.Parcel;
 public class ScanResult implements Parcelable {
     /** The network name. */
     public String SSID;
+
+    /** Ascii encoded SSID. This will replace SSID when we deprecate it. @hide */
+    public WifiSsid wifiSsid;
+
     /** The address of the access point. */
     public String BSSID;
     /**
@@ -47,19 +51,35 @@ public class ScanResult implements Parcelable {
     public int frequency;
 
     /**
-     * We'd like to obtain the following attributes,
-     * but they are not reported via the socket
-     * interface, even though they are known
-     * internally by wpa_supplicant.
-     * {@hide}
+     * Time Synchronization Function (tsf) timestamp in microseconds when
+     * this result was last seen.
      */
-    public ScanResult(String SSID, String BSSID, String caps, int level, int frequency) {
-        this.SSID = SSID;
+     public long timestamp;
+
+    /** {@hide} */
+    public ScanResult(WifiSsid wifiSsid, String BSSID, String caps, int level, int frequency,
+            long tsf) {
+        this.wifiSsid = wifiSsid;
+        this.SSID = (wifiSsid != null) ? wifiSsid.toString() : WifiSsid.NONE;
         this.BSSID = BSSID;
         this.capabilities = caps;
         this.level = level;
         this.frequency = frequency;
-        //networkConfig = null;
+        this.timestamp = tsf;
+    }
+
+
+    /** copy constructor {@hide} */
+    public ScanResult(ScanResult source) {
+        if (source != null) {
+            wifiSsid = source.wifiSsid;
+            SSID = source.SSID;
+            BSSID = source.BSSID;
+            capabilities = source.capabilities;
+            level = source.level;
+            frequency = source.frequency;
+            timestamp = source.timestamp;
+        }
     }
 
     @Override
@@ -68,7 +88,7 @@ public class ScanResult implements Parcelable {
         String none = "<none>";
 
         sb.append("SSID: ").
-            append(SSID == null ? none : SSID).
+            append(wifiSsid == null ? WifiSsid.NONE : wifiSsid).
             append(", BSSID: ").
             append(BSSID == null ? none : BSSID).
             append(", capabilities: ").
@@ -76,7 +96,9 @@ public class ScanResult implements Parcelable {
             append(", level: ").
             append(level).
             append(", frequency: ").
-            append(frequency);
+            append(frequency).
+            append(", timestamp: ").
+            append(timestamp);
 
         return sb.toString();
     }
@@ -88,23 +110,34 @@ public class ScanResult implements Parcelable {
 
     /** Implement the Parcelable interface {@hide} */
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(SSID);
+        if (wifiSsid != null) {
+            dest.writeInt(1);
+            wifiSsid.writeToParcel(dest, flags);
+        } else {
+            dest.writeInt(0);
+        }
         dest.writeString(BSSID);
         dest.writeString(capabilities);
         dest.writeInt(level);
         dest.writeInt(frequency);
+        dest.writeLong(timestamp);
     }
 
     /** Implement the Parcelable interface {@hide} */
     public static final Creator<ScanResult> CREATOR =
         new Creator<ScanResult>() {
             public ScanResult createFromParcel(Parcel in) {
+                WifiSsid wifiSsid = null;
+                if (in.readInt() == 1) {
+                    wifiSsid = WifiSsid.CREATOR.createFromParcel(in);
+                }
                 return new ScanResult(
-                    in.readString(),
+                    wifiSsid,
                     in.readString(),
                     in.readString(),
                     in.readInt(),
-                    in.readInt()
+                    in.readInt(),
+                    in.readLong()
                 );
             }
 

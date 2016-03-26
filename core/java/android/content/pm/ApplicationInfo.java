@@ -298,9 +298,21 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * activity's manifest.
      *
      * Default value is false (no support for RTL).
-     * @hide
      */
     public static final int FLAG_SUPPORTS_RTL = 1<<22;
+
+    /**
+     * Value for {@link #flags}: true if the application is currently
+     * installed for the calling user.
+     */
+    public static final int FLAG_INSTALLED = 1<<23;
+
+    /**
+     * Value for {@link #flags}: true if the application only has its
+     * data installed; the application package itself does not currently
+     * exist on the device.
+     */
+    public static final int FLAG_IS_DATA_ONLY = 1<<24;
 
     /**
      * Value for {@link #flags}: Set to true if the application has been
@@ -335,7 +347,8 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * {@link #FLAG_SUPPORTS_NORMAL_SCREENS},
      * {@link #FLAG_SUPPORTS_LARGE_SCREENS}, {@link #FLAG_SUPPORTS_XLARGE_SCREENS},
      * {@link #FLAG_RESIZEABLE_FOR_SCREENS},
-     * {@link #FLAG_SUPPORTS_SCREEN_DENSITIES}, {@link #FLAG_VM_SAFE_MODE}
+     * {@link #FLAG_SUPPORTS_SCREEN_DENSITIES}, {@link #FLAG_VM_SAFE_MODE},
+     * {@link #FLAG_INSTALLED}.
      */
     public int flags = 0;
     
@@ -383,6 +396,15 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * {@hide}
      */
     public String[] resourceDirs;
+
+    /**
+     * String retrieved from the seinfo tag found in selinux policy. This value
+     * is useful in setting an SELinux security context on the process as well
+     * as its data directory.
+     *
+     * {@hide}
+     */
+    public String seinfo;
 
     /**
      * Paths to all shared libraries this application is linked against.  This
@@ -464,6 +486,9 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         if (resourceDirs != null) {
             pw.println(prefix + "resourceDirs=" + resourceDirs);
         }
+        if (seinfo != null) {
+            pw.println(prefix + "seinfo=" + seinfo);
+        }
         pw.println(prefix + "dataDir=" + dataDir);
         if (sharedLibraryFiles != null) {
             pw.println(prefix + "sharedLibraryFiles=" + sharedLibraryFiles);
@@ -531,6 +556,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         publicSourceDir = orig.publicSourceDir;
         nativeLibraryDir = orig.nativeLibraryDir;
         resourceDirs = orig.resourceDirs;
+        seinfo = orig.seinfo;
         sharedLibraryFiles = orig.sharedLibraryFiles;
         dataDir = orig.dataDir;
         uid = orig.uid;
@@ -541,6 +567,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         manageSpaceActivityName = orig.manageSpaceActivityName;
         descriptionRes = orig.descriptionRes;
         uiOptions = orig.uiOptions;
+        backupAgentName = orig.backupAgentName;
     }
 
 
@@ -569,6 +596,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         dest.writeString(publicSourceDir);
         dest.writeString(nativeLibraryDir);
         dest.writeStringArray(resourceDirs);
+        dest.writeString(seinfo);
         dest.writeStringArray(sharedLibraryFiles);
         dest.writeString(dataDir);
         dest.writeInt(uid);
@@ -607,6 +635,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         publicSourceDir = source.readString();
         nativeLibraryDir = source.readString();
         resourceDirs = source.readStringArray();
+        seinfo = source.readString();
         sharedLibraryFiles = source.readStringArray();
         dataDir = source.readString();
         uid = source.readInt();

@@ -40,7 +40,6 @@
 #include <androidfw/KeyCharacterMap.h>
 #include <androidfw/VirtualKeyMap.h>
 
-#include <sha1.h>
 #include <string.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -49,6 +48,7 @@
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <sys/limits.h>
+#include <sys/sha1.h>
 
 /* this macro is used to tell if "bit" is set in "array"
  * it selects a byte from the array, and does a boolean AND
@@ -162,7 +162,8 @@ EventHub::Device::Device(int fd, int32_t id, const String8& path,
         next(NULL),
         fd(fd), id(id), path(path), identifier(identifier),
         classes(0), configuration(NULL), virtualKeyMap(NULL),
-        ffEffectPlaying(false), ffEffectId(-1) {
+        ffEffectPlaying(false), ffEffectId(-1),
+        timestampOverrideSec(0), timestampOverrideUsec(0) {
     memset(keyBitmask, 0, sizeof(keyBitmask));
     memset(absBitmask, 0, sizeof(absBitmask));
     memset(relBitmask, 0, sizeof(relBitmask));
@@ -766,11 +767,36 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
 
                     size_t count = size_t(readSize) / sizeof(struct input_event);
                     for (size_t i = 0; i < count; i++) {
-                        const struct input_event& iev = readBuffer[i];
-                        ALOGV("%s got: t0=%d, t1=%d, type=%d, code=%d, value=%d",
+                        struct input_event& iev = readBuffer[i];
+                        ALOGV("%s got: time=%d.%06d, type=%d, code=%d, value=%d",
                                 device->path.string(),
                                 (int) iev.time.tv_sec, (int) iev.time.tv_usec,
                                 iev.type, iev.code, iev.value);
+
+                        // Some input devices may have a better concept of the time
+                        // when an input event was actually generated than the kernel
+                        // which simply timestamps all events on entry to evdev.
+                        // This is a custom Android extension of the input protocol
+                        // mainly intended for use with uinput based device drivers.
+                        if (iev.type == EV_MSC) {
+                            if (iev.code == MSC_ANDROID_TIME_SEC) {
+                                device->timestampOverrideSec = iev.value;
+                                continue;
+                            } else if (iev.code == MSC_ANDROID_TIME_USEC) {
+                                device->timestampOverrideUsec = iev.value;
+                                continue;
+                            }
+                        }
+                        if (device->timestampOverrideSec || device->timestampOverrideUsec) {
+                            iev.time.tv_sec = device->timestampOverrideSec;
+                            iev.time.tv_usec = device->timestampOverrideUsec;
+                            if (iev.type == EV_SYN && iev.code == SYN_REPORT) {
+                                device->timestampOverrideSec = 0;
+                                device->timestampOverrideUsec = 0;
+                            }
+                            ALOGV("applied override time %d.%06d",
+                                    int(iev.time.tv_sec), int(iev.time.tv_usec));
+                        }
 
 #ifdef HAVE_POSIX_CLOCKS
                         // Use the time specified in the event instead of the current time
@@ -787,6 +813,40 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
                         event->when = nsecs_t(iev.time.tv_sec) * 1000000000LL
                                 + nsecs_t(iev.time.tv_usec) * 1000LL;
                         ALOGV("event time %lld, now %lld", event->when, now);
+
+                        // Bug 7291243: Add a guard in case the kernel generates timestamps
+                        // that appear to be far into the future because they were generated
+                        // using the wrong clock source.
+                        //
+                        // This can happen because when the input device is initially opened
+                        // it has a default clock source of CLOCK_REALTIME.  Any input events
+                        // enqueued right after the device is opened will have timestamps
+                        // generated using CLOCK_REALTIME.  We later set the clock source
+                        // to CLOCK_MONOTONIC but it is already too late.
+                        //
+                        // Invalid input event timestamps can result in ANRs, crashes and
+                        // and other issues that are hard to track down.  We must not let them
+                        // propagate through the system.
+                        //
+                        // Log a warning so that we notice the problem and recover gracefully.
+                        if (event->when >= now + 10 * 1000000000LL) {
+                            // Double-check.  Time may have moved on.
+                            nsecs_t time = systemTime(SYSTEM_TIME_MONOTONIC);
+                            if (event->when > time) {
+                                ALOGW("An input event from %s has a timestamp that appears to "
+                                        "have been generated using the wrong clock source "
+                                        "(expected CLOCK_MONOTONIC): "
+                                        "event time %lld, current time %lld, call time %lld.  "
+                                        "Using current time instead.",
+                                        device->path.string(), event->when, time, now);
+                                event->when = time;
+                            } else {
+                                ALOGV("Event time is ok but failed the fast path and required "
+                                        "an extra call to systemTime: "
+                                        "event time %lld, current time %lld, call time %lld.",
+                                        event->when, time, now);
+                            }
+                        }
 #else
                         event->when = now;
 #endif
@@ -795,8 +855,8 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
                         event->code = iev.code;
                         event->value = iev.value;
                         event += 1;
+                        capacity -= 1;
                     }
-                    capacity -= count;
                     if (capacity == 0) {
                         // The result buffer is full.  Reset the pending event index
                         // so we will try to read the device again on the next iteration.
@@ -1148,6 +1208,12 @@ status_t EventHub::openDeviceLocked(const char *devicePath) {
                 device->classes |= INPUT_DEVICE_CLASS_GAMEPAD;
                 break;
             }
+        }
+
+        // Disable kernel key repeat since we handle it ourselves
+        unsigned int repeatRate[] = {0,0};
+        if (ioctl(fd, EVIOCSREP, repeatRate)) {
+            ALOGW("Unable to disable kernel key repeat for %s: %s", devicePath, strerror(errno));
         }
     }
 

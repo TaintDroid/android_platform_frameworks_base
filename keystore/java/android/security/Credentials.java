@@ -20,8 +20,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import com.android.org.bouncycastle.openssl.PEMReader;
-import com.android.org.bouncycastle.openssl.PEMWriter;
+import com.android.org.bouncycastle.util.io.pem.PemObject;
+import com.android.org.bouncycastle.util.io.pem.PemReader;
+import com.android.org.bouncycastle.util.io.pem.PemWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,6 +33,10 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charsets;
 import java.security.KeyPair;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +48,8 @@ public class Credentials {
     private static final String LOGTAG = "Credentials";
 
     public static final String INSTALL_ACTION = "android.credentials.INSTALL";
+
+    public static final String INSTALL_AS_USER_ACTION = "android.credentials.INSTALL_AS_USER";
 
     public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
 
@@ -61,6 +68,9 @@ public class Credentials {
     /** Key prefix for WIFI. */
     public static final String WIFI = "WIFI_";
 
+    /** Key containing suffix of lockdown VPN profile. */
+    public static final String LOCKDOWN_VPN = "LOCKDOWN_VPN";
+
     /** Data type for public keys. */
     public static final String EXTRA_PUBLIC_KEY = "KEY";
 
@@ -73,6 +83,12 @@ public class Credentials {
     // commonly used on Windows
     public static final String EXTENSION_CER = ".cer";
     public static final String EXTENSION_PFX = ".pfx";
+
+    /**
+     * Intent extra: install the certificate bundle as this UID instead of
+     * system.
+     */
+    public static final String EXTRA_INSTALL_AS_UID = "install_as_uid";
 
     /**
      * Intent extra: name for the user's private key.
@@ -105,34 +121,41 @@ public class Credentials {
     public static final String EXTRA_CA_CERTIFICATES_DATA = "ca_certificates_data";
 
     /**
-     * Convert objects to a PEM format, which is used for
-     * CA_CERTIFICATE, USER_CERTIFICATE, and USER_PRIVATE_KEY
-     * entries.
+     * Convert objects to a PEM format which is used for
+     * CA_CERTIFICATE and USER_CERTIFICATE entries.
      */
-    public static byte[] convertToPem(Object... objects) throws IOException {
+    public static byte[] convertToPem(Certificate... objects)
+            throws IOException, CertificateEncodingException {
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         Writer writer = new OutputStreamWriter(bao, Charsets.US_ASCII);
-        PEMWriter pw = new PEMWriter(writer);
-        for (Object o : objects) {
-            pw.writeObject(o);
+        PemWriter pw = new PemWriter(writer);
+        for (Certificate o : objects) {
+            pw.writeObject(new PemObject("CERTIFICATE", o.getEncoded()));
         }
         pw.close();
         return bao.toByteArray();
     }
     /**
      * Convert objects from PEM format, which is used for
-     * CA_CERTIFICATE, USER_CERTIFICATE, and USER_PRIVATE_KEY
-     * entries.
+     * CA_CERTIFICATE and USER_CERTIFICATE entries.
      */
-    public static List<Object> convertFromPem(byte[] bytes) throws IOException {
+    public static List<X509Certificate> convertFromPem(byte[] bytes)
+            throws IOException, CertificateException {
         ByteArrayInputStream bai = new ByteArrayInputStream(bytes);
         Reader reader = new InputStreamReader(bai, Charsets.US_ASCII);
-        PEMReader pr = new PEMReader(reader);
+        PemReader pr = new PemReader(reader);
 
-        List<Object> result = new ArrayList<Object>();
-        Object o;
-        while ((o = pr.readObject()) != null) {
-            result.add(o);
+        CertificateFactory cf = CertificateFactory.getInstance("X509");
+
+        List<X509Certificate> result = new ArrayList<X509Certificate>();
+        PemObject o;
+        while ((o = pr.readPemObject()) != null) {
+            if (o.getType().equals("CERTIFICATE")) {
+                Certificate c = cf.generateCertificate(new ByteArrayInputStream(o.getContent()));
+                result.add((X509Certificate) c);
+            } else {
+                throw new IllegalArgumentException("Unknown type " + o.getType());
+            }
         }
         pr.close();
         return result;
@@ -184,5 +207,33 @@ public class Credentials {
         } catch (ActivityNotFoundException e) {
             Log.w(LOGTAG, e.toString());
         }
+    }
+
+    /**
+     * Delete all types (private key, certificate, CA certificate) for a
+     * particular {@code alias}. All three can exist for any given alias.
+     * Returns {@code true} if there was at least one of those types.
+     */
+    static boolean deleteAllTypesForAlias(KeyStore keystore, String alias) {
+        /*
+         * Make sure every type is deleted. There can be all three types, so
+         * don't use a conditional here.
+         */
+        return keystore.delKey(Credentials.USER_PRIVATE_KEY + alias)
+                | deleteCertificateTypesForAlias(keystore, alias);
+    }
+
+    /**
+     * Delete all types (private key, certificate, CA certificate) for a
+     * particular {@code alias}. All three can exist for any given alias.
+     * Returns {@code true} if there was at least one of those types.
+     */
+    static boolean deleteCertificateTypesForAlias(KeyStore keystore, String alias) {
+        /*
+         * Make sure every certificate type is deleted. There can be two types,
+         * so don't use a conditional here.
+         */
+        return keystore.delete(Credentials.USER_CERTIFICATE + alias)
+                | keystore.delete(Credentials.CA_CERTIFICATE + alias);
     }
 }

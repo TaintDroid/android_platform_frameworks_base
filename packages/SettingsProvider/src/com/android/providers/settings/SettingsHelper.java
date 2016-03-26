@@ -16,40 +16,30 @@
 
 package com.android.providers.settings;
 
-import java.util.Locale;
-
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
-import android.app.backup.BackupDataInput;
 import android.app.backup.IBackupManager;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.IContentService;
 import android.content.res.Configuration;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.IPowerManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
+
+import java.util.Locale;
 
 public class SettingsHelper {
-    private static final String TAG = "SettingsHelper";
-
     private Context mContext;
     private AudioManager mAudioManager;
-    private IContentService mContentService;
-    private IPowerManager mPowerManager;
 
     public SettingsHelper(Context context) {
         mContext = context;
         mAudioManager = (AudioManager) context
                 .getSystemService(Context.AUDIO_SERVICE);
-        mContentService = ContentResolver.getContentService();
-        mPowerManager = IPowerManager.Stub.asInterface(
-                ServiceManager.getService("power"));
     }
 
     /**
@@ -71,8 +61,29 @@ public class SettingsHelper {
             return false;
         } else if (Settings.Secure.BACKUP_AUTO_RESTORE.equals(name)) {
             setAutoRestore(Integer.parseInt(value) == 1);
+        } else if (isAlreadyConfiguredCriticalAccessibilitySetting(name)) {
+            return false;
         }
         return true;
+    }
+
+    private boolean isAlreadyConfiguredCriticalAccessibilitySetting(String name) {
+        // These are the critical accessibility settings that are required for a
+        // blind user to be able to interact with the device. If these settings are
+        // already configured, we will not overwrite them. If they are already set,
+        // it means that the user has performed a global gesture to enable accessibility
+        // and definitely needs these features working after the restore.
+        if (Settings.Secure.ACCESSIBILITY_ENABLED.equals(name)
+                || Settings.Secure.ACCESSIBILITY_SCRIPT_INJECTION.equals(name)
+                || Settings.Secure.ACCESSIBILITY_SPEAK_PASSWORD.equals(name)
+                || Settings.Secure.TOUCH_EXPLORATION_ENABLED.equals(name)) {
+            return Settings.Secure.getInt(mContext.getContentResolver(), name, 0) != 0;
+        } else if (Settings.Secure.TOUCH_EXPLORATION_GRANTED_ACCESSIBILITY_SERVICES.equals(name)
+                || Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(name)) {
+            return !TextUtils.isEmpty(Settings.Secure.getString(
+                    mContext.getContentResolver(), name));
+        }
+        return false;
     }
 
     private void setAutoRestore(boolean enabled) {
@@ -86,8 +97,12 @@ public class SettingsHelper {
     }
 
     private void setGpsLocation(String value) {
+        UserManager um = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+        if (um.hasUserRestriction(UserManager.DISALLOW_SHARE_LOCATION)) {
+            return;
+        }
         final String GPS = LocationManager.GPS_PROVIDER;
-        boolean enabled = 
+        boolean enabled =
                 GPS.equals(value) ||
                 value.startsWith(GPS + ",") ||
                 value.endsWith("," + GPS) ||
@@ -109,7 +124,7 @@ public class SettingsHelper {
             IPowerManager power = IPowerManager.Stub.asInterface(
                     ServiceManager.getService("power"));
             if (power != null) {
-                power.setBacklightBrightness(brightness);
+                power.setTemporaryScreenBrightnessSettingOverride(brightness);
             }
         } catch (RemoteException doe) {
 

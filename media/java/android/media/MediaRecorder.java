@@ -16,6 +16,7 @@
 
 package android.media;
 
+import android.app.ActivityThread;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,6 +28,10 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
 
 /**
  * Used to record audio and video. The recording control is based on a
@@ -105,10 +110,11 @@ public class MediaRecorder
             mEventHandler = null;
         }
 
+        String packageName = ActivityThread.currentPackageName();
         /* Native setup requires a weak reference to our object.
          * It's easier to create it here than in C++.
          */
-        native_setup(new WeakReference<MediaRecorder>(this));
+        native_setup(new WeakReference<MediaRecorder>(this), packageName);
     }
 
     /**
@@ -284,14 +290,34 @@ public class MediaRecorder
      * @throws IllegalStateException if it is called after setOutputFormat()
      * @see android.media.MediaRecorder.AudioSource
      */
-    public native void setAudioSource(int audio_source)
+// begin WITH_TAINT_TRACKING
+    //public native void setAudioSource(int audio_source)
+    //        throws IllegalStateException;
+    public void setAudioSource(int audio_source) throws IllegalStateException {
+        setAudioSourceNative(audio_source);
+        mSavedAudioSource = audio_source;
+    }
+    private native void setAudioSourceNative(int audio_source)
             throws IllegalStateException;
+    private int mSavedAudioSource = 0;
+// end WITH_TAINT_TRACKING
+
+// begin WITH_TAINT_TRACKING
+    /**
+     * Gets the audio source used for recording. Needed by Taint Tracking hook.
+     */
+    private int getAudioSource() {
+        return mSavedAudioSource;
+    }
+// end WITH_TAINT_TRACKING
 
     /**
      * Gets the maximum value for audio sources.
      * @see android.media.MediaRecorder.AudioSource
      */
-    public static final int getAudioSourceMax() { return AudioSource.VOICE_COMMUNICATION; }
+    public static final int getAudioSourceMax() {
+        return AudioSource.VOICE_COMMUNICATION;
+    }
 
     /**
      * Sets the video source to be used for recording. If this method is not
@@ -649,15 +675,32 @@ public class MediaRecorder
      */
     public void prepare() throws IllegalStateException, IOException
     {
+// begin WITH_TAINT_TRACKING
+        int tag = Taint.TAINT_CLEAR;
+        if (getAudioSource() == MediaRecorder.AudioSource.MIC) {
+            tag = Taint.TAINT_MIC;
+        }
+// end WITH_TAINT_TRACKING
+
         if (mPath != null) {
             FileOutputStream fos = new FileOutputStream(mPath);
             try {
                 _setOutputFile(fos.getFD(), 0, 0);
+// begin WITH_TAINT_TRACKING
+                if (tag != Taint.TAINT_CLEAR) {
+                    Taint.addTaintFile(fos.getFD().getDescriptor(), tag);
+                }
+// end WITH_TAINT_TRACKING
             } finally {
                 fos.close();
             }
         } else if (mFd != null) {
             _setOutputFile(mFd, 0, 0);
+// begin WITH_TAINT_TRACKING
+            if (tag != Taint.TAINT_CLEAR) {
+                Taint.addTaintFile(mFd.getDescriptor(), tag);
+            }
+// end WITH_TAINT_TRACKING        
         } else {
             throw new IOException("No valid output file");
         }
@@ -720,12 +763,17 @@ public class MediaRecorder
     public native int getMaxAmplitude() throws IllegalStateException;
 
     /* Do not change this value without updating its counterpart
-     * in include/media/mediarecorder.h!
+     * in include/media/mediarecorder.h or mediaplayer.h!
      */
     /** Unspecified media recorder error.
      * @see android.media.MediaRecorder.OnErrorListener
      */
     public static final int MEDIA_RECORDER_ERROR_UNKNOWN = 1;
+    /** Media server died. In this case, the application must release the
+     * MediaRecorder object and instantiate a new one.
+     * @see android.media.MediaRecorder.OnErrorListener
+     */
+    public static final int MEDIA_ERROR_SERVER_DIED = 100;
 
     /**
      * Interface definition for a callback to be invoked when an error
@@ -740,6 +788,7 @@ public class MediaRecorder
          * @param what    the type of error that has occurred:
          * <ul>
          * <li>{@link #MEDIA_RECORDER_ERROR_UNKNOWN}
+         * <li>{@link #MEDIA_ERROR_SERVER_DIED}
          * </ul>
          * @param extra   an extra code, specific to the error type
          */
@@ -969,7 +1018,8 @@ public class MediaRecorder
 
     private static native final void native_init();
 
-    private native final void native_setup(Object mediarecorder_this) throws IllegalStateException;
+    private native final void native_setup(Object mediarecorder_this,
+            String clientName) throws IllegalStateException;
 
     private native final void native_finalize();
 

@@ -21,9 +21,9 @@ import java.util.Arrays;
 import android.animation.LayoutTransition;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.service.notification.StatusBarNotification;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -35,14 +35,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.WindowManagerImpl;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.android.internal.statusbar.StatusBarIcon;
-import com.android.internal.statusbar.StatusBarNotification;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.StatusBarIconView;
@@ -62,7 +59,8 @@ public class TabletTicker
 
     private static final int ADVANCE_DELAY = 5000; // 5 seconds
 
-    private Context mContext;
+    private final Context mContext;
+    private final WindowManager mWindowManager;
 
     private ViewGroup mWindow;
     private IBinder mCurrentKey;
@@ -83,6 +81,7 @@ public class TabletTicker
     public TabletTicker(TabletStatusBar bar) {
         mBar = bar;
         mContext = bar.getContext();
+        mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         final Resources res = mContext.getResources();
         mLargeIconHeight = res.getDimensionPixelSize(
                 android.R.dimen.notification_large_icon_height);
@@ -178,7 +177,7 @@ public class TabletTicker
             if (mCurrentView != null) {
                 if (mWindow == null) {
                     mWindow = makeWindow();
-                    WindowManagerImpl.getDefault().addView(mWindow, mWindow.getLayoutParams());
+                    mWindowManager.addView(mWindow, mWindow.getLayoutParams());
                 }
 
                 mWindow.addView(mCurrentView);
@@ -225,7 +224,7 @@ public class TabletTicker
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, mLargeIconHeight,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL, windowFlags,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        lp.gravity = Gravity.BOTTOM | Gravity.END;
 //        lp.windowAnimations = com.android.internal.R.style.Animation_Toast;
 
         mLayoutTransition = new LayoutTransition();
@@ -242,7 +241,7 @@ public class TabletTicker
     public void endTransition(LayoutTransition transition, ViewGroup container,
             View view, int transitionType) {
         if (mWindowShouldClose) {
-            WindowManagerImpl.getDefault().removeView(mWindow);
+            mWindowManager.removeView(mWindow);
             mWindow = null;
             mWindowShouldClose = false;
             mBar.doneTicking();
@@ -250,7 +249,7 @@ public class TabletTicker
     }
 
     private View makeTickerView(StatusBarNotification notification) {
-        final Notification n = notification.notification;
+        final Notification n = notification.getNotification();
 
         LayoutInflater inflater = (LayoutInflater)mContext.getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
@@ -275,8 +274,8 @@ public class TabletTicker
                 exception = e;
             }
             if (expanded == null) {
-                final String ident = notification.pkg
-                        + "/0x" + Integer.toHexString(notification.id);
+                final String ident = notification.getPackageName()
+                        + "/0x" + Integer.toHexString(notification.getId());
                 Slog.e(TAG, "couldn't inflate view for notification " + ident, exception);
                 return null;
             }
@@ -287,7 +286,8 @@ public class TabletTicker
         } else if (n.tickerText != null) {
             group = (ViewGroup)inflater.inflate(R.layout.system_bar_ticker_compat, mWindow, false);
             final Drawable icon = StatusBarIconView.getIcon(mContext,
-                    new StatusBarIcon(notification.pkg, n.icon, n.iconLevel, 0, n.tickerText));
+                    new StatusBarIcon(notification.getPackageName(), notification.getUser(), n.icon, n.iconLevel, 0,
+                            n.tickerText));
             ImageView iv = (ImageView)group.findViewById(iconId);
             iv.setImageDrawable(icon);
             iv.setVisibility(View.VISIBLE);
@@ -313,12 +313,12 @@ public class TabletTicker
         }
 
         if (CLICKABLE_TICKER) {
-            PendingIntent contentIntent = notification.notification.contentIntent;
+            PendingIntent contentIntent = notification.getNotification().contentIntent;
             if (contentIntent != null) {
                 // create the usual notification clicker, but chain it together with a halt() call
                 // to abort the ticker too
                 final View.OnClickListener clicker = mBar.makeClicker(contentIntent,
-                                            notification.pkg, notification.tag, notification.id);
+                        notification.getPackageName(), notification.getTag(), notification.getId());
                 group.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         halt();

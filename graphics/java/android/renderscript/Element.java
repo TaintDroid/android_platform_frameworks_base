@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 The Android Open Source Project
+ * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import android.util.Log;
  * <div class="special reference">
  * <h3>Developer Guides</h3>
  * <p>For more information about creating an application that uses Renderscript, read the
- * <a href="{@docRoot}guide/topics/graphics/renderscript.html">Renderscript</a> developer guide.</p>
+ * <a href="{@docRoot}guide/topics/renderscript/index.html">Renderscript</a> developer guide.</p>
  * </div>
  **/
 public class Element extends BaseObj {
@@ -171,7 +171,8 @@ public class Element extends BaseObj {
         PIXEL_LA (9),
         PIXEL_RGB (10),
         PIXEL_RGBA (11),
-        PIXEL_DEPTH (12);
+        PIXEL_DEPTH (12),
+        PIXEL_YUV(13);
 
         int mID;
         DataKind(int id) {
@@ -905,7 +906,8 @@ public class Element extends BaseObj {
               dk == DataKind.PIXEL_LA ||
               dk == DataKind.PIXEL_RGB ||
               dk == DataKind.PIXEL_RGBA ||
-              dk == DataKind.PIXEL_DEPTH)) {
+              dk == DataKind.PIXEL_DEPTH ||
+              dk == DataKind.PIXEL_YUV)) {
             throw new RSIllegalArgumentException("Unsupported DataKind");
         }
         if (!(dt == DataType.UNSIGNED_8 ||

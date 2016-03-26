@@ -23,13 +23,15 @@ import android.content.Context;
  * application has stored any of the following types of browsing data and
  * to clear any such stored data for all WebViews in the application.
  * <ul>
- *  <li>Username/password pairs entered into web forms</li>
+ *  <li>Username/password pairs for web forms</li>
  *  <li>HTTP authentication username/password pairs</li>
  *  <li>Data entered into text fields (e.g. for autocomplete suggestions)</li>
  * </ul>
  */
 public class WebViewDatabase {
-    // TODO: deprecate/hide this.
+    /**
+     * @hide Since API level {@link android.os.Build.VERSION_CODES#JELLY_BEAN_MR1}
+     */
     protected static final String LOGTAG = "webviewdatabase";
 
     /**
@@ -38,55 +40,74 @@ public class WebViewDatabase {
     protected WebViewDatabase() {
     }
 
-    public static synchronized WebViewDatabase getInstance(Context context) {
+    public static WebViewDatabase getInstance(Context context) {
         return WebViewFactory.getProvider().getWebViewDatabase(context);
     }
 
     /**
-     * Gets whether there are any username/password combinations
-     * from web pages saved.
+     * Gets whether there are any saved username/password pairs for web forms.
+     * Note that these are unrelated to HTTP authentication credentials.
      *
-     * @return true if there are any username/passwords used in web
-     *         forms saved
+     * @return true if there are any saved username/password pairs
+     * @see WebView#savePassword
+     * @see #clearUsernamePassworda
+     * @deprecated Saving passwords in WebView will not be supported in future versions.
      */
+    @Deprecated
     public boolean hasUsernamePassword() {
         throw new MustOverrideException();
     }
 
     /**
-     * Clears any username/password combinations saved from web forms.
+     * Clears any saved username/password pairs for web forms.
+     * Note that these are unrelated to HTTP authentication credentials.
+     *
+     * @see WebView#savePassword
+     * @see #hasUsernamePassword
+     * @deprecated Saving passwords in WebView will not be supported in future versions.
      */
+    @Deprecated
     public void clearUsernamePassword() {
         throw new MustOverrideException();
     }
 
     /**
-     * Gets whether there are any HTTP authentication username/password combinations saved.
+     * Gets whether there are any saved credentials for HTTP authentication.
      *
-     * @return true if there are any HTTP authentication username/passwords saved
+     * @return whether there are any saved credentials
+     * @see WebView#getHttpAuthUsernamePassword
+     * @see WebView#setHttpAuthUsernamePassword
+     * @see #clearHttpAuthUsernamePassword
      */
     public boolean hasHttpAuthUsernamePassword() {
         throw new MustOverrideException();
     }
 
     /**
-     * Clears any HTTP authentication username/passwords that are saved.
+     * Clears any saved credentials for HTTP authentication.
+     *
+     * @see WebView#getHttpAuthUsernamePassword
+     * @see WebView#setHttpAuthUsernamePassword
+     * @see #hasHttpAuthUsernamePassword
      */
     public void clearHttpAuthUsernamePassword() {
         throw new MustOverrideException();
     }
 
     /**
-     * Gets whether there is any previously-entered form data saved.
+     * Gets whether there is any saved data for web forms.
      *
-     * @return true if there is form data saved
+     * @return whether there is any saved data for web forms
+     * @see #clearFormData
      */
     public boolean hasFormData() {
         throw new MustOverrideException();
     }
 
     /**
-     * Clears any stored previously-entered form data.
+     * Clears any saved data for web forms.
+     *
+     * @see #hasFormData
      */
     public void clearFormData() {
         throw new MustOverrideException();

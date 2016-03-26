@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -117,12 +118,7 @@ public class StatusBarIconView extends AnimatedImageView {
         mIcon = icon.clone();
         setContentDescription(icon.contentDescription);
         if (!iconEquals) {
-            Drawable drawable = getIcon(icon);
-            if (drawable == null) {
-                Slog.w(TAG, "No icon for slot " + mSlot);
-                return false;
-            }
-            setImageDrawable(drawable);
+            if (!updateDrawable(false /* no clear */)) return false;
         }
         if (!levelEquals) {
             setImageLevel(icon.iconLevel);
@@ -148,6 +144,23 @@ public class StatusBarIconView extends AnimatedImageView {
         return true;
     }
 
+    public void updateDrawable() {
+        updateDrawable(true /* with clear */);
+    }
+
+    private boolean updateDrawable(boolean withClear) {
+        Drawable drawable = getIcon(mIcon);
+        if (drawable == null) {
+            Slog.w(TAG, "No icon for slot " + mSlot);
+            return false;
+        }
+        if (withClear) {
+            setImageDrawable(null);
+        }
+        setImageDrawable(drawable);
+        return true;
+    }
+
     private Drawable getIcon(StatusBarIcon icon) {
         return getIcon(getContext(), icon);
     }
@@ -165,7 +178,12 @@ public class StatusBarIconView extends AnimatedImageView {
 
         if (icon.iconPackage != null) {
             try {
-                r = context.getPackageManager().getResourcesForApplication(icon.iconPackage);
+                int userId = icon.user.getIdentifier();
+                if (userId == UserHandle.USER_ALL) {
+                    userId = UserHandle.USER_OWNER;
+                }
+                r = context.getPackageManager()
+                        .getResourcesForApplicationAsUser(icon.iconPackage, userId);
             } catch (PackageManager.NameNotFoundException ex) {
                 Slog.e(TAG, "Icon package not found: " + icon.iconPackage);
                 return null;

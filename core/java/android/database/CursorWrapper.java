@@ -20,6 +20,10 @@ import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.Bundle;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING
+
 /**
  * Wrapper class for Cursor that delegates all calls to the actual cursor object.  The primary
  * use for this class is to extend a cursor while overriding only a subset of its methods.
@@ -52,6 +56,14 @@ public class CursorWrapper implements Cursor {
     public boolean isClosed() {
         return mCursor.isClosed();
     }
+
+// begin WITH_TAINT_TRACKING
+    private int taint_ = Taint.TAINT_CLEAR;
+
+    public void setTaint(int taint) {
+        this.taint_ = taint;
+    } 
+// end WITH_TAINT_TRACKING
 
     public int getCount() {
         return mCursor.getCount();
@@ -87,7 +99,9 @@ public class CursorWrapper implements Cursor {
     }
 
     public double getDouble(int columnIndex) {
-        return mCursor.getDouble(columnIndex);
+// begin WITH_TAINT_TRACKING
+        return Taint.addTaintDouble(mCursor.getDouble(columnIndex), taint_);
+// end WITH_TAINT_TRACKING
     }
 
     public Bundle getExtras() {
@@ -95,23 +109,37 @@ public class CursorWrapper implements Cursor {
     }
 
     public float getFloat(int columnIndex) {
-        return mCursor.getFloat(columnIndex);
+// begin WITH_TAINT_TRACKING
+        return Taint.addTaintFloat(mCursor.getFloat(columnIndex), taint_);
+// end WITH_TAINT_TRACKING
     }
 
     public int getInt(int columnIndex) {
-        return mCursor.getInt(columnIndex);
+// begin WITH_TAINT_TRACKING
+        return Taint.addTaintInt(mCursor.getInt(columnIndex), taint_);
+// end WITH_TAINT_TRACKING
     }
 
     public long getLong(int columnIndex) {
-        return mCursor.getLong(columnIndex);
+// begin WITH_TAINT_TRACKING
+        return Taint.addTaintLong(mCursor.getLong(columnIndex), taint_);
+// end WITH_TAINT_TRACKING
     }
 
     public short getShort(int columnIndex) {
-        return mCursor.getShort(columnIndex);
+// begin WITH_TAINT_TRACKING
+        return Taint.addTaintShort(mCursor.getShort(columnIndex), taint_);
+// end WITH_TAINT_TRACKING
     }
 
     public String getString(int columnIndex) {
-        return mCursor.getString(columnIndex);
+// begin WITH_TAINT_TRACKING
+        String retString = mCursor.getString(columnIndex);	
+        if(taint_ != Taint.TAINT_CLEAR) {
+            Taint.addTaintString(retString, taint_);
+        }
+// end WITH_TAINT_TRACKING
+        return retString;
     }
     
     public void copyStringToBuffer(int columnIndex, CharArrayBuffer buffer) {

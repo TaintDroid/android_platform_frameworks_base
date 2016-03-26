@@ -25,7 +25,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.UserId;
+import android.os.UserHandle;
 import android.util.Slog;
 
 import java.io.PrintWriter;
@@ -54,11 +54,12 @@ class PendingIntentRecord extends IIntentSender.Stub {
         String[] allResolvedTypes;
         final int flags;
         final int hashCode;
+        final int userId;
         
         private static final int ODD_PRIME_NUMBER = 37;
         
         Key(int _t, String _p, ActivityRecord _a, String _w,
-                int _r, Intent[] _i, String[] _it, int _f, Bundle _o) {
+                int _r, Intent[] _i, String[] _it, int _f, Bundle _o, int _userId) {
             type = _t;
             packageName = _p;
             activity = _a;
@@ -70,10 +71,12 @@ class PendingIntentRecord extends IIntentSender.Stub {
             allResolvedTypes = _it;
             flags = _f;
             options = _o;
-            
+            userId = _userId;
+
             int hash = 23;
             hash = (ODD_PRIME_NUMBER*hash) + _f;
             hash = (ODD_PRIME_NUMBER*hash) + _r;
+            hash = (ODD_PRIME_NUMBER*hash) + _userId;
             if (_w != null) {
                 hash = (ODD_PRIME_NUMBER*hash) + _w.hashCode();
             }
@@ -100,6 +103,9 @@ class PendingIntentRecord extends IIntentSender.Stub {
             try {
                 Key other = (Key)otherObj;
                 if (type != other.type) {
+                    return false;
+                }
+                if (userId != other.userId){
                     return false;
                 }
                 if (!packageName.equals(other.packageName)) {
@@ -156,7 +162,7 @@ class PendingIntentRecord extends IIntentSender.Stub {
                 + " intent="
                 + (requestIntent != null
                         ? requestIntent.toShortString(false, true, false, false) : "<null>")
-                + " flags=0x" + Integer.toHexString(flags) + "}";
+                + " flags=0x" + Integer.toHexString(flags) + " u=" + userId + "}";
         }
         
         String typeName() {
@@ -215,6 +221,10 @@ class PendingIntentRecord extends IIntentSender.Stub {
                 final long origId = Binder.clearCallingIdentity();
                 
                 boolean sendFinish = finishedReceiver != null;
+                int userId = key.userId;
+                if (userId == UserHandle.USER_CURRENT) {
+                    userId = owner.getCurrentUserIdLocked();
+                }
                 switch (key.type) {
                     case ActivityManager.INTENT_SENDER_ACTIVITY:
                         if (options == null) {
@@ -236,12 +246,12 @@ class PendingIntentRecord extends IIntentSender.Stub {
                                 }
                                 allIntents[allIntents.length-1] = finalIntent;
                                 allResolvedTypes[allResolvedTypes.length-1] = resolvedType;
-                                owner.startActivitiesInPackage(uid, allIntents,
-                                        allResolvedTypes, resultTo, options);
+                                owner.startActivitiesInPackage(uid, key.packageName, allIntents,
+                                        allResolvedTypes, resultTo, options, userId);
                             } else {
-                                owner.startActivityInPackage(uid,
-                                        finalIntent, resolvedType,
-                                        resultTo, resultWho, requestCode, 0, options);
+                                owner.startActivityInPackage(uid, key.packageName, finalIntent,
+                                        resolvedType, resultTo, resultWho, requestCode, 0,
+                                        options, userId);
                             }
                         } catch (RuntimeException e) {
                             Slog.w(ActivityManagerService.TAG,
@@ -259,8 +269,7 @@ class PendingIntentRecord extends IIntentSender.Stub {
                             owner.broadcastIntentInPackage(key.packageName, uid,
                                     finalIntent, resolvedType,
                                     finishedReceiver, code, null, null,
-                                requiredPermission, (finishedReceiver != null), false, UserId
-                                        .getUserId(uid));
+                                requiredPermission, (finishedReceiver != null), false, userId);
                             sendFinish = false;
                         } catch (RuntimeException e) {
                             Slog.w(ActivityManagerService.TAG,
@@ -270,7 +279,7 @@ class PendingIntentRecord extends IIntentSender.Stub {
                     case ActivityManager.INTENT_SENDER_SERVICE:
                         try {
                             owner.startServiceInPackage(uid,
-                                    finalIntent, resolvedType);
+                                    finalIntent, resolvedType, userId);
                         } catch (RuntimeException e) {
                             Slog.w(ActivityManagerService.TAG,
                                     "Unable to send startService intent", e);
@@ -281,7 +290,7 @@ class PendingIntentRecord extends IIntentSender.Stub {
                 if (sendFinish) {
                     try {
                         finishedReceiver.performReceive(new Intent(finalIntent), 0,
-                                null, null, false, false);
+                                null, null, false, false, key.userId);
                     } catch (RemoteException e) {
                     }
                 }

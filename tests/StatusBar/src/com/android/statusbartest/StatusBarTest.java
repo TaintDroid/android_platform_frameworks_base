@@ -16,29 +16,15 @@
 
 package com.android.statusbartest;
 
-import android.app.ListActivity;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.widget.ArrayAdapter;
 import android.view.View;
-import android.widget.ListView;
 import android.content.Intent;
 import android.app.PendingIntent;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.StatusBarManager;
-import android.content.Context;
-import android.util.AttributeSet;
-import android.os.Vibrator;
-import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.net.Uri;
 import android.os.SystemClock;
-import android.widget.RemoteViews;
-import android.widget.Toast;
-import android.os.PowerManager;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -298,25 +284,39 @@ public class StatusBarTest extends TestActivity
                     }, 3000);
             }
         },
-        new Test("Expand") {
+        new Test("Expand notifications") {
             public void run() {
-                mStatusBarManager.expand();
+                mStatusBarManager.expandNotificationsPanel();
             }
         },
-        new Test("Expand in 3 sec.") {
+        new Test(" ... in 3 sec.") {
             public void run() {
                 mHandler.postDelayed(new Runnable() {
                         public void run() {
-                            mStatusBarManager.expand();
+                            mStatusBarManager.expandNotificationsPanel();
                         }
                     }, 3000);
             }
         },
-        new Test("Collapse in 3 sec.") {
+        new Test("Expand settings") {
+            public void run() {
+                mStatusBarManager.expandSettingsPanel();
+            }
+        },
+        new Test(" ... in 3 sec.") {
             public void run() {
                 mHandler.postDelayed(new Runnable() {
                         public void run() {
-                            mStatusBarManager.collapse();
+                            mStatusBarManager.expandSettingsPanel();
+                        }
+                    }, 3000);
+            }
+        },
+        new Test("Collapse panels in 3 sec.") {
+            public void run() {
+                mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            mStatusBarManager.collapsePanels();
                         }
                     }, 3000);
             }

@@ -50,6 +50,7 @@ import java.io.IOException;
  * <ul>
  * <li>{@link MifareClassic}
  * <li>{@link MifareUltralight}
+ * <li>{@link NfcBarcode}
  * <li>{@link NdefFormatable} must only be enumerated on tags for which this Android device
  * is capable of formatting. Proprietary knowledge is often required to format a tag
  * to make it NDEF compatible.
@@ -146,6 +147,15 @@ public interface TagTechnology extends Closeable {
      * @hide
      */
     public static final int MIFARE_ULTRALIGHT = 9;
+
+    /**
+     * This technology is an instance of {@link NfcBarcode}.
+     * <p>Support for this technology type is optional. If a stack doesn't support this technology
+     * type tags using it must still be discovered and present the lower level radio interface
+     * technologies in use.
+     * @hide
+     */
+    public static final int NFC_BARCODE = 10;
 
     /**
      * Get the {@link Tag} object backing this {@link TagTechnology} object.

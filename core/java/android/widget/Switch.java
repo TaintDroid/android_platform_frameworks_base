@@ -53,6 +53,17 @@ import com.android.internal.R;
  * {@link #setSwitchTextAppearance(android.content.Context, int) switchTextAppearance} and
  * the related seSwitchTypeface() methods control that of the thumb.
  *
+ * <p>See the <a href="{@docRoot}guide/topics/ui/controls/togglebutton.html">Toggle Buttons</a>
+ * guide.</p>
+ *
+ * @attr ref android.R.styleable#Switch_textOn
+ * @attr ref android.R.styleable#Switch_textOff
+ * @attr ref android.R.styleable#Switch_switchMinWidth
+ * @attr ref android.R.styleable#Switch_switchPadding
+ * @attr ref android.R.styleable#Switch_switchTextAppearance
+ * @attr ref android.R.styleable#Switch_thumb
+ * @attr ref android.R.styleable#Switch_thumbTextPadding
+ * @attr ref android.R.styleable#Switch_track
  */
 public class Switch extends CompoundButton {
     private static final int TOUCH_MODE_IDLE = 0;
@@ -469,12 +480,6 @@ public class Switch extends CompoundButton {
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
-
         if (mOnLayout == null) {
             mOnLayout = makeLayout(mTextOn);
         }
@@ -490,34 +495,6 @@ public class Switch extends CompoundButton {
 
         mThumbWidth = maxTextWidth + mThumbTextPadding * 2;
 
-        switch (widthMode) {
-            case MeasureSpec.AT_MOST:
-                widthSize = Math.min(widthSize, switchWidth);
-                break;
-
-            case MeasureSpec.UNSPECIFIED:
-                widthSize = switchWidth;
-                break;
-
-            case MeasureSpec.EXACTLY:
-                // Just use what we were given
-                break;
-        }
-
-        switch (heightMode) {
-            case MeasureSpec.AT_MOST:
-                heightSize = Math.min(heightSize, switchHeight);
-                break;
-
-            case MeasureSpec.UNSPECIFIED:
-                heightSize = switchHeight;
-                break;
-
-            case MeasureSpec.EXACTLY:
-                // Just use what we were given
-                break;
-        }
-
         mSwitchWidth = switchWidth;
         mSwitchHeight = switchHeight;
 
@@ -531,9 +508,9 @@ public class Switch extends CompoundButton {
     @Override
     public void onPopulateAccessibilityEvent(AccessibilityEvent event) {
         super.onPopulateAccessibilityEvent(event);
-        CharSequence text = isChecked() ? mOnLayout.getText() : mOffLayout.getText();
-        if (!TextUtils.isEmpty(text)) {
-            event.getText().add(text);
+        Layout layout =  isChecked() ? mOnLayout : mOffLayout;
+        if (layout != null && !TextUtils.isEmpty(layout.getText())) {
+            event.getText().add(layout.getText());
         }
     }
 
@@ -651,7 +628,7 @@ public class Switch extends CompoundButton {
             mVelocityTracker.computeCurrentVelocity(1000);
             float xvel = mVelocityTracker.getXVelocity();
             if (Math.abs(xvel) > mMinFlingVelocity) {
-                newState = xvel > 0;
+                newState = isLayoutRtl() ? (xvel < 0) : (xvel > 0);
             } else {
                 newState = getTargetCheckedState();
             }
@@ -669,13 +646,25 @@ public class Switch extends CompoundButton {
     }
 
     private boolean getTargetCheckedState() {
-        return mThumbPosition >= getThumbScrollRange() / 2;
+        if (isLayoutRtl()) {
+            return mThumbPosition <= getThumbScrollRange() / 2;
+        } else {
+            return mThumbPosition >= getThumbScrollRange() / 2;
+        }
+    }
+
+    private void setThumbPosition(boolean checked) {
+        if (isLayoutRtl()) {
+            mThumbPosition = checked ? 0 : getThumbScrollRange();
+        } else {
+            mThumbPosition = checked ? getThumbScrollRange() : 0;
+        }
     }
 
     @Override
     public void setChecked(boolean checked) {
         super.setChecked(checked);
-        mThumbPosition = isChecked() ? getThumbScrollRange() : 0;
+        setThumbPosition(isChecked());
         invalidate();
     }
 
@@ -683,10 +672,19 @@ public class Switch extends CompoundButton {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
 
-        mThumbPosition = isChecked() ? getThumbScrollRange() : 0;
+        setThumbPosition(isChecked());
 
-        int switchRight = getWidth() - getPaddingRight();
-        int switchLeft = switchRight - mSwitchWidth;
+        int switchRight;
+        int switchLeft;
+
+        if (isLayoutRtl()) {
+            switchLeft = getPaddingLeft();
+            switchRight = switchLeft + mSwitchWidth;
+        } else {
+            switchRight = getWidth() - getPaddingRight();
+            switchLeft = switchRight - mSwitchWidth;
+        }
+
         int switchTop = 0;
         int switchBottom = 0;
         switch (getGravity() & Gravity.VERTICAL_GRAVITY_MASK) {
@@ -752,16 +750,32 @@ public class Switch extends CompoundButton {
         mTextPaint.drawableState = getDrawableState();
 
         Layout switchText = getTargetCheckedState() ? mOnLayout : mOffLayout;
-
-        canvas.translate((thumbLeft + thumbRight) / 2 - switchText.getWidth() / 2,
-                (switchInnerTop + switchInnerBottom) / 2 - switchText.getHeight() / 2);
-        switchText.draw(canvas);
+        if (switchText != null) {
+            canvas.translate((thumbLeft + thumbRight) / 2 - switchText.getWidth() / 2,
+                    (switchInnerTop + switchInnerBottom) / 2 - switchText.getHeight() / 2);
+            switchText.draw(canvas);
+        }
 
         canvas.restore();
     }
 
     @Override
+    public int getCompoundPaddingLeft() {
+        if (!isLayoutRtl()) {
+            return super.getCompoundPaddingLeft();
+        }
+        int padding = super.getCompoundPaddingLeft() + mSwitchWidth;
+        if (!TextUtils.isEmpty(getText())) {
+            padding += mSwitchPadding;
+        }
+        return padding;
+    }
+
+    @Override
     public int getCompoundPaddingRight() {
+        if (isLayoutRtl()) {
+            return super.getCompoundPaddingRight();
+        }
         int padding = super.getCompoundPaddingRight() + mSwitchWidth;
         if (!TextUtils.isEmpty(getText())) {
             padding += mSwitchPadding;

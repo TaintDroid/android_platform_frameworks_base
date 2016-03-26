@@ -21,6 +21,8 @@ import android.content.res.Resources;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import libcore.icu.LocaleData;
+
 /**
  * An alternative to the {@link java.util.Calendar} and
  * {@link java.util.GregorianCalendar} classes. An instance of the Time class represents
@@ -149,6 +151,9 @@ public class Time {
     private static String sDateTimeFormat;
     private static String sAm;
     private static String sPm;
+    private static char sZeroDigit;
+
+    // Referenced by native code.
     private static String sDateCommand = "%a %b %e %H:%M:%S %Z %Y";
 
     /**
@@ -317,82 +322,51 @@ public class Time {
             Locale locale = Locale.getDefault();
 
             if (sLocale == null || locale == null || !(locale.equals(sLocale))) {
-                Resources r = Resources.getSystem();
+                LocaleData localeData = LocaleData.get(locale);
 
-                sShortMonths = new String[] {
-                    r.getString(com.android.internal.R.string.month_medium_january),
-                    r.getString(com.android.internal.R.string.month_medium_february),
-                    r.getString(com.android.internal.R.string.month_medium_march),
-                    r.getString(com.android.internal.R.string.month_medium_april),
-                    r.getString(com.android.internal.R.string.month_medium_may),
-                    r.getString(com.android.internal.R.string.month_medium_june),
-                    r.getString(com.android.internal.R.string.month_medium_july),
-                    r.getString(com.android.internal.R.string.month_medium_august),
-                    r.getString(com.android.internal.R.string.month_medium_september),
-                    r.getString(com.android.internal.R.string.month_medium_october),
-                    r.getString(com.android.internal.R.string.month_medium_november),
-                    r.getString(com.android.internal.R.string.month_medium_december),
-                };
-                sLongMonths = new String[] {
-                    r.getString(com.android.internal.R.string.month_long_january),
-                    r.getString(com.android.internal.R.string.month_long_february),
-                    r.getString(com.android.internal.R.string.month_long_march),
-                    r.getString(com.android.internal.R.string.month_long_april),
-                    r.getString(com.android.internal.R.string.month_long_may),
-                    r.getString(com.android.internal.R.string.month_long_june),
-                    r.getString(com.android.internal.R.string.month_long_july),
-                    r.getString(com.android.internal.R.string.month_long_august),
-                    r.getString(com.android.internal.R.string.month_long_september),
-                    r.getString(com.android.internal.R.string.month_long_october),
-                    r.getString(com.android.internal.R.string.month_long_november),
-                    r.getString(com.android.internal.R.string.month_long_december),
-                };
-                sLongStandaloneMonths = new String[] {
-                    r.getString(com.android.internal.R.string.month_long_standalone_january),
-                    r.getString(com.android.internal.R.string.month_long_standalone_february),
-                    r.getString(com.android.internal.R.string.month_long_standalone_march),
-                    r.getString(com.android.internal.R.string.month_long_standalone_april),
-                    r.getString(com.android.internal.R.string.month_long_standalone_may),
-                    r.getString(com.android.internal.R.string.month_long_standalone_june),
-                    r.getString(com.android.internal.R.string.month_long_standalone_july),
-                    r.getString(com.android.internal.R.string.month_long_standalone_august),
-                    r.getString(com.android.internal.R.string.month_long_standalone_september),
-                    r.getString(com.android.internal.R.string.month_long_standalone_october),
-                    r.getString(com.android.internal.R.string.month_long_standalone_november),
-                    r.getString(com.android.internal.R.string.month_long_standalone_december),
-                };
-                sShortWeekdays = new String[] {
-                    r.getString(com.android.internal.R.string.day_of_week_medium_sunday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_monday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_tuesday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_wednesday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_thursday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_friday),
-                    r.getString(com.android.internal.R.string.day_of_week_medium_saturday),
-                };
-                sLongWeekdays = new String[] {
-                    r.getString(com.android.internal.R.string.day_of_week_long_sunday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_monday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_tuesday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_wednesday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_thursday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_friday),
-                    r.getString(com.android.internal.R.string.day_of_week_long_saturday),
-                };
+                sAm = localeData.amPm[0];
+                sPm = localeData.amPm[1];
+                sZeroDigit = localeData.zeroDigit;
+
+                sShortMonths = localeData.shortMonthNames;
+                sLongMonths = localeData.longMonthNames;
+                sLongStandaloneMonths = localeData.longStandAloneMonthNames;
+                sShortWeekdays = localeData.shortWeekdayNames;
+                sLongWeekdays = localeData.longWeekdayNames;
+
+                Resources r = Resources.getSystem();
                 sTimeOnlyFormat = r.getString(com.android.internal.R.string.time_of_day);
                 sDateOnlyFormat = r.getString(com.android.internal.R.string.month_day_year);
                 sDateTimeFormat = r.getString(com.android.internal.R.string.date_and_time);
-                sAm = r.getString(com.android.internal.R.string.am);
-                sPm = r.getString(com.android.internal.R.string.pm);
 
                 sLocale = locale;
             }
 
-            return format1(format);
+            String result = format1(format);
+            if (sZeroDigit != '0') {
+                result = localizeDigits(result);
+            }
+            return result;
         }
     }
 
     native private String format1(String format);
+
+    // TODO: unify this with java.util.Formatter's copy.
+    private String localizeDigits(String s) {
+        int length = s.length();
+        int offsetToLocalizedDigits = sZeroDigit - '0';
+        StringBuilder result = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            char ch = s.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                ch += offsetToLocalizedDigits;
+            }
+            result.append(ch);
+        }
+        return result.toString();
+    }
+
 
     /**
      * Return the current time in YYYYMMDDTHHMMSS<tz> format
@@ -437,6 +411,9 @@ public class Time {
      * @throws android.util.TimeFormatException if s cannot be parsed.
      */
     public boolean parse(String s) {
+        if (s == null) {
+            throw new NullPointerException("time string is null");
+        }
         if (nativeParse(s)) {
             timezone = TIMEZONE_UTC;
             return true;
@@ -720,7 +697,7 @@ public class Time {
             int minutes = (offset % 3600) / 60;
             int hours = offset / 3600;
 
-            return String.format("%s%s%02d:%02d", base, sign, hours, minutes);
+            return String.format(Locale.US, "%s%s%02d:%02d", base, sign, hours, minutes);
         }
     }
 

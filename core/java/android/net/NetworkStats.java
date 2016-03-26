@@ -21,6 +21,8 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.SparseBooleanArray;
 
+import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.Objects;
 
 import java.io.CharArrayWriter;
@@ -133,6 +135,18 @@ public class NetworkStats implements Parcelable {
             builder.append(" operations=").append(operations);
             return builder.toString();
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof Entry) {
+                final Entry e = (Entry) o;
+                return uid == e.uid && set == e.set && tag == e.tag && rxBytes == e.rxBytes
+                        && rxPackets == e.rxPackets && txBytes == e.txBytes
+                        && txPackets == e.txPackets && operations == e.operations
+                        && iface.equals(e.iface);
+            }
+            return false;
+        }
     }
 
     public NetworkStats(long elapsedRealtime, int initialSize) {
@@ -189,14 +203,14 @@ public class NetworkStats implements Parcelable {
         return clone;
     }
 
-    // @VisibleForTesting
+    @VisibleForTesting
     public NetworkStats addIfaceValues(
             String iface, long rxBytes, long rxPackets, long txBytes, long txPackets) {
         return addValues(
                 iface, UID_ALL, SET_DEFAULT, TAG_NONE, rxBytes, rxPackets, txBytes, txPackets, 0L);
     }
 
-    // @VisibleForTesting
+    @VisibleForTesting
     public NetworkStats addValues(String iface, int uid, int set, int tag, long rxBytes,
             long rxPackets, long txBytes, long txPackets, long operations) {
         return addValues(new Entry(
@@ -268,7 +282,7 @@ public class NetworkStats implements Parcelable {
         return size;
     }
 
-    // @VisibleForTesting
+    @VisibleForTesting
     public int internalSize() {
         return iface.length;
     }
@@ -334,7 +348,7 @@ public class NetworkStats implements Parcelable {
      * Find first stats index that matches the requested parameters, starting
      * search around the hinted index as an optimization.
      */
-    // @VisibleForTesting
+    @VisibleForTesting
     public int findIndexHinted(String iface, int uid, int set, int tag, int hintIndex) {
         for (int offset = 0; offset < size; offset++) {
             final int halfOffset = offset / 2;
@@ -608,13 +622,13 @@ public class NetworkStats implements Parcelable {
      * Return all rows except those attributed to the requested UID; doesn't
      * mutate the original structure.
      */
-    public NetworkStats withoutUid(int uid) {
+    public NetworkStats withoutUids(int[] uids) {
         final NetworkStats stats = new NetworkStats(elapsedRealtime, 10);
 
         Entry entry = new Entry();
         for (int i = 0; i < size; i++) {
             entry = getValues(i, entry);
-            if (entry.uid != uid) {
+            if (!ArrayUtils.contains(uids, entry.uid)) {
                 stats.addValues(entry);
             }
         }

@@ -60,11 +60,15 @@ abstract class CustomBar extends LinearLayout {
 
     protected abstract TextView getStyleableTextView();
 
-    protected CustomBar(Context context, Density density, String layoutPath, String name)
-            throws XmlPullParserException {
+    protected CustomBar(Context context, Density density, int orientation, String layoutPath,
+            String name) throws XmlPullParserException {
         super(context);
-        setOrientation(LinearLayout.HORIZONTAL);
-        setGravity(Gravity.CENTER_VERTICAL);
+        setOrientation(orientation);
+        if (orientation == LinearLayout.HORIZONTAL) {
+            setGravity(Gravity.CENTER_VERTICAL);
+        } else {
+            setGravity(Gravity.CENTER_HORIZONTAL);
+        }
 
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
@@ -233,7 +237,7 @@ abstract class CustomBar extends LinearLayout {
         BridgeContext bridgeContext = (BridgeContext) mContext;
         RenderResources res = bridgeContext.getRenderResources();
 
-        ResourceValue value = res.findItemInTheme(themeEntryName);
+        ResourceValue value = res.findItemInTheme(themeEntryName, true /*isFrameworkAttr*/);
         value = res.resolveResValue(value);
 
         if (value instanceof StyleResourceValue == false) {
@@ -243,24 +247,27 @@ abstract class CustomBar extends LinearLayout {
         StyleResourceValue style = (StyleResourceValue) value;
 
         // get the background
-        ResourceValue backgroundValue = res.findItemInStyle(style, "background");
+        ResourceValue backgroundValue = res.findItemInStyle(style, "background",
+                true /*isFrameworkAttr*/);
         backgroundValue = res.resolveResValue(backgroundValue);
         if (backgroundValue != null) {
             Drawable d = ResourceHelper.getDrawable(backgroundValue, bridgeContext);
             if (d != null) {
-                setBackgroundDrawable(d);
+                setBackground(d);
             }
         }
 
         TextView textView = getStyleableTextView();
         if (textView != null) {
             // get the text style
-            ResourceValue textStyleValue = res.findItemInStyle(style, "titleTextStyle");
+            ResourceValue textStyleValue = res.findItemInStyle(style, "titleTextStyle",
+                    true /*isFrameworkAttr*/);
             textStyleValue = res.resolveResValue(textStyleValue);
             if (textStyleValue instanceof StyleResourceValue) {
                 StyleResourceValue textStyle = (StyleResourceValue) textStyleValue;
 
-                ResourceValue textSize = res.findItemInStyle(textStyle, "textSize");
+                ResourceValue textSize = res.findItemInStyle(textStyle, "textSize",
+                        true /*isFrameworkAttr*/);
                 textSize = res.resolveResValue(textSize);
 
                 if (textSize != null) {
@@ -273,7 +280,8 @@ abstract class CustomBar extends LinearLayout {
                 }
 
 
-                ResourceValue textColor = res.findItemInStyle(textStyle, "textColor");
+                ResourceValue textColor = res.findItemInStyle(textStyle, "textColor",
+                        true /*isFrameworkAttr*/);
                 textColor = res.resolveResValue(textColor);
                 if (textColor != null) {
                     ColorStateList stateList = ResourceHelper.getColorStateList(

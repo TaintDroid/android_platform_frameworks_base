@@ -218,17 +218,17 @@ interface INetworkManagementService
     /**
      * Start Wifi Access Point
      */
-    void startAccessPoint(in WifiConfiguration wifiConfig, String wlanIface, String softapIface);
+    void startAccessPoint(in WifiConfiguration wifiConfig, String iface);
 
     /**
      * Stop Wifi Access Point
      */
-    void stopAccessPoint(String wlanIface);
+    void stopAccessPoint(String iface);
 
     /**
      * Set Access Point config
      */
-    void setAccessPoint(in WifiConfiguration wifiConfig, String wlanIface, String softapIface);
+    void setAccessPoint(in WifiConfiguration wifiConfig, String iface);
 
     /**
      ** DATA USAGE RELATED
@@ -296,21 +296,25 @@ interface INetworkManagementService
     boolean isBandwidthControlEnabled();
 
     /**
-     * Configures bandwidth throttling on an interface.
+     * Sets idletimer for an interface.
+     *
+     * This either initializes a new idletimer or increases its
+     * reference-counting if an idletimer already exists for given
+     * {@code iface}.
+     *
+     * {@code label} usually represents the network type of {@code iface}.
+     * Caller should ensure that {@code label} for an {@code iface} remains the
+     * same for all calls to addIdleTimer.
+     *
+     * Every {@code addIdleTimer} should be paired with a
+     * {@link removeIdleTimer} to cleanup when the network disconnects.
      */
-    void setInterfaceThrottle(String iface, int rxKbps, int txKbps);
+    void addIdleTimer(String iface, int timeout, String label);
 
     /**
-     * Returns the currently configured RX throttle values
-     * for the specified interface
+     * Removes idletimer for an interface.
      */
-    int getInterfaceRxThrottle(String iface);
-
-    /**
-     * Returns the currently configured TX throttle values
-     * for the specified interface
-     */
-    int getInterfaceTxThrottle(String iface);
+    void removeIdleTimer(String iface);
 
     /**
      * Sets the name of the default interface in the DNS resolver.
@@ -320,7 +324,7 @@ interface INetworkManagementService
     /**
      * Bind name servers to an interface in the DNS resolver.
      */
-    void setDnsServersForInterface(String iface, in String[] servers);
+    void setDnsServersForInterface(String iface, in String[] servers, String domains);
 
     /**
      * Flush the DNS cache associated with the default interface.
@@ -331,4 +335,36 @@ interface INetworkManagementService
      * Flush the DNS cache associated with the specified interface.
      */
     void flushInterfaceDnsCache(String iface);
+
+    void setFirewallEnabled(boolean enabled);
+    boolean isFirewallEnabled();
+    void setFirewallInterfaceRule(String iface, boolean allow);
+    void setFirewallEgressSourceRule(String addr, boolean allow);
+    void setFirewallEgressDestRule(String addr, int port, boolean allow);
+    void setFirewallUidRule(int uid, boolean allow);
+
+    /**
+     * Set a process (pid) to use the name servers associated with the specified interface.
+     */
+    void setDnsInterfaceForPid(String iface, int pid);
+
+    /**
+     * Clear a process (pid) from being associated with an interface.
+     */
+    void clearDnsInterfaceForPid(int pid);
+
+    /**
+     * Start the clatd (464xlat) service
+     */
+    void startClatd(String interfaceName);
+
+    /**
+     * Stop the clatd (464xlat) service
+     */
+    void stopClatd();
+
+    /**
+     * Determine whether the clatd (464xlat) service has been started
+     */
+    boolean isClatdStarted();
 }

@@ -22,10 +22,12 @@ import android.net.NetworkQuotaInfo;
 import android.net.NetworkState;
 import android.net.ProxyProperties;
 import android.os.IBinder;
+import android.os.Messenger;
 import android.os.ParcelFileDescriptor;
 
 import com.android.internal.net.LegacyVpnInfo;
 import com.android.internal.net.VpnConfig;
+import com.android.internal.net.VpnProfile;
 
 /**
  * Interface that answers queries about, and allows changing, the
@@ -118,7 +120,15 @@ interface IConnectivityManager
 
     ParcelFileDescriptor establishVpn(in VpnConfig config);
 
-    void startLegacyVpn(in VpnConfig config, in String[] racoon, in String[] mtpd);
+    void startLegacyVpn(in VpnProfile profile);
 
     LegacyVpnInfo getLegacyVpnInfo();
+
+    boolean updateLockdownVpn();
+
+    void captivePortalCheckComplete(in NetworkInfo info);
+
+    void supplyMessenger(int networkType, in Messenger messenger);
+
+    int findConnectionTypeForIface(in String iface);
 }

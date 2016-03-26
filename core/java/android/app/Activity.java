@@ -48,6 +48,7 @@ import android.os.Looper;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.StrictMode;
+import android.os.UserHandle;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -74,7 +75,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewManager;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.WindowManagerImpl;
+import android.view.WindowManagerGlobal;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.AdapterView;
 
@@ -652,8 +653,9 @@ public class Activity extends ContextThemeWrapper
     /** Start of user-defined activity results. */
     public static final int RESULT_FIRST_USER   = 1;
 
+    static final String FRAGMENTS_TAG = "android:fragments";
+
     private static final String WINDOW_HIERARCHY_TAG = "android:viewHierarchyState";
-    private static final String FRAGMENTS_TAG = "android:fragments";
     private static final String SAVED_DIALOG_IDS_KEY = "android:savedDialogIds";
     private static final String SAVED_DIALOGS_TAG = "android:savedDialogs";
     private static final String SAVED_DIALOG_KEY_PREFIX = "android:dialog_";
@@ -683,6 +685,7 @@ public class Activity extends ContextThemeWrapper
     private boolean mStopped;
     boolean mFinished;
     boolean mStartedActivity;
+    private boolean mDestroyed;
     /** true if the activity is going through a transient pause */
     /*package*/ boolean mTemporaryPause = false;
     /** true if the activity is being destroyed in order to recreate it with a new configuration */
@@ -696,7 +699,7 @@ public class Activity extends ContextThemeWrapper
         Object activity;
         HashMap<String, Object> children;
         ArrayList<Fragment> fragments;
-        SparseArray<LoaderManagerImpl> loaders;
+        HashMap<String, LoaderManagerImpl> loaders;
     }
     /* package */ NonConfigurationInstances mLastNonConfigurationInstances;
     
@@ -714,8 +717,14 @@ public class Activity extends ContextThemeWrapper
     private int mTitleColor = 0;
 
     final FragmentManagerImpl mFragments = new FragmentManagerImpl();
+    final FragmentContainer mContainer = new FragmentContainer() {
+        @Override
+        public View findViewById(int id) {
+            return Activity.this.findViewById(id);
+        }
+    };
     
-    SparseArray<LoaderManagerImpl> mAllLoaderManagers;
+    HashMap<String, LoaderManagerImpl> mAllLoaderManagers;
     LoaderManagerImpl mLoaderManager;
     
     private static final class ManagedCursor {
@@ -743,6 +752,7 @@ public class Activity extends ContextThemeWrapper
     
     protected static final int[] FOCUSED_STATE_SET = {com.android.internal.R.attr.state_focused};
 
+    @SuppressWarnings("unused")
     private final Object mInstanceTracker = StrictMode.trackActivity(this);
 
     private Thread mUiThread;
@@ -807,19 +817,19 @@ public class Activity extends ContextThemeWrapper
             return mLoaderManager;
         }
         mCheckedForLoaderManager = true;
-        mLoaderManager = getLoaderManager(-1, mLoadersStarted, true);
+        mLoaderManager = getLoaderManager(null, mLoadersStarted, true);
         return mLoaderManager;
     }
     
-    LoaderManagerImpl getLoaderManager(int index, boolean started, boolean create) {
+    LoaderManagerImpl getLoaderManager(String who, boolean started, boolean create) {
         if (mAllLoaderManagers == null) {
-            mAllLoaderManagers = new SparseArray<LoaderManagerImpl>();
+            mAllLoaderManagers = new HashMap<String, LoaderManagerImpl>();
         }
-        LoaderManagerImpl lm = mAllLoaderManagers.get(index);
+        LoaderManagerImpl lm = mAllLoaderManagers.get(who);
         if (lm == null) {
             if (create) {
-                lm = new LoaderManagerImpl(this, started);
-                mAllLoaderManagers.put(index, lm);
+                lm = new LoaderManagerImpl(who, this, started);
+                mAllLoaderManagers.put(who, lm);
             }
         } else {
             lm.updateActivity(this);
@@ -1024,7 +1034,7 @@ public class Activity extends ContextThemeWrapper
             if (mLoaderManager != null) {
                 mLoaderManager.doStart();
             } else if (!mCheckedForLoaderManager) {
-                mLoaderManager = getLoaderManager(-1, mLoadersStarted, false);
+                mLoaderManager = getLoaderManager(null, mLoadersStarted, false);
             }
             mCheckedForLoaderManager = true;
         }
@@ -1336,6 +1346,20 @@ public class Activity extends ContextThemeWrapper
     }
 
     /**
+     * This is called when the user is requesting an assist, to build a full
+     * {@link Intent#ACTION_ASSIST} Intent with all of the context of the current
+     * application.  You can override this method to place into the bundle anything
+     * you would like to appear in the {@link Intent#EXTRA_ASSIST_CONTEXT} part
+     * of the assist Intent.  The default implementation does nothing.
+     *
+     * <p>This function will be called after any global assist callbacks that had
+     * been registered with {@link Application#registerOnProvideAssistDataListener
+     * Application.registerOnProvideAssistDataListener}.
+     */
+    public void onProvideAssistData(Bundle data) {
+    }
+
+    /**
      * Called when you are no longer visible to the user.  You will next
      * receive either {@link #onRestart}, {@link #onDestroy}, or nothing,
      * depending on later user activity.
@@ -1600,13 +1624,17 @@ public class Activity extends ContextThemeWrapper
         if (mAllLoaderManagers != null) {
             // prune out any loader managers that were already stopped and so
             // have nothing useful to retain.
-            for (int i=mAllLoaderManagers.size()-1; i>=0; i--) {
-                LoaderManagerImpl lm = mAllLoaderManagers.valueAt(i);
-                if (lm.mRetaining) {
-                    retainLoaders = true;
-                } else {
-                    lm.doDestroy();
-                    mAllLoaderManagers.removeAt(i);
+            LoaderManagerImpl loaders[] = new LoaderManagerImpl[mAllLoaderManagers.size()];
+            mAllLoaderManagers.values().toArray(loaders);
+            if (loaders != null) {
+                for (int i=0; i<loaders.length; i++) {
+                    LoaderManagerImpl lm = loaders[i];
+                    if (lm.mRetaining) {
+                        retainLoaders = true;
+                    } else {
+                        lm.doDestroy();
+                        mAllLoaderManagers.remove(lm.mWho);
+                    }
                 }
             }
         }
@@ -1642,13 +1670,13 @@ public class Activity extends ContextThemeWrapper
         return mFragments;
     }
 
-    void invalidateFragmentIndex(int index) {
+    void invalidateFragment(String who) {
         //Log.v(TAG, "invalidateFragmentIndex: index=" + index);
         if (mAllLoaderManagers != null) {
-            LoaderManagerImpl lm = mAllLoaderManagers.get(index);
+            LoaderManagerImpl lm = mAllLoaderManagers.get(who);
             if (lm != null && !lm.mRetaining) {
                 lm.doDestroy();
-                mAllLoaderManagers.remove(index);
+                mAllLoaderManagers.remove(who);
             }
         }
     }
@@ -2525,12 +2553,16 @@ public class Activity extends ContextThemeWrapper
      * Activity don't need to deal with feature codes.
      */
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        CharSequence titleCondensed = item.getTitleCondensed();
+
         switch (featureId) {
             case Window.FEATURE_OPTIONS_PANEL:
                 // Put event logging here so it gets called even if subclass
                 // doesn't call through to superclass's implmeentation of each
                 // of these methods below
-                EventLog.writeEvent(50000, 0, item.getTitleCondensed());
+                if(titleCondensed != null) {
+                    EventLog.writeEvent(50000, 0, titleCondensed.toString());
+                }
                 if (onOptionsItemSelected(item)) {
                     return true;
                 }
@@ -2548,7 +2580,9 @@ public class Activity extends ContextThemeWrapper
                 return false;
                 
             case Window.FEATURE_CONTEXT_MENU:
-                EventLog.writeEvent(50000, 1, item.getTitleCondensed());
+                if(titleCondensed != null) {
+                    EventLog.writeEvent(50000, 1, titleCondensed.toString());
+                }
                 if (onContextItemSelected(item)) {
                     return true;
                 }
@@ -2708,7 +2742,12 @@ public class Activity extends ContextThemeWrapper
         // metadata is available.
         Intent upIntent = getParentActivityIntent();
         if (upIntent != null) {
-            if (shouldUpRecreateTask(upIntent)) {
+            if (mActivityInfo.taskAffinity == null) {
+                // Activities with a null affinity are special; they really shouldn't
+                // specify a parent activity intent in the first place. Just finish
+                // the current activity and call it a day.
+                finish();
+            } else if (shouldUpRecreateTask(upIntent)) {
                 TaskStackBuilder b = TaskStackBuilder.create(this);
                 onCreateNavigateUpTaskStack(b);
                 onPrepareNavigateUpTaskStack(b);
@@ -2819,7 +2858,7 @@ public class Activity extends ContextThemeWrapper
      * item has been selected.
      * <p>
      * It is not safe to hold onto the context menu after this method returns.
-     * {@inheritDoc}
+     *
      */
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
     }
@@ -3379,6 +3418,31 @@ public class Activity extends ContextThemeWrapper
     }
 
     /**
+     * @hide Implement to provide correct calling token.
+     */
+    public void startActivityAsUser(Intent intent, UserHandle user) {
+        startActivityAsUser(intent, null, user);
+    }
+
+    /**
+     * @hide Implement to provide correct calling token.
+     */
+    public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
+        if (mParent != null) {
+            throw new RuntimeException("Called be called from a child");
+        }
+        Instrumentation.ActivityResult ar =
+                mInstrumentation.execStartActivity(
+                        this, mMainThread.getApplicationThread(), mToken, this,
+                        intent, -1, options, user);
+        if (ar != null) {
+            mMainThread.sendActivityResult(
+                mToken, mEmbeddedID, -1, ar.getResultCode(),
+                ar.getResultData());
+        }
+    }
+
+    /**
      * Same as calling {@link #startIntentSenderForResult(IntentSender, int,
      * Intent, int, int, int, Bundle)} with no options.
      *
@@ -3449,7 +3513,8 @@ public class Activity extends ContextThemeWrapper
         try {
             String resolvedType = null;
             if (fillInIntent != null) {
-                fillInIntent.setAllowFds(false);
+                fillInIntent.migrateExtraStreamToClipData();
+                fillInIntent.prepareToLeaveProcess();
                 resolvedType = fillInIntent.resolveTypeIfNeeded(getContentResolver());
             }
             int result = ActivityManagerNative.getDefault()
@@ -3674,9 +3739,10 @@ public class Activity extends ContextThemeWrapper
         if (mParent == null) {
             int result = ActivityManager.START_RETURN_INTENT_TO_CALLER;
             try {
-                intent.setAllowFds(false);
+                intent.migrateExtraStreamToClipData();
+                intent.prepareToLeaveProcess();
                 result = ActivityManagerNative.getDefault()
-                    .startActivity(mMainThread.getApplicationThread(),
+                    .startActivity(mMainThread.getApplicationThread(), getBasePackageName(),
                             intent, intent.resolveTypeIfNeeded(getContentResolver()),
                             mToken, mEmbeddedID, requestCode,
                             ActivityManager.START_FLAG_ONLY_IF_NEEDED, null, null,
@@ -3744,7 +3810,8 @@ public class Activity extends ContextThemeWrapper
     public boolean startNextMatchingActivity(Intent intent, Bundle options) {
         if (mParent == null) {
             try {
-                intent.setAllowFds(false);
+                intent.migrateExtraStreamToClipData();
+                intent.prepareToLeaveProcess();
                 return ActivityManagerNative.getDefault()
                     .startNextMatchingActivity(mToken, intent, options);
             } catch (RemoteException e) {
@@ -3963,10 +4030,16 @@ public class Activity extends ContextThemeWrapper
      * use this information to validate that the recipient is allowed to
      * receive the data.
      * 
-     * <p>Note: if the calling activity is not expecting a result (that is it
+     * <p class="note">Note: if the calling activity is not expecting a result (that is it
      * did not use the {@link #startActivityForResult} 
      * form that includes a request code), then the calling package will be 
-     * null. 
+     * null.</p>
+     *
+     * <p class="note">Note: prior to {@link android.os.Build.VERSION_CODES#JELLY_BEAN_MR2},
+     * the result from this method was unstable.  If the process hosting the calling
+     * package was no longer running, it would return null instead of the proper package
+     * name.  You can use {@link #getCallingActivity()} and retrieve the package name
+     * from that instead.</p>
      * 
      * @return The package of the activity that will receive your
      *         reply, or null if none.
@@ -3985,12 +4058,12 @@ public class Activity extends ContextThemeWrapper
      * can use this information to validate that the recipient is allowed to
      * receive the data.
      * 
-     * <p>Note: if the calling activity is not expecting a result (that is it
+     * <p class="note">Note: if the calling activity is not expecting a result (that is it
      * did not use the {@link #startActivityForResult} 
      * form that includes a request code), then the calling package will be 
      * null. 
      * 
-     * @return String The full name of the activity that will receive your
+     * @return The ComponentName of the activity that will receive your
      *         reply, or null if none.
      */
     public ComponentName getCallingActivity() {
@@ -4046,6 +4119,14 @@ public class Activity extends ContextThemeWrapper
     }
 
     /**
+     * Returns true if the final {@link #onDestroy()} call has been made
+     * on the Activity, so this instance is now dead.
+     */
+    public boolean isDestroyed() {
+        return mDestroyed;
+    }
+
+    /**
      * Check to see whether this activity is in the process of being destroyed in order to be
      * recreated with a new configuration. This is often used in
      * {@link #onStop} to determine whether the state needs to be cleaned up or will be passed
@@ -4090,7 +4171,7 @@ public class Activity extends ContextThemeWrapper
             if (false) Log.v(TAG, "Finishing self: token=" + mToken);
             try {
                 if (resultData != null) {
-                    resultData.setAllowFds(false);
+                    resultData.prepareToLeaveProcess();
                 }
                 if (ActivityManagerNative.getDefault()
                     .finishActivity(mToken, resultCode, resultData)) {
@@ -4242,12 +4323,13 @@ public class Activity extends ContextThemeWrapper
             int flags) {
         String packageName = getPackageName();
         try {
-            data.setAllowFds(false);
+            data.prepareToLeaveProcess();
             IIntentSender target =
                 ActivityManagerNative.getDefault().getIntentSender(
                         ActivityManager.INTENT_SENDER_ACTIVITY_RESULT, packageName,
                         mParent == null ? mToken : mParent.mToken,
-                        mEmbeddedID, requestCode, new Intent[] { data }, null, flags, null);
+                        mEmbeddedID, requestCode, new Intent[] { data }, null, flags, null,
+                        UserHandle.myUserId());
             return target != null ? new PendingIntent(target) : null;
         } catch (RemoteException e) {
             // Empty
@@ -4707,6 +4789,10 @@ public class Activity extends ContextThemeWrapper
      * @param args additional arguments to the dump request.
      */
     public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        dumpInner(prefix, fd, writer, args);
+    }
+
+    void dumpInner(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
         writer.print(prefix); writer.print("Local Activity ");
                 writer.print(Integer.toHexString(System.identityHashCode(this)));
                 writer.println(" State:");
@@ -4728,6 +4814,29 @@ public class Activity extends ContextThemeWrapper
             mLoaderManager.dump(prefix + "  ", fd, writer, args);
         }
         mFragments.dump(prefix, fd, writer, args);
+        writer.print(prefix); writer.println("View Hierarchy:");
+        dumpViewHierarchy(prefix + "  ", writer, getWindow().getDecorView());
+    }
+
+    private void dumpViewHierarchy(String prefix, PrintWriter writer, View view) {
+        writer.print(prefix);
+        if (view == null) {
+            writer.println("null");
+            return;
+        }
+        writer.println(view.toString());
+        if (!(view instanceof ViewGroup)) {
+            return;
+        }
+        ViewGroup grp = (ViewGroup)view;
+        final int N = grp.getChildCount();
+        if (N <= 0) {
+            return;
+        }
+        prefix = prefix + "  ";
+        for (int i=0; i<N; i++) {
+            dumpViewHierarchy(prefix, writer, grp.getChildAt(i));
+        }
     }
 
     /**
@@ -4738,8 +4847,8 @@ public class Activity extends ContextThemeWrapper
      * <code>android:immersive</code> but may be changed at runtime by
      * {@link #setImmersive}.
      *
+     * @see #setImmersive(boolean)
      * @see android.content.pm.ActivityInfo#FLAG_IMMERSIVE
-     * @hide
      */
     public boolean isImmersive() {
         try {
@@ -4751,7 +4860,7 @@ public class Activity extends ContextThemeWrapper
 
     /**
      * Adjust the current immersive mode setting.
-     * 
+     *
      * Note that changing this value will have no effect on the activity's
      * {@link android.content.pm.ActivityInfo} structure; that is, if
      * <code>android:immersive</code> is set to <code>true</code>
@@ -4760,9 +4869,8 @@ public class Activity extends ContextThemeWrapper
      * always have its {@link android.content.pm.ActivityInfo#FLAG_IMMERSIVE
      * FLAG_IMMERSIVE} bit set.
      *
-     * @see #isImmersive
+     * @see #isImmersive()
      * @see android.content.pm.ActivityInfo#FLAG_IMMERSIVE
-     * @hide
      */
     public void setImmersive(boolean i) {
         try {
@@ -4894,9 +5002,10 @@ public class Activity extends ContextThemeWrapper
                 resultData = mResultData;
             }
             if (resultData != null) {
-                resultData.setAllowFds(false);
+                resultData.prepareToLeaveProcess();
             }
             try {
+                upIntent.prepareToLeaveProcess();
                 return ActivityManagerNative.getDefault().navigateUpTo(mToken, upIntent,
                         resultCode, resultData);
             } catch (RemoteException e) {
@@ -4939,7 +5048,21 @@ public class Activity extends ContextThemeWrapper
         if (TextUtils.isEmpty(parentName)) {
             return null;
         }
-        return new Intent().setClassName(this, parentName);
+
+        // If the parent itself has no parent, generate a main activity intent.
+        final ComponentName target = new ComponentName(this, parentName);
+        try {
+            final ActivityInfo parentInfo = getPackageManager().getActivityInfo(target, 0);
+            final String parentActivity = parentInfo.parentActivityName;
+            final Intent parentIntent = parentActivity == null
+                    ? Intent.makeMainActivity(target)
+                    : new Intent().setComponent(target);
+            return parentIntent;
+        } catch (NameNotFoundException e) {
+            Log.e(TAG, "getParentActivityIntent: bad parentActivityName '" + parentName +
+                    "' in manifest");
+            return null;
+        }
     }
 
     // ------------------ Internal API ------------------
@@ -4964,7 +5087,7 @@ public class Activity extends ContextThemeWrapper
             Configuration config) {
         attachBaseContext(context);
 
-        mFragments.attachActivity(this);
+        mFragments.attachActivity(this, mContainer, null);
         
         mWindow = PolicyManager.makeNewWindow(this);
         mWindow.setCallback(this);
@@ -4990,7 +5113,9 @@ public class Activity extends ContextThemeWrapper
         mEmbeddedID = id;
         mLastNonConfigurationInstances = lastNonConfigurationInstances;
 
-        mWindow.setWindowManager(null, mToken, mComponent.flattenToString(),
+        mWindow.setWindowManager(
+                (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),
+                mToken, mComponent.flattenToString(),
                 (info.flags & ActivityInfo.FLAG_HARDWARE_ACCELERATED) != 0);
         if (mParent != null) {
             mWindow.setContainer(mParent.getWindow());
@@ -5023,10 +5148,14 @@ public class Activity extends ContextThemeWrapper
         }
         mFragments.dispatchStart();
         if (mAllLoaderManagers != null) {
-            for (int i=mAllLoaderManagers.size()-1; i>=0; i--) {
-                LoaderManagerImpl lm = mAllLoaderManagers.valueAt(i);
-                lm.finishRetain();
-                lm.doReportStart();
+            LoaderManagerImpl loaders[] = new LoaderManagerImpl[mAllLoaderManagers.size()];
+            mAllLoaderManagers.values().toArray(loaders);
+            if (loaders != null) {
+                for (int i=0; i<loaders.length; i++) {
+                    LoaderManagerImpl lm = loaders[i];
+                    lm.finishRetain();
+                    lm.doReportStart();
+                }
             }
         }
     }
@@ -5037,7 +5166,7 @@ public class Activity extends ContextThemeWrapper
         if (mStopped) {
             mStopped = false;
             if (mToken != null && mParent == null) {
-                WindowManagerImpl.getDefault().setStoppedState(mToken, false);
+                WindowManagerGlobal.getInstance().setStoppedState(mToken, false);
             }
 
             synchronized (mManagedCursors) {
@@ -5137,7 +5266,7 @@ public class Activity extends ContextThemeWrapper
             }
 
             if (mToken != null && mParent == null) {
-                WindowManagerImpl.getDefault().setStoppedState(mToken, true);
+                WindowManagerGlobal.getInstance().setStoppedState(mToken, true);
             }
             
             mFragments.dispatchStop();
@@ -5167,6 +5296,7 @@ public class Activity extends ContextThemeWrapper
     }
 
     final void performDestroy() {
+        mDestroyed = true;
         mWindow.destroy();
         mFragments.dispatchDestroy();
         onDestroy();

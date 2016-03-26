@@ -16,7 +16,11 @@
 
 package com.android.server;
 
+import android.app.IActivityController;
+import android.os.Binder;
+import android.os.RemoteException;
 import com.android.server.am.ActivityManagerService;
+import com.android.server.power.PowerManagerService;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -25,19 +29,22 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Debug;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
-import android.provider.Settings;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.Slog;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -84,10 +91,11 @@ public class Watchdog extends Thread {
     AlarmManagerService mAlarm;
     ActivityManagerService mActivity;
     boolean mCompleted;
-    boolean mForceKillSystem;
     Monitor mCurrentMonitor;
 
     int mPhonePid;
+    IActivityController mController;
+    boolean mAllowRestart = true;
 
     final Calendar mCalendar = Calendar.getInstance();
     int mMinScreenOff = MEMCHECK_DEFAULT_MIN_SCREEN_OFF;
@@ -111,15 +119,17 @@ public class Watchdog extends Thread {
      * Used for scheduling monitor callbacks and checking memory usage.
      */
     final class HeartbeatHandler extends Handler {
+        HeartbeatHandler(Looper looper) {
+            super(looper);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MONITOR: {
                     // See if we should force a reboot.
                     int rebootInterval = mReqRebootInterval >= 0
-                            ? mReqRebootInterval : Settings.Secure.getInt(
-                            mResolver, Settings.Secure.REBOOT_INTERVAL,
-                            REBOOT_DEFAULT_INTERVAL);
+                            ? mReqRebootInterval : REBOOT_DEFAULT_INTERVAL;
                     if (mRebootInterval != rebootInterval) {
                         mRebootInterval = rebootInterval;
                         // We have been running long enough that a reboot can
@@ -129,7 +139,9 @@ public class Watchdog extends Thread {
 
                     final int size = mMonitors.size();
                     for (int i = 0 ; i < size ; i++) {
-                        mCurrentMonitor = mMonitors.get(i);
+                        synchronized (Watchdog.this) {
+                            mCurrentMonitor = mMonitors.get(i);
+                        }
                         mCurrentMonitor.monitor();
                     }
 
@@ -182,7 +194,9 @@ public class Watchdog extends Thread {
 
     private Watchdog() {
         super("watchdog");
-        mHandler = new HeartbeatHandler();
+        // Explicitly bind the HeartbeatHandler to run on the ServerThread, so
+        // that it can't get accidentally bound to another thread.
+        mHandler = new HeartbeatHandler(Looper.getMainLooper());
     }
 
     public void init(Context context, BatteryService battery,
@@ -214,6 +228,18 @@ public class Watchdog extends Thread {
         }
     }
 
+    public void setActivityController(IActivityController controller) {
+        synchronized (this) {
+            mController = controller;
+        }
+    }
+
+    public void setAllowRestart(boolean allowRestart) {
+        synchronized (this) {
+            mAllowRestart = allowRestart;
+        }
+    }
+
     public void addMonitor(Monitor monitor) {
         synchronized (this) {
             if (isAlive()) {
@@ -225,9 +251,7 @@ public class Watchdog extends Thread {
 
     void checkReboot(boolean fromAlarm) {
         int rebootInterval = mReqRebootInterval >= 0 ? mReqRebootInterval
-                : Settings.Secure.getInt(
-                mResolver, Settings.Secure.REBOOT_INTERVAL,
-                REBOOT_DEFAULT_INTERVAL);
+                : REBOOT_DEFAULT_INTERVAL;
         mRebootInterval = rebootInterval;
         if (rebootInterval <= 0) {
             // No reboot interval requested.
@@ -237,17 +261,11 @@ public class Watchdog extends Thread {
         }
 
         long rebootStartTime = mReqRebootStartTime >= 0 ? mReqRebootStartTime
-                : Settings.Secure.getLong(
-                mResolver, Settings.Secure.REBOOT_START_TIME,
-                REBOOT_DEFAULT_START_TIME);
+                : REBOOT_DEFAULT_START_TIME;
         long rebootWindowMillis = (mReqRebootWindow >= 0 ? mReqRebootWindow
-                : Settings.Secure.getLong(
-                mResolver, Settings.Secure.REBOOT_WINDOW,
-                REBOOT_DEFAULT_WINDOW)) * 1000;
+                : REBOOT_DEFAULT_WINDOW) * 1000;
         long recheckInterval = (mReqRecheckInterval >= 0 ? mReqRecheckInterval
-                : Settings.Secure.getLong(
-                mResolver, Settings.Secure.MEMCHECK_RECHECK_INTERVAL,
-                MEMCHECK_DEFAULT_RECHECK_INTERVAL)) * 1000;
+                : MEMCHECK_DEFAULT_RECHECK_INTERVAL) * 1000;
 
         retrieveBrutalityAmount();
 
@@ -314,7 +332,7 @@ public class Watchdog extends Thread {
     void rebootSystem(String reason) {
         Slog.i(TAG, "Rebooting system because: " + reason);
         PowerManagerService pms = (PowerManagerService) ServiceManager.getService("power");
-        pms.reboot(reason);
+        pms.reboot(false, reason, false);
     }
 
     /**
@@ -324,13 +342,9 @@ public class Watchdog extends Thread {
      */
     void retrieveBrutalityAmount() {
         mMinScreenOff = (mReqMinScreenOff >= 0 ? mReqMinScreenOff
-                : Settings.Secure.getInt(
-                mResolver, Settings.Secure.MEMCHECK_MIN_SCREEN_OFF,
-                MEMCHECK_DEFAULT_MIN_SCREEN_OFF)) * 1000;
+                : MEMCHECK_DEFAULT_MIN_SCREEN_OFF) * 1000;
         mMinAlarm = (mReqMinNextAlarm >= 0 ? mReqMinNextAlarm
-                : Settings.Secure.getInt(
-                mResolver, Settings.Secure.MEMCHECK_MIN_ALARM,
-                MEMCHECK_DEFAULT_MIN_ALARM)) * 1000;
+                : MEMCHECK_DEFAULT_MIN_ALARM) * 1000;
     }
 
     /**
@@ -343,12 +357,12 @@ public class Watchdog extends Thread {
      * text of why it is not a good time.
      */
     String shouldWeBeBrutalLocked(long curTime) {
-        if (mBattery == null || !mBattery.isPowered()) {
+        if (mBattery == null || !mBattery.isPowered(BatteryManager.BATTERY_PLUGGED_ANY)) {
             return "battery";
         }
 
         if (mMinScreenOff >= 0 && (mPower == null ||
-                mPower.timeSinceScreenOn() < mMinScreenOff)) {
+                mPower.timeSinceScreenWasLastOn() < mMinScreenOff)) {
             return "screen";
         }
 
@@ -392,6 +406,9 @@ public class Watchdog extends Thread {
             mCompleted = false;
             mHandler.sendEmptyMessage(MONITOR);
 
+
+            final String name;
+            final boolean allowRestart;
             synchronized (this) {
                 long timeout = TIME_TO_WAIT;
 
@@ -400,16 +417,16 @@ public class Watchdog extends Thread {
                 // to timeout on is asleep as well and won't have a chance to run, causing a false
                 // positive on when to kill things.
                 long start = SystemClock.uptimeMillis();
-                while (timeout > 0 && !mForceKillSystem) {
+                while (timeout > 0) {
                     try {
-                        wait(timeout);  // notifyAll() is called when mForceKillSystem is set
+                        wait(timeout);
                     } catch (InterruptedException e) {
                         Log.wtf(TAG, e);
                     }
                     timeout = TIME_TO_WAIT - (SystemClock.uptimeMillis() - start);
                 }
 
-                if (mCompleted && !mForceKillSystem) {
+                if (mCompleted) {
                     // The monitors have returned.
                     waitedHalf = false;
                     continue;
@@ -425,14 +442,15 @@ public class Watchdog extends Thread {
                     waitedHalf = true;
                     continue;
                 }
+
+                name = (mCurrentMonitor != null) ?
+                    mCurrentMonitor.getClass().getName() : "null";
+                allowRestart = mAllowRestart;
             }
 
             // If we got here, that means that the system is most likely hung.
             // First collect stack traces from all threads of the system process.
             // Then kill this process so that the system will restart.
-
-            final String name = (mCurrentMonitor != null) ?
-                    mCurrentMonitor.getClass().getName() : "null";
             EventLog.writeEvent(EventLogTags.WATCHDOG, name);
 
             ArrayList<Integer> pids = new ArrayList<Integer>();
@@ -452,6 +470,16 @@ public class Watchdog extends Thread {
                 dumpKernelStackTraces();
             }
 
+            // Trigger the kernel to dump all blocked threads to the kernel log
+            try {
+                FileWriter sysrq_trigger = new FileWriter("/proc/sysrq-trigger");
+                sysrq_trigger.write("w");
+                sysrq_trigger.close();
+            } catch (IOException e) {
+                Slog.e(TAG, "Failed to write to /proc/sysrq-trigger");
+                Slog.e(TAG, e.getMessage());
+            }
+
             // Try to add the error to the dropbox, but assuming that the ActivityManager
             // itself may be deadlocked.  (which has happened, causing this statement to
             // deadlock and the watchdog as a whole to be ineffective)
@@ -467,13 +495,34 @@ public class Watchdog extends Thread {
                 dropboxThread.join(2000);  // wait up to 2 seconds for it to return.
             } catch (InterruptedException ignored) {}
 
+            IActivityController controller;
+            synchronized (this) {
+                controller = mController;
+            }
+            if (controller != null) {
+                Slog.i(TAG, "Reporting stuck state to activity controller");
+                try {
+                    Binder.setDumpDisabled("Service dumps disabled due to hung system process.");
+                    // 1 = keep waiting, -1 = kill system
+                    int res = controller.systemNotResponding(name);
+                    if (res >= 0) {
+                        Slog.i(TAG, "Activity controller requested to coninue to wait");
+                        waitedHalf = false;
+                        continue;
+                    }
+                } catch (RemoteException e) {
+                }
+            }
+
             // Only kill the process if the debugger is not attached.
-            if (!Debug.isDebuggerConnected()) {
+            if (Debug.isDebuggerConnected()) {
+                Slog.w(TAG, "Debugger connected: Watchdog is *not* killing the system process");
+            } else if (!allowRestart) {
+                Slog.w(TAG, "Restart not allowed: Watchdog is *not* killing the system process");
+            } else {
                 Slog.w(TAG, "*** WATCHDOG KILLING SYSTEM PROCESS: " + name);
                 Process.killProcess(Process.myPid());
                 System.exit(10);
-            } else {
-                Slog.w(TAG, "Debugger connected: Watchdog is *not* killing the system process");
             }
 
             waitedHalf = false;

@@ -23,6 +23,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -124,24 +125,16 @@ public class TaskStackBuilder {
      * @return This TaskStackBuilder for method chaining
      */
     public TaskStackBuilder addParentStack(Activity sourceActivity) {
-        final int insertAt = mIntents.size();
-        Intent parent = sourceActivity.getParentActivityIntent();
-        PackageManager pm = sourceActivity.getPackageManager();
-        while (parent != null) {
-            mIntents.add(insertAt, parent);
-            try {
-                ActivityInfo info = pm.getActivityInfo(parent.getComponent(), 0);
-                String parentActivity = info.parentActivityName;
-                if (parentActivity != null) {
-                    parent = new Intent().setComponent(
-                            new ComponentName(mSourceContext, parentActivity));
-                } else {
-                    parent = null;
-                }
-            } catch (NameNotFoundException e) {
-                Log.e(TAG, "Bad ComponentName while traversing activity parent metadata");
-                throw new IllegalArgumentException(e);
+        final Intent parent = sourceActivity.getParentActivityIntent();
+        if (parent != null) {
+            // We have the actual parent intent, build the rest from static metadata
+            // then add the direct parent intent to the end.
+            ComponentName target = parent.getComponent();
+            if (target == null) {
+                target = parent.resolveActivity(mSourceContext.getPackageManager());
             }
+            addParentStack(target);
+            addNextIntent(parent);
         }
         return this;
     }
@@ -155,24 +148,7 @@ public class TaskStackBuilder {
      * @return This TaskStackBuilder for method chaining
      */
     public TaskStackBuilder addParentStack(Class<?> sourceActivityClass) {
-        final int insertAt = mIntents.size();
-        PackageManager pm = mSourceContext.getPackageManager();
-        try {
-            ActivityInfo info = pm.getActivityInfo(
-                    new ComponentName(mSourceContext, sourceActivityClass), 0);
-            String parentActivity = info.parentActivityName;
-            while (parentActivity != null) {
-                Intent parent = new Intent().setComponent(
-                        new ComponentName(mSourceContext, parentActivity));
-                mIntents.add(insertAt, parent);
-                info = pm.getActivityInfo(parent.getComponent(), 0);
-                parentActivity = info.parentActivityName;
-            }
-        } catch (NameNotFoundException e) {
-            Log.e(TAG, "Bad ComponentName while traversing activity parent metadata");
-            throw new IllegalArgumentException(e);
-        }
-        return this;
+        return addParentStack(new ComponentName(mSourceContext, sourceActivityClass));
     }
 
     /**
@@ -191,11 +167,13 @@ public class TaskStackBuilder {
             ActivityInfo info = pm.getActivityInfo(sourceActivityName, 0);
             String parentActivity = info.parentActivityName;
             while (parentActivity != null) {
-                Intent parent = new Intent().setComponent(
-                        new ComponentName(info.packageName, parentActivity));
-                mIntents.add(insertAt, parent);
-                info = pm.getActivityInfo(parent.getComponent(), 0);
+                final ComponentName target = new ComponentName(info.packageName, parentActivity);
+                info = pm.getActivityInfo(target, 0);
                 parentActivity = info.parentActivityName;
+                final Intent parent = parentActivity == null && insertAt == 0
+                        ? Intent.makeMainActivity(target)
+                        : new Intent().setComponent(target);
+                mIntents.add(insertAt, parent);
             }
         } catch (NameNotFoundException e) {
             Log.e(TAG, "Bad ComponentName while traversing activity parent metadata");
@@ -232,22 +210,26 @@ public class TaskStackBuilder {
 
     /**
      * Start the task stack constructed by this builder.
+     * @hide
+     */
+    public void startActivities(Bundle options, UserHandle userHandle) {
+        if (mIntents.isEmpty()) {
+            throw new IllegalStateException(
+                    "No intents added to TaskStackBuilder; cannot startActivities");
+        }
+
+        mSourceContext.startActivitiesAsUser(getIntents(), options, userHandle);
+    }
+
+    /**
+     * Start the task stack constructed by this builder.
      *
      * @param options Additional options for how the Activity should be started.
      * See {@link android.content.Context#startActivity(Intent, Bundle)
      * Context.startActivity(Intent, Bundle)} for more details.
      */
     public void startActivities(Bundle options) {
-        if (mIntents.isEmpty()) {
-            throw new IllegalStateException(
-                    "No intents added to TaskStackBuilder; cannot startActivities");
-        }
-
-        Intent[] intents = mIntents.toArray(new Intent[mIntents.size()]);
-        intents[0].addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK |
-                Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-        mSourceContext.startActivities(intents, options);
+        startActivities(options, new UserHandle(UserHandle.myUserId()));
     }
 
     /**
@@ -287,11 +269,22 @@ public class TaskStackBuilder {
                     "No intents added to TaskStackBuilder; cannot getPendingIntent");
         }
 
-        Intent[] intents = mIntents.toArray(new Intent[mIntents.size()]);
-        intents[0].addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK |
-                Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-        return PendingIntent.getActivities(mSourceContext, requestCode, intents, flags, options);
+        return PendingIntent.getActivities(mSourceContext, requestCode, getIntents(),
+                flags, options);
+    }
+
+    /**
+     * @hide
+     */
+    public PendingIntent getPendingIntent(int requestCode, int flags, Bundle options,
+            UserHandle user) {
+        if (mIntents.isEmpty()) {
+            throw new IllegalStateException(
+                    "No intents added to TaskStackBuilder; cannot getPendingIntent");
+        }
+
+        return PendingIntent.getActivitiesAsUser(mSourceContext, requestCode, getIntents(), flags,
+                options, user);
     }
 
     /**
@@ -302,6 +295,15 @@ public class TaskStackBuilder {
      * @return An array containing the intents added to this builder.
      */
     public Intent[] getIntents() {
-        return mIntents.toArray(new Intent[mIntents.size()]);
+        Intent[] intents = new Intent[mIntents.size()];
+        if (intents.length == 0) return intents;
+
+        intents[0] = new Intent(mIntents.get(0)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TASK |
+                Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+        for (int i = 1; i < intents.length; i++) {
+            intents[i] = new Intent(mIntents.get(i));
+        }
+        return intents;
     }
 }

@@ -21,6 +21,7 @@ import android.database.DataSetObserver;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -30,6 +31,8 @@ import android.view.View.MeasureSpec;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+
+import java.util.Locale;
 
 /**
  * A ListPopupWindow anchors itself to a host view and displays a
@@ -91,6 +94,8 @@ public class ListPopupWindow {
     private Rect mTempRect = new Rect();
 
     private boolean mModal;
+
+    private int mLayoutDirection;
 
     /**
      * The provided prompt view should appear above list content.
@@ -193,6 +198,9 @@ public class ListPopupWindow {
         mContext = context;
         mPopup = new PopupWindow(context, attrs, defStyleAttr, defStyleRes);
         mPopup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        // Set the default layout direction to match the default locale one
+        final Locale locale = mContext.getResources().getConfiguration().locale;
+        mLayoutDirection = TextUtils.getLayoutDirectionFromLocale(locale);
     }
 
     /**

@@ -110,13 +110,15 @@ public final class CreateInfo implements ICreateInfo {
         "android.os.Handler#sendMessageAtTime",
         "android.os.HandlerThread#run",
         "android.os.Build#getString",
-        "android.view.Display#getWindowManager",
+        "android.text.format.DateFormat#is24HourFormat",
+        "android.view.Choreographer#getRefreshRate",
+        "android.view.Display#updateDisplayInfoLocked",
         "android.view.LayoutInflater#rInflate",
         "android.view.LayoutInflater#parseInclude",
         "android.view.View#isInEditMode",
         "android.view.ViewRootImpl#isInTouchMode",
+        "android.view.WindowManagerGlobal#getWindowManagerService",
         "android.view.inputmethod.InputMethodManager#getInstance",
-        "android.util.Log#println_native",
         "com.android.internal.util.XmlUtils#convertValueToInt",
         "com.android.internal.textservice.ITextServicesManager$Stub#asInterface",
     };
@@ -185,6 +187,7 @@ public final class CreateInfo implements ICreateInfo {
     private final static String[] RENAMED_CLASSES =
         new String[] {
             "android.os.ServiceManager",                       "android.os._Original_ServiceManager",
+            "android.util.LruCache",                           "android.util._Original_LruCache",
             "android.view.SurfaceView",                        "android.view._Original_SurfaceView",
             "android.view.accessibility.AccessibilityManager", "android.view.accessibility._Original_AccessibilityManager",
             "android.webkit.WebView",                          "android.webkit._Original_WebView",

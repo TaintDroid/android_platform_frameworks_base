@@ -29,6 +29,8 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import libcore.icu.LocaleData;
+
 /**
  * This class contains various date-related utilities for creating text for things like
  * elapsed time and date ranges, strings for days of the week and months, and AM/PM text etc.
@@ -36,112 +38,9 @@ import java.util.TimeZone;
 public class DateUtils
 {
     private static final Object sLock = new Object();
-    private static final int[] sDaysLong = new int[] {
-            com.android.internal.R.string.day_of_week_long_sunday,
-            com.android.internal.R.string.day_of_week_long_monday,
-            com.android.internal.R.string.day_of_week_long_tuesday,
-            com.android.internal.R.string.day_of_week_long_wednesday,
-            com.android.internal.R.string.day_of_week_long_thursday,
-            com.android.internal.R.string.day_of_week_long_friday,
-            com.android.internal.R.string.day_of_week_long_saturday,
-        };
-    private static final int[] sDaysMedium = new int[] {
-            com.android.internal.R.string.day_of_week_medium_sunday,
-            com.android.internal.R.string.day_of_week_medium_monday,
-            com.android.internal.R.string.day_of_week_medium_tuesday,
-            com.android.internal.R.string.day_of_week_medium_wednesday,
-            com.android.internal.R.string.day_of_week_medium_thursday,
-            com.android.internal.R.string.day_of_week_medium_friday,
-            com.android.internal.R.string.day_of_week_medium_saturday,
-        };
-    private static final int[] sDaysShort = new int[] {
-            com.android.internal.R.string.day_of_week_short_sunday,
-            com.android.internal.R.string.day_of_week_short_monday,
-            com.android.internal.R.string.day_of_week_short_tuesday,
-            com.android.internal.R.string.day_of_week_short_wednesday,
-            com.android.internal.R.string.day_of_week_short_thursday,
-            com.android.internal.R.string.day_of_week_short_friday,
-            com.android.internal.R.string.day_of_week_short_saturday,
-        };
-    private static final int[] sDaysShortest = new int[] {
-            com.android.internal.R.string.day_of_week_shortest_sunday,
-            com.android.internal.R.string.day_of_week_shortest_monday,
-            com.android.internal.R.string.day_of_week_shortest_tuesday,
-            com.android.internal.R.string.day_of_week_shortest_wednesday,
-            com.android.internal.R.string.day_of_week_shortest_thursday,
-            com.android.internal.R.string.day_of_week_shortest_friday,
-            com.android.internal.R.string.day_of_week_shortest_saturday,
-        };
-    private static final int[] sMonthsStandaloneLong = new int [] {
-            com.android.internal.R.string.month_long_standalone_january,
-            com.android.internal.R.string.month_long_standalone_february,
-            com.android.internal.R.string.month_long_standalone_march,
-            com.android.internal.R.string.month_long_standalone_april,
-            com.android.internal.R.string.month_long_standalone_may,
-            com.android.internal.R.string.month_long_standalone_june,
-            com.android.internal.R.string.month_long_standalone_july,
-            com.android.internal.R.string.month_long_standalone_august,
-            com.android.internal.R.string.month_long_standalone_september,
-            com.android.internal.R.string.month_long_standalone_october,
-            com.android.internal.R.string.month_long_standalone_november,
-            com.android.internal.R.string.month_long_standalone_december,
-        };
-    private static final int[] sMonthsLong = new int [] {
-            com.android.internal.R.string.month_long_january,
-            com.android.internal.R.string.month_long_february,
-            com.android.internal.R.string.month_long_march,
-            com.android.internal.R.string.month_long_april,
-            com.android.internal.R.string.month_long_may,
-            com.android.internal.R.string.month_long_june,
-            com.android.internal.R.string.month_long_july,
-            com.android.internal.R.string.month_long_august,
-            com.android.internal.R.string.month_long_september,
-            com.android.internal.R.string.month_long_october,
-            com.android.internal.R.string.month_long_november,
-            com.android.internal.R.string.month_long_december,
-        };
-    private static final int[] sMonthsMedium = new int [] {
-            com.android.internal.R.string.month_medium_january,
-            com.android.internal.R.string.month_medium_february,
-            com.android.internal.R.string.month_medium_march,
-            com.android.internal.R.string.month_medium_april,
-            com.android.internal.R.string.month_medium_may,
-            com.android.internal.R.string.month_medium_june,
-            com.android.internal.R.string.month_medium_july,
-            com.android.internal.R.string.month_medium_august,
-            com.android.internal.R.string.month_medium_september,
-            com.android.internal.R.string.month_medium_october,
-            com.android.internal.R.string.month_medium_november,
-            com.android.internal.R.string.month_medium_december,
-        };
-    private static final int[] sMonthsShortest = new int [] {
-            com.android.internal.R.string.month_shortest_january,
-            com.android.internal.R.string.month_shortest_february,
-            com.android.internal.R.string.month_shortest_march,
-            com.android.internal.R.string.month_shortest_april,
-            com.android.internal.R.string.month_shortest_may,
-            com.android.internal.R.string.month_shortest_june,
-            com.android.internal.R.string.month_shortest_july,
-            com.android.internal.R.string.month_shortest_august,
-            com.android.internal.R.string.month_shortest_september,
-            com.android.internal.R.string.month_shortest_october,
-            com.android.internal.R.string.month_shortest_november,
-            com.android.internal.R.string.month_shortest_december,
-        };
-    private static final int[] sAmPm = new int[] {
-            com.android.internal.R.string.am,
-            com.android.internal.R.string.pm,
-        };
     private static Configuration sLastConfig;
-    private static java.text.DateFormat sStatusTimeFormat;
     private static String sElapsedFormatMMSS;
     private static String sElapsedFormatHMMSS;
-
-    private static final String FAST_FORMAT_HMMSS = "%1$d:%2$02d:%3$02d";
-    private static final String FAST_FORMAT_MMSS = "%1$02d:%2$02d";
-    private static final char TIME_PADDING = '0';
-    private static final char TIME_SEPARATOR = ':';
-
 
     public static final long SECOND_IN_MILLIS = 1000;
     public static final long MINUTE_IN_MILLIS = SECOND_IN_MILLIS * 60;
@@ -195,14 +94,14 @@ public class DateUtils
     // translated.
     /**
      * This is not actually the preferred 24-hour date format in all locales.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final String HOUR_MINUTE_24 = "%H:%M";
     public static final String MONTH_FORMAT = "%B";
     /**
      * This is not actually a useful month name in all locales.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final String ABBREV_MONTH_FORMAT = "%b";
@@ -218,7 +117,7 @@ public class DateUtils
     // The index is constructed from a bit-wise OR of the boolean values:
     // {showTime, showYear, showWeekDay}.  For example, if showYear and
     // showWeekDay are both true, then the index would be 3.
-    /** @deprecated do not use. */
+    /** @deprecated Do not use. */
     public static final int sameYearTable[] = {
         com.android.internal.R.string.same_year_md1_md2,
         com.android.internal.R.string.same_year_wday1_md1_wday2_md2,
@@ -245,7 +144,7 @@ public class DateUtils
     // The index is constructed from a bit-wise OR of the boolean values:
     // {showTime, showYear, showWeekDay}.  For example, if showYear and
     // showWeekDay are both true, then the index would be 3.
-    /** @deprecated do not use. */
+    /** @deprecated Do not use. */
     public static final int sameMonthTable[] = {
         com.android.internal.R.string.same_month_md1_md2,
         com.android.internal.R.string.same_month_wday1_md1_wday2_md2,
@@ -272,7 +171,7 @@ public class DateUtils
      *
      * @more <p>
      *       e.g. "Sunday" or "January"
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final int LENGTH_LONG = 10;
@@ -283,7 +182,7 @@ public class DateUtils
      *
      * @more <p>
      *       e.g. "Sun" or "Jan"
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final int LENGTH_MEDIUM = 20;
@@ -295,7 +194,7 @@ public class DateUtils
      * <p>e.g. "Su" or "Jan"
      * <p>In most languages, the results returned for LENGTH_SHORT will be the same as
      * the results returned for {@link #LENGTH_MEDIUM}.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final int LENGTH_SHORT = 30;
@@ -304,7 +203,7 @@ public class DateUtils
      * Request an even shorter abbreviated version of the name.
      * Do not use this.  Currently this will always return the same result
      * as {@link #LENGTH_SHORT}.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final int LENGTH_SHORTER = 40;
@@ -316,7 +215,7 @@ public class DateUtils
      * <p>e.g. "S", "T", "T" or "J"
      * <p>In some languages, the results returned for LENGTH_SHORTEST will be the same as
      * the results returned for {@link #LENGTH_SHORT}.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static final int LENGTH_SHORTEST = 50;
@@ -332,22 +231,21 @@ public class DateUtils
      *               Undefined lengths will return {@link #LENGTH_MEDIUM}
      *               but may return something different in the future.
      * @throws IndexOutOfBoundsException if the dayOfWeek is out of bounds.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static String getDayOfWeekString(int dayOfWeek, int abbrev) {
-        int[] list;
+        LocaleData d = LocaleData.get(Locale.getDefault());
+        String[] names;
         switch (abbrev) {
-            case LENGTH_LONG:       list = sDaysLong;       break;
-            case LENGTH_MEDIUM:     list = sDaysMedium;     break;
-            case LENGTH_SHORT:      list = sDaysShort;      break;
-            case LENGTH_SHORTER:    list = sDaysShort;      break;
-            case LENGTH_SHORTEST:   list = sDaysShortest;   break;
-            default:                list = sDaysMedium;     break;
+            case LENGTH_LONG:       names = d.longWeekdayNames;  break;
+            case LENGTH_MEDIUM:     names = d.shortWeekdayNames; break;
+            case LENGTH_SHORT:      names = d.shortWeekdayNames; break; // TODO
+            case LENGTH_SHORTER:    names = d.shortWeekdayNames; break; // TODO
+            case LENGTH_SHORTEST:   names = d.tinyWeekdayNames;  break;
+            default:                names = d.shortWeekdayNames; break;
         }
-
-        Resources r = Resources.getSystem();
-        return r.getString(list[dayOfWeek - Calendar.SUNDAY]);
+        return names[dayOfWeek];
     }
 
     /**
@@ -355,12 +253,11 @@ public class DateUtils
      * @param ampm Either {@link Calendar#AM Calendar.AM} or {@link Calendar#PM Calendar.PM}.
      * @throws IndexOutOfBoundsException if the ampm is out of bounds.
      * @return Localized version of "AM" or "PM".
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static String getAMPMString(int ampm) {
-        Resources r = Resources.getSystem();
-        return r.getString(sAmPm[ampm - Calendar.AM]);
+        return LocaleData.get(Locale.getDefault()).amPm[ampm - Calendar.AM];
     }
 
     /**
@@ -372,62 +269,21 @@ public class DateUtils
      *               Undefined lengths will return {@link #LENGTH_MEDIUM}
      *               but may return something different in the future.
      * @return Localized month of the year.
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
+     * @deprecated Use {@link java.text.SimpleDateFormat} instead.
      */
     @Deprecated
     public static String getMonthString(int month, int abbrev) {
-        // Note that here we use sMonthsMedium for MEDIUM, SHORT and SHORTER.
-        // This is a shortcut to not spam the translators with too many variations
-        // of the same string.  If we find that in a language the distinction
-        // is necessary, we can can add more without changing this API.
-        int[] list;
+        LocaleData d = LocaleData.get(Locale.getDefault());
+        String[] names;
         switch (abbrev) {
-            case LENGTH_LONG:       list = sMonthsLong;     break;
-            case LENGTH_MEDIUM:     list = sMonthsMedium;   break;
-            case LENGTH_SHORT:      list = sMonthsMedium;   break;
-            case LENGTH_SHORTER:    list = sMonthsMedium;   break;
-            case LENGTH_SHORTEST:   list = sMonthsShortest; break;
-            default:                list = sMonthsMedium;   break;
+            case LENGTH_LONG:       names = d.longMonthNames;  break;
+            case LENGTH_MEDIUM:     names = d.shortMonthNames; break;
+            case LENGTH_SHORT:      names = d.shortMonthNames; break;
+            case LENGTH_SHORTER:    names = d.shortMonthNames; break;
+            case LENGTH_SHORTEST:   names = d.tinyMonthNames;  break;
+            default:                names = d.shortMonthNames; break;
         }
-
-        Resources r = Resources.getSystem();
-        return r.getString(list[month - Calendar.JANUARY]);
-    }
-
-    /**
-     * Return a localized string for the month of the year, for
-     * contexts where the month is not formatted together with
-     * a day of the month.
-     *
-     * @param month One of {@link Calendar#JANUARY Calendar.JANUARY},
-     *               {@link Calendar#FEBRUARY Calendar.FEBRUARY}, etc.
-     * @param abbrev One of {@link #LENGTH_LONG}, {@link #LENGTH_MEDIUM},
-     *               or {@link #LENGTH_SHORTEST}.
-     *               Undefined lengths will return {@link #LENGTH_MEDIUM}
-     *               but may return something different in the future.
-     * @return Localized month of the year.
-     * @hide Pending API council approval
-     * @deprecated use {@link java.text.SimpleDateFormat} instead.
-     */
-    @Deprecated
-    public static String getStandaloneMonthString(int month, int abbrev) {
-        // Note that here we use sMonthsMedium for MEDIUM, SHORT and SHORTER.
-        // This is a shortcut to not spam the translators with too many variations
-        // of the same string.  If we find that in a language the distinction
-        // is necessary, we can can add more without changing this API.
-        int[] list;
-        switch (abbrev) {
-            case LENGTH_LONG:       list = sMonthsStandaloneLong;
-                                                            break;
-            case LENGTH_MEDIUM:     list = sMonthsMedium;   break;
-            case LENGTH_SHORT:      list = sMonthsMedium;   break;
-            case LENGTH_SHORTER:    list = sMonthsMedium;   break;
-            case LENGTH_SHORTEST:   list = sMonthsShortest; break;
-            default:                list = sMonthsMedium;   break;
-        }
-
-        Resources r = Resources.getSystem();
-        return r.getString(list[month - Calendar.JANUARY]);
+        return names[month];
     }
 
     /**
@@ -533,20 +389,7 @@ public class DateUtils
                 }
             }
         } else if (duration < WEEK_IN_MILLIS && minResolution < WEEK_IN_MILLIS) {
-            count = getNumberOfDaysPassed(time, now);
-            if (past) {
-                if (abbrevRelative) {
-                    resId = com.android.internal.R.plurals.abbrev_num_days_ago;
-                } else {
-                    resId = com.android.internal.R.plurals.num_days_ago;
-                }
-            } else {
-                if (abbrevRelative) {
-                    resId = com.android.internal.R.plurals.abbrev_in_num_days;
-                } else {
-                    resId = com.android.internal.R.plurals.in_num_days;
-                }
-            }
+            return getRelativeDayString(r, time, now);
         } else {
             // We know that we won't be showing the time, so it is safe to pass
             // in a null context.
@@ -555,24 +398,6 @@ public class DateUtils
 
         String format = r.getQuantityString(resId, (int) count);
         return String.format(format, count);
-    }
-
-    /**
-     * Returns the number of days passed between two dates.
-     *
-     * @param date1 first date
-     * @param date2 second date
-     * @return number of days passed between to dates.
-     */
-    private synchronized static long getNumberOfDaysPassed(long date1, long date2) {
-        if (sThenTime == null) {
-            sThenTime = new Time();
-        }
-        sThenTime.set(date1);
-        int day1 = Time.getJulianDay(date1, sThenTime.gmtoff);
-        sThenTime.set(date2);
-        int day2 = Time.getJulianDay(date2, sThenTime.gmtoff);
-        return Math.abs(day2 - day1);
     }
 
     /**
@@ -633,31 +458,37 @@ public class DateUtils
      * today this function returns "Today", if the day was a week ago it returns "7 days ago", and
      * if the day is in 2 weeks it returns "in 14 days".
      *
-     * @param r the resources to get the strings from
+     * @param r the resources
      * @param day the relative day to describe in UTC milliseconds
      * @param today the current time in UTC milliseconds
-     * @return a formatting string
      */
     private static final String getRelativeDayString(Resources r, long day, long today) {
+        Locale locale = r.getConfiguration().locale;
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+
+        // TODO: use TimeZone.getOffset instead.
         Time startTime = new Time();
         startTime.set(day);
+        int startDay = Time.getJulianDay(day, startTime.gmtoff);
+
         Time currentTime = new Time();
         currentTime.set(today);
-
-        int startDay = Time.getJulianDay(day, startTime.gmtoff);
         int currentDay = Time.getJulianDay(today, currentTime.gmtoff);
 
         int days = Math.abs(currentDay - startDay);
         boolean past = (today > day);
 
+        // TODO: some locales name other days too, such as de_DE's "Vorgestern" (today - 2).
         if (days == 1) {
             if (past) {
-                return r.getString(com.android.internal.R.string.yesterday);
+                return LocaleData.get(locale).yesterday;
             } else {
-                return r.getString(com.android.internal.R.string.tomorrow);
+                return LocaleData.get(locale).tomorrow;
             }
         } else if (days == 0) {
-            return r.getString(com.android.internal.R.string.today);
+            return LocaleData.get(locale).today;
         }
 
         int resId;
@@ -682,21 +513,32 @@ public class DateUtils
         Configuration cfg = r.getConfiguration();
         if (sLastConfig == null || !sLastConfig.equals(cfg)) {
             sLastConfig = cfg;
-            sStatusTimeFormat = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT);
             sElapsedFormatMMSS = r.getString(com.android.internal.R.string.elapsed_time_short_format_mm_ss);
             sElapsedFormatHMMSS = r.getString(com.android.internal.R.string.elapsed_time_short_format_h_mm_ss);
         }
     }
 
     /**
-     * Format a time so it appears like it would in the status bar clock.
-     * @deprecated use {@link #DateFormat.getTimeFormat(Context)} instead.
+     * Return given duration in a human-friendly format. For example, "4
+     * minutes" or "1 second". Returns only largest meaningful unit of time,
+     * from seconds up to hours.
+     *
      * @hide
      */
-    public static final CharSequence timeString(long millis) {
-        synchronized (sLock) {
-            initFormatStringsLocked();
-            return sStatusTimeFormat.format(millis);
+    public static CharSequence formatDuration(long millis) {
+        final Resources res = Resources.getSystem();
+        if (millis >= HOUR_IN_MILLIS) {
+            final int hours = (int) ((millis + 1800000) / HOUR_IN_MILLIS);
+            return res.getQuantityString(
+                    com.android.internal.R.plurals.duration_hours, hours, hours);
+        } else if (millis >= MINUTE_IN_MILLIS) {
+            final int minutes = (int) ((millis + 30000) / MINUTE_IN_MILLIS);
+            return res.getQuantityString(
+                    com.android.internal.R.plurals.duration_minutes, minutes, minutes);
+        } else {
+            final int seconds = (int) ((millis + 500) / SECOND_IN_MILLIS);
+            return res.getQuantityString(
+                    com.android.internal.R.plurals.duration_seconds, seconds, seconds);
         }
     }
 
@@ -710,19 +552,18 @@ public class DateUtils
     }
 
     /**
-     * Formats an elapsed time in the form "MM:SS" or "H:MM:SS"
-     * for display on the call-in-progress screen.
+     * Formats an elapsed time in a format like "MM:SS" or "H:MM:SS" (using a form
+     * suited to the current locale), similar to that used on the call-in-progress
+     * screen.
      *
-     * @param recycle {@link StringBuilder} to recycle, if possible
+     * @param recycle {@link StringBuilder} to recycle, or null to use a temporary one.
      * @param elapsedSeconds the elapsed time in seconds.
      */
     public static String formatElapsedTime(StringBuilder recycle, long elapsedSeconds) {
-        initFormatStrings();
-
+        // Break the elapsed seconds into hours, minutes, and seconds.
         long hours = 0;
         long minutes = 0;
         long seconds = 0;
-
         if (elapsedSeconds >= 3600) {
             hours = elapsedSeconds / 3600;
             elapsedSeconds -= hours * 3600;
@@ -733,80 +574,24 @@ public class DateUtils
         }
         seconds = elapsedSeconds;
 
-        String result;
+        // Create a StringBuilder if we weren't given one to recycle.
+        // TODO: if we cared, we could have a thread-local temporary StringBuilder.
+        StringBuilder sb = recycle;
+        if (sb == null) {
+            sb = new StringBuilder(8);
+        } else {
+            sb.setLength(0);
+        }
+
+        // Format the broken-down time in a locale-appropriate way.
+        // TODO: use icu4c when http://unicode.org/cldr/trac/ticket/3407 is fixed.
+        Formatter f = new Formatter(sb, Locale.getDefault());
+        initFormatStrings();
         if (hours > 0) {
-            return formatElapsedTime(recycle, sElapsedFormatHMMSS, hours, minutes, seconds);
+            return f.format(sElapsedFormatHMMSS, hours, minutes, seconds).toString();
         } else {
-            return formatElapsedTime(recycle, sElapsedFormatMMSS, minutes, seconds);
+            return f.format(sElapsedFormatMMSS, minutes, seconds).toString();
         }
-    }
-
-    /**
-     * Fast formatting of h:mm:ss
-     */
-    private static String formatElapsedTime(StringBuilder recycle, String format, long hours,
-            long minutes, long seconds) {
-        if (FAST_FORMAT_HMMSS.equals(format)) {
-            StringBuilder sb = recycle;
-            if (sb == null) {
-                sb = new StringBuilder(8);
-            } else {
-                sb.setLength(0);
-            }
-            sb.append(hours);
-            sb.append(TIME_SEPARATOR);
-            if (minutes < 10) {
-                sb.append(TIME_PADDING);
-            } else {
-                sb.append(toDigitChar(minutes / 10));
-            }
-            sb.append(toDigitChar(minutes % 10));
-            sb.append(TIME_SEPARATOR);
-            if (seconds < 10) {
-                sb.append(TIME_PADDING);
-            } else {
-                sb.append(toDigitChar(seconds / 10));
-            }
-            sb.append(toDigitChar(seconds % 10));
-            return sb.toString();
-        } else {
-            return String.format(format, hours, minutes, seconds);
-        }
-    }
-
-    /**
-     * Fast formatting of m:ss
-     */
-    private static String formatElapsedTime(StringBuilder recycle, String format, long minutes,
-            long seconds) {
-        if (FAST_FORMAT_MMSS.equals(format)) {
-            StringBuilder sb = recycle;
-            if (sb == null) {
-                sb = new StringBuilder(8);
-            } else {
-                sb.setLength(0);
-            }
-            if (minutes < 10) {
-                sb.append(TIME_PADDING);
-            } else {
-                sb.append(toDigitChar(minutes / 10));
-            }
-            sb.append(toDigitChar(minutes % 10));
-            sb.append(TIME_SEPARATOR);
-            if (seconds < 10) {
-                sb.append(TIME_PADDING);
-            } else {
-                sb.append(toDigitChar(seconds / 10));
-            }
-            sb.append(toDigitChar(seconds % 10));
-            return sb.toString();
-        } else {
-            return String.format(format, minutes, seconds);
-        }
-    }
-
-    private static char toDigitChar(long digit) {
-        return (char) (digit + '0');
     }
 
     /**
@@ -847,18 +632,6 @@ public class DateUtils
     }
 
     /**
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     */
-    public static Calendar newCalendar(boolean zulu)
-    {
-        if (zulu)
-            return Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-
-        return Calendar.getInstance();
-    }
-
-    /**
      * @return true if the supplied when is today else false
      */
     public static boolean isToday(long when) {
@@ -873,127 +646,6 @@ public class DateUtils
         return (thenYear == time.year)
                 && (thenMonth == time.month)
                 && (thenMonthDay == time.monthDay);
-    }
-
-    /**
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     * Return true if this date string is local time
-     */
-    public static boolean isUTC(String s)
-    {
-        if (s.length() == 16 && s.charAt(15) == 'Z') {
-            return true;
-        }
-        if (s.length() == 9 && s.charAt(8) == 'Z') {
-            // XXX not sure if this case possible/valid
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Return a string containing the date and time in RFC2445 format.
-     * Ensures that the time is written in UTC.  The Calendar class doesn't
-     * really help out with this, so this is slower than it ought to be.
-     *
-     * @param cal the date and time to write
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     */
-    public static String writeDateTime(Calendar cal)
-    {
-        TimeZone tz = TimeZone.getTimeZone("GMT");
-        GregorianCalendar c = new GregorianCalendar(tz);
-        c.setTimeInMillis(cal.getTimeInMillis());
-        return writeDateTime(c, true);
-    }
-
-    /**
-     * Return a string containing the date and time in RFC2445 format.
-     *
-     * @param cal the date and time to write
-     * @param zulu If the calendar is in UTC, pass true, and a Z will
-     * be written at the end as per RFC2445.  Otherwise, the time is
-     * considered in localtime.
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     */
-    public static String writeDateTime(Calendar cal, boolean zulu)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.ensureCapacity(16);
-        if (zulu) {
-            sb.setLength(16);
-            sb.setCharAt(15, 'Z');
-        } else {
-            sb.setLength(15);
-        }
-        return writeDateTime(cal, sb);
-    }
-
-    /**
-     * Return a string containing the date and time in RFC2445 format.
-     *
-     * @param cal the date and time to write
-     * @param sb a StringBuilder to use.  It is assumed that setLength
-     *           has already been called on sb to the appropriate length
-     *           which is sb.setLength(zulu ? 16 : 15)
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     */
-    public static String writeDateTime(Calendar cal, StringBuilder sb)
-    {
-        int n;
-
-        n = cal.get(Calendar.YEAR);
-        sb.setCharAt(3, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(2, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(1, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(0, (char)('0'+n%10));
-
-        n = cal.get(Calendar.MONTH) + 1;
-        sb.setCharAt(5, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(4, (char)('0'+n%10));
-
-        n = cal.get(Calendar.DAY_OF_MONTH);
-        sb.setCharAt(7, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(6, (char)('0'+n%10));
-
-        sb.setCharAt(8, 'T');
-
-        n = cal.get(Calendar.HOUR_OF_DAY);
-        sb.setCharAt(10, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(9, (char)('0'+n%10));
-
-        n = cal.get(Calendar.MINUTE);
-        sb.setCharAt(12, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(11, (char)('0'+n%10));
-
-        n = cal.get(Calendar.SECOND);
-        sb.setCharAt(14, (char)('0'+n%10));
-        n /= 10;
-        sb.setCharAt(13, (char)('0'+n%10));
-
-        return sb.toString();
-    }
-
-    /**
-     * @hide
-     * @deprecated use {@link android.text.format.Time}
-     */
-    public static void assign(Calendar lval, Calendar rval)
-    {
-        // there should be a faster way.
-        lval.clear();
-        lval.setTimeInMillis(rval.getTimeInMillis());
     }
 
     /**
@@ -1228,30 +880,34 @@ public class DateUtils
         // computation below that'd otherwise be thrown out.
         boolean isInstant = (startMillis == endMillis);
 
-        Time startDate;
+        Calendar startCalendar, endCalendar;
+        Time startDate = new Time();
         if (timeZone != null) {
-            startDate = new Time(timeZone);
+            startCalendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
         } else if (useUTC) {
-            startDate = new Time(Time.TIMEZONE_UTC);
+            startCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         } else {
-            startDate = new Time();
+            startCalendar = Calendar.getInstance();
         }
-        startDate.set(startMillis);
+        startCalendar.setTimeInMillis(startMillis);
+        setTimeFromCalendar(startDate, startCalendar);
 
-        Time endDate;
+        Time endDate = new Time();
         int dayDistance;
         if (isInstant) {
             endDate = startDate;
             dayDistance = 0;
         } else {
             if (timeZone != null) {
-                endDate = new Time(timeZone);
+                endCalendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
             } else if (useUTC) {
-                endDate = new Time(Time.TIMEZONE_UTC);
+                endCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
             } else {
-                endDate = new Time();
+                endCalendar = Calendar.getInstance();
             }
-            endDate.set(endMillis);
+            endCalendar.setTimeInMillis(endMillis);
+            setTimeFromCalendar(endDate, endCalendar);
+
             int startJulianDay = Time.getJulianDay(startMillis, startDate.gmtoff);
             int endJulianDay = Time.getJulianDay(endMillis, endDate.gmtoff);
             dayDistance = endJulianDay - startJulianDay;
@@ -1480,6 +1136,14 @@ public class DateUtils
         String endMonthDayString = isInstant ? null : endDate.format(MONTH_DAY_FORMAT);
         String endYearString = isInstant ? null : endDate.format(YEAR_FORMAT);
 
+        String startStandaloneMonthString = startMonthString;
+        String endStandaloneMonthString = endMonthString;
+        // We need standalone months for these strings in Persian (fa): http://b/6811327
+        if (!numericDate && !abbrevMonth && Locale.getDefault().getLanguage().equals("fa")) {
+            startStandaloneMonthString = startDate.format("%-B");
+            endStandaloneMonthString = endDate.format("%-B");
+        }
+
         if (startMonthNum != endMonthNum) {
             // Same year, different month.
             // Example: "October 28 - November 3"
@@ -1500,7 +1164,8 @@ public class DateUtils
                     startWeekDayString, startMonthString, startMonthDayString,
                     startYearString, startTimeString,
                     endWeekDayString, endMonthString, endMonthDayString,
-                    endYearString, endTimeString);
+                    endYearString, endTimeString,
+                    startStandaloneMonthString, endStandaloneMonthString);
         }
 
         if (startDay != endDay) {
@@ -1519,7 +1184,8 @@ public class DateUtils
                     startWeekDayString, startMonthString, startMonthDayString,
                     startYearString, startTimeString,
                     endWeekDayString, endMonthString, endMonthDayString,
-                    endYearString, endTimeString);
+                    endYearString, endTimeString,
+                    startStandaloneMonthString, endStandaloneMonthString);
         }
 
         // Same start and end day
@@ -1582,6 +1248,20 @@ public class DateUtils
         // The values that are used in a fullFormat string are specified
         // by position.
         return formatter.format(fullFormat, timeString, startWeekDayString, dateString);
+    }
+
+    private static void setTimeFromCalendar(Time t, Calendar c) {
+        t.hour = c.get(Calendar.HOUR_OF_DAY);
+        t.minute = c.get(Calendar.MINUTE);
+        t.month = c.get(Calendar.MONTH);
+        t.monthDay = c.get(Calendar.DAY_OF_MONTH);
+        t.second = c.get(Calendar.SECOND);
+        t.weekDay = c.get(Calendar.DAY_OF_WEEK) - 1;
+        t.year = c.get(Calendar.YEAR);
+        t.yearDay = c.get(Calendar.DAY_OF_YEAR);
+        t.isDst = (c.get(Calendar.DST_OFFSET) != 0) ? 1 : 0;
+        t.gmtoff = c.get(Calendar.ZONE_OFFSET) + c.get(Calendar.DST_OFFSET);
+        t.timezone = c.getTimeZone().getID();
     }
 
     /**

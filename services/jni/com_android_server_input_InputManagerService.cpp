@@ -49,7 +49,7 @@
 #include <ScopedLocalRef.h>
 #include <ScopedUtfChars.h>
 
-#include "com_android_server_PowerManagerService.h"
+#include "com_android_server_power_PowerManagerService.h"
 #include "com_android_server_input_InputApplicationHandle.h"
 #include "com_android_server_input_InputWindowHandle.h"
 
@@ -63,7 +63,7 @@ static const float POINTER_SPEED_EXPONENT = 1.0f / 4;
 static struct {
     jmethodID notifyConfigurationChanged;
     jmethodID notifyInputDevicesChanged;
-    jmethodID notifyLidSwitchChanged;
+    jmethodID notifySwitch;
     jmethodID notifyInputChannelBroken;
     jmethodID notifyANR;
     jmethodID filterInputEvent;
@@ -143,7 +143,7 @@ static void loadSystemIconAsSprite(JNIEnv* env, jobject contextObj, int32_t styl
 
 enum {
     WM_ACTION_PASS_TO_USER = 1,
-    WM_ACTION_POKE_USER_ACTIVITY = 2,
+    WM_ACTION_WAKE_UP = 2,
     WM_ACTION_GO_TO_SLEEP = 4,
 };
 
@@ -164,9 +164,7 @@ public:
 
     void dump(String8& dump);
 
-    void setDisplaySize(int32_t displayId, int32_t width, int32_t height,
-            int32_t externalWidth, int32_t externalHeight);
-    void setDisplayOrientation(int32_t displayId, int32_t orientation, int32_t externalOrientation);
+    void setDisplayViewport(bool external, const DisplayViewport& viewport);
 
     status_t registerInputChannel(JNIEnv* env, const sp<InputChannel>& inputChannel,
             const sp<InputWindowHandle>& inputWindowHandle, bool monitor);
@@ -189,7 +187,7 @@ public:
 
     /* --- InputDispatcherPolicyInterface implementation --- */
 
-    virtual void notifySwitch(nsecs_t when, int32_t switchCode, int32_t switchValue,
+    virtual void notifySwitch(nsecs_t when, uint32_t switchValues, uint32_t switchMask,
             uint32_t policyFlags);
     virtual void notifyConfigurationChanged(nsecs_t when);
     virtual nsecs_t notifyANR(const sp<InputApplicationHandle>& inputApplicationHandle,
@@ -223,10 +221,8 @@ private:
     Mutex mLock;
     struct Locked {
         // Display size information.
-        int32_t displayWidth, displayHeight; // -1 when not initialized
-        int32_t displayOrientation;
-        int32_t displayExternalWidth, displayExternalHeight; // -1 when not initialized
-        int32_t displayExternalOrientation;
+        DisplayViewport internalViewport;
+        DisplayViewport externalViewport;
 
         // System UI visibility.
         int32_t systemUiVisibility;
@@ -274,13 +270,6 @@ NativeInputManager::NativeInputManager(jobject contextObj,
 
     {
         AutoMutex _l(mLock);
-        mLocked.displayWidth = -1;
-        mLocked.displayHeight = -1;
-        mLocked.displayOrientation = DISPLAY_ORIENTATION_0;
-        mLocked.displayExternalWidth = -1;
-        mLocked.displayExternalHeight = -1;
-        mLocked.displayExternalOrientation = DISPLAY_ORIENTATION_0;
-
         mLocked.systemUiVisibility = ASYSTEM_UI_VISIBILITY_STATUS_BAR_VISIBLE;
         mLocked.pointerSpeed = 0;
         mLocked.pointerGesturesEnabled = true;
@@ -316,56 +305,25 @@ bool NativeInputManager::checkAndClearExceptionFromCallback(JNIEnv* env, const c
     return false;
 }
 
-void NativeInputManager::setDisplaySize(int32_t displayId, int32_t width, int32_t height,
-        int32_t externalWidth, int32_t externalHeight) {
+void NativeInputManager::setDisplayViewport(bool external, const DisplayViewport& viewport) {
     bool changed = false;
-    if (displayId == 0) {
+    {
         AutoMutex _l(mLock);
 
-        if (mLocked.displayWidth != width || mLocked.displayHeight != height) {
+        DisplayViewport& v = external ? mLocked.externalViewport : mLocked.internalViewport;
+        if (v != viewport) {
             changed = true;
-            mLocked.displayWidth = width;
-            mLocked.displayHeight = height;
+            v = viewport;
 
-            sp<PointerController> controller = mLocked.pointerController.promote();
-            if (controller != NULL) {
-                controller->setDisplaySize(width, height);
+            if (!external) {
+                sp<PointerController> controller = mLocked.pointerController.promote();
+                if (controller != NULL) {
+                    controller->setDisplayViewport(
+                            viewport.logicalRight - viewport.logicalLeft,
+                            viewport.logicalBottom - viewport.logicalTop,
+                            viewport.orientation);
+                }
             }
-        }
-
-        if (mLocked.displayExternalWidth != externalWidth
-                || mLocked.displayExternalHeight != externalHeight) {
-            changed = true;
-            mLocked.displayExternalWidth = externalWidth;
-            mLocked.displayExternalHeight = externalHeight;
-        }
-    }
-
-    if (changed) {
-        mInputManager->getReader()->requestRefreshConfiguration(
-                InputReaderConfiguration::CHANGE_DISPLAY_INFO);
-    }
-}
-
-void NativeInputManager::setDisplayOrientation(int32_t displayId, int32_t orientation,
-        int32_t externalOrientation) {
-    bool changed = false;
-    if (displayId == 0) {
-        AutoMutex _l(mLock);
-
-        if (mLocked.displayOrientation != orientation) {
-            changed = true;
-            mLocked.displayOrientation = orientation;
-
-            sp<PointerController> controller = mLocked.pointerController.promote();
-            if (controller != NULL) {
-                controller->setDisplayOrientation(orientation);
-            }
-        }
-
-        if (mLocked.displayExternalOrientation != externalOrientation) {
-            changed = true;
-            mLocked.displayExternalOrientation = externalOrientation;
         }
     }
 
@@ -448,11 +406,8 @@ void NativeInputManager::getReaderConfiguration(InputReaderConfiguration* outCon
 
         outConfig->showTouches = mLocked.showTouches;
 
-        outConfig->setDisplayInfo(0, false /*external*/,
-                mLocked.displayWidth, mLocked.displayHeight, mLocked.displayOrientation);
-        outConfig->setDisplayInfo(0, true /*external*/,
-                mLocked.displayExternalWidth, mLocked.displayExternalHeight,
-                mLocked.displayExternalOrientation);
+        outConfig->setDisplayInfo(false /*external*/, mLocked.internalViewport);
+        outConfig->setDisplayInfo(true /*external*/, mLocked.externalViewport);
     } // release lock
 }
 
@@ -466,8 +421,11 @@ sp<PointerControllerInterface> NativeInputManager::obtainPointerController(int32
         controller = new PointerController(this, mLooper, mLocked.spriteController);
         mLocked.pointerController = controller;
 
-        controller->setDisplaySize(mLocked.displayWidth, mLocked.displayHeight);
-        controller->setDisplayOrientation(mLocked.displayOrientation);
+        DisplayViewport& v = mLocked.internalViewport;
+        controller->setDisplayViewport(
+                v.logicalRight - v.logicalLeft,
+                v.logicalBottom - v.logicalTop,
+                v.orientation);
 
         JNIEnv* env = jniEnv();
         jobject pointerIconObj = env->CallObjectMethod(mServiceObj,
@@ -569,23 +527,18 @@ String8 NativeInputManager::getDeviceAlias(const InputDeviceIdentifier& identifi
     return result;
 }
 
-void NativeInputManager::notifySwitch(nsecs_t when, int32_t switchCode,
-        int32_t switchValue, uint32_t policyFlags) {
+void NativeInputManager::notifySwitch(nsecs_t when,
+        uint32_t switchValues, uint32_t switchMask, uint32_t policyFlags) {
 #if DEBUG_INPUT_DISPATCHER_POLICY
-    ALOGD("notifySwitch - when=%lld, switchCode=%d, switchValue=%d, policyFlags=0x%x",
-            when, switchCode, switchValue, policyFlags);
+    ALOGD("notifySwitch - when=%lld, switchValues=0x%08x, switchMask=0x%08x, policyFlags=0x%x",
+            when, switchValues, switchMask, policyFlags);
 #endif
 
     JNIEnv* env = jniEnv();
 
-    switch (switchCode) {
-    case SW_LID:
-        // When switch value is set indicates lid is closed.
-        env->CallVoidMethod(mServiceObj, gServiceClassInfo.notifyLidSwitchChanged,
-                when, switchValue == 0 /*lidOpen*/);
-        checkAndClearExceptionFromCallback(env, "notifyLidSwitchChanged");
-        break;
-    }
+    env->CallVoidMethod(mServiceObj, gServiceClassInfo.notifySwitch,
+            when, switchValues, switchMask);
+    checkAndClearExceptionFromCallback(env, "notifySwitch");
 }
 
 void NativeInputManager::notifyConfigurationChanged(nsecs_t when) {
@@ -899,11 +852,11 @@ void NativeInputManager::handleInterceptActions(jint wmActions, nsecs_t when,
         android_server_PowerManagerService_goToSleep(when);
     }
 
-    if (wmActions & WM_ACTION_POKE_USER_ACTIVITY) {
+    if (wmActions & WM_ACTION_WAKE_UP) {
 #if DEBUG_INPUT_DISPATCHER_POLICY
-        ALOGD("handleInterceptActions: Poking user activity.");
+        ALOGD("handleInterceptActions: Waking up.");
 #endif
-        android_server_PowerManagerService_userActivity(when, POWER_MANAGER_BUTTON_EVENT);
+        android_server_PowerManagerService_wakeUp(when);
     }
 
     if (wmActions & WM_ACTION_PASS_TO_USER) {
@@ -1022,9 +975,14 @@ void NativeInputManager::loadPointerResources(PointerResources* outResources) {
 static jint nativeInit(JNIEnv* env, jclass clazz,
         jobject serviceObj, jobject contextObj, jobject messageQueueObj) {
     sp<MessageQueue> messageQueue = android_os_MessageQueue_getMessageQueue(env, messageQueueObj);
+    if (messageQueue == NULL) {
+        jniThrowRuntimeException(env, "MessageQueue is not initialized.");
+        return 0;
+    }
+
     NativeInputManager* im = new NativeInputManager(contextObj, serviceObj,
             messageQueue->getLooper());
-    im->incStrong(serviceObj);
+    im->incStrong(0);
     return reinterpret_cast<jint>(im);
 }
 
@@ -1037,22 +995,27 @@ static void nativeStart(JNIEnv* env, jclass clazz, jint ptr) {
     }
 }
 
-static void nativeSetDisplaySize(JNIEnv* env, jclass clazz, jint ptr,
-        jint displayId, jint width, jint height, jint externalWidth, jint externalHeight) {
+static void nativeSetDisplayViewport(JNIEnv* env, jclass clazz, jint ptr, jboolean external,
+        jint displayId, jint orientation,
+        jint logicalLeft, jint logicalTop, jint logicalRight, jint logicalBottom,
+        jint physicalLeft, jint physicalTop, jint physicalRight, jint physicalBottom,
+        jint deviceWidth, jint deviceHeight) {
     NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
 
-    // XXX we could get this from the SurfaceFlinger directly instead of requiring it
-    // to be passed in like this, not sure which is better but leaving it like this
-    // keeps the window manager in direct control of when display transitions propagate down
-    // to the input dispatcher
-    im->setDisplaySize(displayId, width, height, externalWidth, externalHeight);
-}
-
-static void nativeSetDisplayOrientation(JNIEnv* env, jclass clazz,
-        jint ptr, jint displayId, jint orientation, jint externalOrientation) {
-    NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
-
-    im->setDisplayOrientation(displayId, orientation, externalOrientation);
+    DisplayViewport v;
+    v.displayId = displayId;
+    v.orientation = orientation;
+    v.logicalLeft = logicalLeft;
+    v.logicalTop = logicalTop;
+    v.logicalRight = logicalRight;
+    v.logicalBottom = logicalBottom;
+    v.physicalLeft = physicalLeft;
+    v.physicalTop = physicalTop;
+    v.physicalRight = physicalRight;
+    v.physicalBottom = physicalBottom;
+    v.deviceWidth = deviceWidth;
+    v.deviceHeight = deviceHeight;
+    im->setDisplayViewport(external, v);
 }
 
 static jint nativeGetScanCodeState(JNIEnv* env, jclass clazz,
@@ -1333,10 +1296,8 @@ static JNINativeMethod gInputManagerMethods[] = {
             (void*) nativeInit },
     { "nativeStart", "(I)V",
             (void*) nativeStart },
-    { "nativeSetDisplaySize", "(IIIIII)V",
-            (void*) nativeSetDisplaySize },
-    { "nativeSetDisplayOrientation", "(IIII)V",
-            (void*) nativeSetDisplayOrientation },
+    { "nativeSetDisplayViewport", "(IZIIIIIIIIIIII)V",
+            (void*) nativeSetDisplayViewport },
     { "nativeGetScanCodeState", "(IIII)I",
             (void*) nativeGetScanCodeState },
     { "nativeGetKeyCodeState", "(IIII)I",
@@ -1410,8 +1371,8 @@ int register_android_server_InputManager(JNIEnv* env) {
     GET_METHOD_ID(gServiceClassInfo.notifyInputDevicesChanged, clazz,
             "notifyInputDevicesChanged", "([Landroid/view/InputDevice;)V");
 
-    GET_METHOD_ID(gServiceClassInfo.notifyLidSwitchChanged, clazz,
-            "notifyLidSwitchChanged", "(JZ)V");
+    GET_METHOD_ID(gServiceClassInfo.notifySwitch, clazz,
+            "notifySwitch", "(JII)V");
 
     GET_METHOD_ID(gServiceClassInfo.notifyInputChannelBroken, clazz,
             "notifyInputChannelBroken", "(Lcom/android/server/input/InputWindowHandle;)V");
